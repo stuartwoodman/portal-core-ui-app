@@ -15,7 +15,6 @@ export class LayerStatusService {
     private http: HttpClient,
     @Inject('env') private env
   ) {
-    this.layerStatusMap = new Map();
     this.updateLayerStatus();
   }
 
@@ -23,12 +22,14 @@ export class LayerStatusService {
    * Regularly update layer status from stackdriver service by calling getKnownLayers.
    */
   private updateLayerStatus() {
+    const me = this;
     interval(15 * 1000).subscribe(() => { // will execute every 15 minutes
       return this.http.get(this.env.portalBaseUrl + this.env.getCSWRecordUrl)
         .subscribe((response) => {
           const layerList = response['data'];
+          me.layerStatusMap = new Map();
           layerList.forEach(function (item, i) {
-            this.layerStatusMap.put(item.id, item.stackdriverFailingHosts);
+            me.layerStatusMap.put(item.id, item.stackdriverFailingHosts);
           });           
        });
     });
@@ -39,7 +40,7 @@ export class LayerStatusService {
    * @return true if one of the services is down
    */
   public isLayerDown(layerId: string): boolean {
-    var failingHosts = this.layerStatusMap.get(layerId);
+    var failingHosts = this.layerStatusMap ? this.layerStatusMap.get(layerId) : null;
     if (failingHosts && failingHosts.length > 0) {
       return true;
     }
