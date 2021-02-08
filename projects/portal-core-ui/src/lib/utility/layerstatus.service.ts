@@ -23,7 +23,7 @@ export class LayerStatusService {
    */
   private updateLayerStatus() {
     const me = this;
-    interval(15 * 1000).subscribe(() => { // will execute every 15 minutes
+    interval(15 * 60* 1000).subscribe(() => { // will execute every 15 minutes
       return this.http.get(this.env.portalBaseUrl + this.env.getCSWRecordUrl)
         .subscribe((response) => {
           const layerList = response['data'];
