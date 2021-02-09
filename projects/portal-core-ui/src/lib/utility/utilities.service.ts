@@ -484,23 +484,6 @@ export class UtilitiesService {
       return httpParam;
     }
 
-
-    /**
-     * check if the cswRecord has a entry in the list of failing nagios record
-     * @param stackdriverFailingHosts array of the list of host that is experiencing problem
-     * @param cswRecord the csw we are matching for problem
-     */
-    public static isEndpointFailing(stackdriverFailingHosts: string[], onlineResource: OnlineResourceModel): boolean {
-      if (stackdriverFailingHosts && stackdriverFailingHosts.length > 0) {
-        for (const stackdriverFailingHost of stackdriverFailingHosts) {
-            if (onlineResource.url.indexOf(stackdriverFailingHost) > -1) {
-              return true;
-            }
-        }
-      }
-      return false;
-    }
-
     /**
      * Returns true iff (if and only if) this is an ESRI ArcGIS server
      * @param onlineResource online resource record for service
