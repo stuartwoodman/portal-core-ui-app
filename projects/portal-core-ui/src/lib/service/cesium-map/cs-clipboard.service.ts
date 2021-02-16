@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import * as olProj from 'ol/proj';
-import { OlMapObject } from './ol-map-object';
+import { CsMapObject } from './cs-map-object';
 import olLayerVector from 'ol/layer/Vector';
 import { Constants } from '../../utility/constants.service';
 
@@ -9,7 +9,7 @@ import { Constants } from '../../utility/constants.service';
  * A wrapper around the clipboard object for use in the portal.
  */
 @Injectable()
-export class OlClipboardService {
+export class CsClipboardService {
   private polygonBBox: Polygon;
   public polygonsBS: BehaviorSubject<Polygon>;
 
@@ -21,7 +21,7 @@ export class OlClipboardService {
   private bFilterLayers: Boolean = false;
   public filterLayersBS = new BehaviorSubject<Boolean>(this.bFilterLayers);
 
-  constructor(private olMapObject: OlMapObject) {
+  constructor(private csMapObject: CsMapObject) {
     this.vectorOnMap = null;
     this.polygonBBox = null;
     this.polygonsBS = new BehaviorSubject<Polygon>(this.polygonBBox);
@@ -69,7 +69,7 @@ export class OlClipboardService {
    * @returns the polygon coordinates string BS on which the polygon is drawn on.
    */
   public drawPolygon() {
-    this.olMapObject.drawPolygon().subscribe(
+    this.csMapObject.drawPolygon().subscribe(
         (vector) => {
           const coords = vector.get('polygonString');
           if ( coords ) {
@@ -78,7 +78,7 @@ export class OlClipboardService {
             this.polygonBBox = newPolygon;
             this.polygonsBS.next(this.polygonBBox);
             if (this.vectorOnMap) {
-              this.olMapObject.removeVector(this.vectorOnMap);
+              this.csMapObject.removeVector(this.vectorOnMap);
             }
             this.vectorOnMap = vector;
           }
@@ -86,10 +86,10 @@ export class OlClipboardService {
   }
   public renderPolygon() {
     if (this.vectorOnMap) {
-      this.olMapObject.removeVector(this.vectorOnMap);
+      this.csMapObject.removeVector(this.vectorOnMap);
     }
     if (this.polygonBBox) {
-      this.olMapObject.renderPolygon(this.polygonBBox).subscribe(
+      this.csMapObject.renderPolygon(this.polygonBBox).subscribe(
         (vector) => {
           this.vectorOnMap = vector;
         });
@@ -129,7 +129,7 @@ export class OlClipboardService {
     this.polygonBBox = null;
     this.polygonsBS.next(this.polygonBBox);
     if (this.vectorOnMap) {
-      this.olMapObject.removeVector(this.vectorOnMap);
+      this.csMapObject.removeVector(this.vectorOnMap);
     }
     this.vectorOnMap = null;
   }

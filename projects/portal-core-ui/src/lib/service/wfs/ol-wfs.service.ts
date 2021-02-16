@@ -21,7 +21,7 @@ import olSourceVector from 'ol/source/Vector';
 import { GMLParserService } from '../../utility/gmlparser.service';
 import { Constants } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
-import { RenderStatusService } from '../openlayermap/renderstatus/render-status.service';
+import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 
 /**
  * Use OlMapService to add layer to map. This service class adds wfs layer to the map

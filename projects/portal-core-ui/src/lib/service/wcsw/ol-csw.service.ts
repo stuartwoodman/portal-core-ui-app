@@ -19,7 +19,7 @@ import olSourceVector from 'ol/source/Vector';
 import olStyleStroke from 'ol/style/Stroke';
 import olStyleFill from 'ol/style/Fill';
 import { Constants } from '../../utility/constants.service';
-import { RenderStatusService } from '../openlayermap/renderstatus/render-status.service';
+import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 
 /**
  * Use OlMapService to add csw layer like reports to map. This service class adds csw layer to the map
@@ -80,7 +80,7 @@ export class OlCSWService {
 
   }
 
-  public addPoloygon(layer: LayerModel, cswRecord: CSWRecordModel, primitive: PrimitiveModel): void {
+  public addPolygon(layer: LayerModel, cswRecord: CSWRecordModel, primitive: PrimitiveModel): void {
 
     const feature = new olFeature({
       geometry: new olPolygon([primitive.coords])
@@ -163,7 +163,7 @@ export class OlCSWService {
               this.addPoint(layer, cswRecord, primitive);
               break;
             case Constants.geometryType.POLYGON:
-              this.addPoloygon(layer, cswRecord, primitive);
+              this.addPolygon(layer, cswRecord, primitive);
               break;
           }
 

@@ -15,15 +15,17 @@ import { LayerHandlerService } from '../cswrecords/layer-handler.service';
 import { ManageStateService } from '../permanentlink/manage-state.service';
 import { OlCSWService } from '../wcsw/ol-csw.service';
 import { OlWFSService } from '../wfs/ol-wfs.service';
-import { OlMapObject } from './ol-map-object';
+import { CsMapObject } from './cs-map-object';
 import { OlWMSService } from '../wms/ol-wms.service';
 import { OlWWWService } from '../www/ol-www.service';
 
+import { MapsManagerService } from 'angular-cesium';
+
 /**
- * Wrapper class used for the layer preview map as an open layers map
+ * Wrapper class to provide all things related to the ol map such as adding layer or removing layer.
  */
 @Injectable()
-export class OlMapService {
+export class CsMapService {
 
    // VT: a storage to keep track of the layers that have been added to the map. This is use to handle click events.
    private layerModelList: { [key: string]: LayerModel; } = {};
@@ -32,10 +34,10 @@ export class OlMapService {
    private clickedLayerListBS = new BehaviorSubject<any>({});
 
    constructor(private layerHandlerService: LayerHandlerService, private olWMSService: OlWMSService,
-     private olWFSService: OlWFSService, private olMapObject: OlMapObject, private manageStateService: ManageStateService, @Inject('conf') private conf,
-      private olCSWService: OlCSWService, private olWWWService: OlWWWService) {
+     private olWFSService: OlWFSService, private csMapObject: CsMapObject, private manageStateService: ManageStateService, @Inject('conf') private conf,
+      private olCSWService: OlCSWService, private olWWWService: OlWWWService, private mapsManagerService: MapsManagerService) {
 
-     this.olMapObject.registerClickHandler(this.mapClickHandler.bind(this));
+     this.csMapObject.registerClickHandler(this.mapClickHandler.bind(this));
      this.addLayerSubject = new Subject<LayerModel>();
    }
 
@@ -55,14 +57,14 @@ export class OlMapService {
    public mapClickHandler(pixel: number[]) {
       try {
            // Convert pixel coords to map coords
-           const map = this.olMapObject.getMap();
+           const map = this.csMapObject.getMap();
            const clickCoord = map.getCoordinateFromPixel(pixel);
            const lonlat = olProj.transform(clickCoord, 'EPSG:3857', 'EPSG:4326');
            const clickPoint = point(lonlat);
 
            // Compile a list of clicked on layers
            // NOTO BENE: forEachLayerAtPixel() cannot be used because it causes CORS problems
-           const activeLayers = this.olMapObject.getLayers();
+           const activeLayers = this.csMapObject.getLayers();
            const clickedLayerList: olLayer[] = [];
            const layerColl = map.getLayers();
            const me = this;
@@ -116,8 +118,8 @@ export class OlMapService {
   public getCSWRecordsForExtent(extent: olExtent): CSWRecordModel[] {
     let intersectedCSWRecordList: CSWRecordModel[] = [];
     extent = olProj.transformExtent(extent, 'EPSG:3857', 'EPSG:4326');
-    const groupLayers = this.olMapObject.getLayers();
-    const map = this.olMapObject.getMap();
+    const groupLayers = this.csMapObject.getLayers();
+    const map = this.csMapObject.getMap();
     const mapLayerColl = map.getLayers();
     const me = this;
     mapLayerColl.forEach(function(layer) {
@@ -130,7 +132,7 @@ export class OlMapService {
                       continue;
                    }
                    */
-                     for (const cswRecord of layerModel.cswRecords) {
+                   for (const cswRecord of layerModel.cswRecords) {
                        let cswRecordIntersects: boolean = false;
                        for (const bbox of cswRecord.geographicElements) {
                            const tBbox = [bbox.westBoundLongitude, bbox.southBoundLatitude, bbox.eastBoundLongitude, bbox.northBoundLatitude];
@@ -155,7 +157,7 @@ export class OlMapService {
    * @param layer the layer to add to the map
    */
    public addLayer(layer: LayerModel, param: any): void {
-     this.olMapObject.removeLayerById(layer.id);
+     this.csMapObject.removeLayerById(layer.id);
      delete this.layerModelList[layer.id];
      if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
        this.olCSWService.addLayer(layer, param);
@@ -214,7 +216,7 @@ export class OlMapService {
    */
   public removeLayer(layer: LayerModel): void {
       this.manageStateService.removeLayer(layer.id);
-      this.olMapObject.removeLayerById(layer.id);
+      this.csMapObject.removeLayerById(layer.id);
       delete this.layerModelList[layer.id];
   }
 
@@ -246,7 +248,7 @@ export class OlMapService {
    */
   public setLayerVisibility(layerId: string, visible: boolean) {
     this.layerModelList[layerId].hidden = !visible;
-    this.olMapObject.setLayerVisibility(layerId, visible);
+    this.csMapObject.setLayerVisibility(layerId, visible);
   }
 
   /**
@@ -255,7 +257,10 @@ export class OlMapService {
    * @param opacity the value of opacity between 0.0 and 1.0
    */
   public setLayerOpacity(layerId: string, opacity: number) {
-    this.olMapObject.setLayerOpacity(layerId, opacity);
+    const viewer = this.mapsManagerService.getMap().getCesiumViewer();
+    const imageLayer = viewer.imageryLayers.get(1)
+    imageLayer.alpha = opacity;
+    // this.csMapObject.setLayerOpacity(layerId, opacity);
   }
 
   /**
@@ -277,7 +282,7 @@ export class OlMapService {
    * @param value the new source parameter value
    */
   public setLayerSourceParam(layerId: string, param: string, value: any) {
-    this.olMapObject.setLayerSourceParam(layerId, param, value);
+    this.csMapObject.setLayerSourceParam(layerId, param, value);
   }
 
   /**
@@ -285,21 +290,21 @@ export class OlMapService {
    * @param extent An array of numbers representing an extent: [minx, miny, maxx, maxy]
    */
   public fitView(extent: [number, number, number, number]): void {
-      this.olMapObject.getMap().getView().fit(extent);
+      this.csMapObject.getMap().getView().fit(extent);
   }
 
   /**
    * Zoom the map in one level
    */
   public zoomMapIn(): void {
-    this.olMapObject.zoomIn();
+    this.csMapObject.zoomIn();
   }
 
   /**
    * Zoom the map out one level
    */
   public zoomMapOut(): void {
-    this.olMapObject.zoomOut();
+    this.csMapObject.zoomOut();
   }
 
   /**
@@ -307,7 +312,7 @@ export class OlMapService {
    * @returns a observable object that triggers an event when the user have completed the task
    */
   public drawBound(): Subject<olLayerVector> {
-    return this.olMapObject.drawBox();
+    return this.csMapObject.drawBox();
   }
 
   /**
@@ -315,7 +320,7 @@ export class OlMapService {
     * @returns the layer vector on which the dot is drawn on. This provides a handle for the dot to be deleted
     */
   public drawDot(coord): olLayerVector {
-    return this.olMapObject.drawDot(coord);
+    return this.csMapObject.drawDot(coord);
   }
 
   /**
@@ -323,7 +328,7 @@ export class OlMapService {
   * @returns the polygon coordinates string BS on which the polygon is drawn on.
   */
   public drawPolygon(): BehaviorSubject<olLayerVector> {
-    return this.olMapObject.drawPolygon();
+    return this.csMapObject.drawPolygon();
   }
 
   /**
@@ -331,7 +336,7 @@ export class OlMapService {
    * @param the vector layer to be removed
    */
   public removeVector(vector: olLayerVector) {
-    this.olMapObject.removeVector(vector);
+    this.csMapObject.removeVector(vector);
   }
 
   /**
@@ -339,7 +344,7 @@ export class OlMapService {
    * @returns the map extent
    */
   public getMapExtent(): olExtent {
-    return this.olMapObject.getMapExtent();
+    return this.csMapObject.getMapExtent();
   }
 
   /**
@@ -348,13 +353,22 @@ export class OlMapService {
    * @param duration (Optional) the length of time in milliseconds to display the extent before it is removed. If not supplied the extent will not be removed.
    */
   public displayExtent(extent: olExtent, duration?: number) {
-    this.olMapObject.displayExtent(extent, duration);
+    this.csMapObject.displayExtent(extent, duration);
   }
 
   /**
    * Call updateSize on map to handle scale changes
    */
   public updateSize() {
-    this.olMapObject.updateSize();
+    this.csMapObject.updateSize();
   }
+
+  /**
+   * Change the OL Map's basemap
+   * @param baseMap the basemap's ID value (string)
+   */
+  public switchBaseMap(baseMap: string) {
+    // this.csMapObject.switchBaseMap(baseMap);
+  }
+
 }

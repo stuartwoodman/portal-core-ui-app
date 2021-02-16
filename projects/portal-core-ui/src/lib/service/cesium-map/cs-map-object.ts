@@ -1,21 +1,22 @@
+import {RenderStatusService} from './renderstatus/render-status.service';
 import {Constants} from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import {Injectable , Inject} from '@angular/core';
 import olMap from 'ol/Map';
-import olTile from 'ol/layer/Tile';
-import olOSM from 'ol/source/OSM';
+//import olTile from 'ol/layer/Tile';
+//import olOSM from 'ol/source/OSM';
 import olView from 'ol/View';
 import olLayer from 'ol/layer/Layer';
 import olSourceVector from 'ol/source/Vector';
 import olFormatGML2 from 'ol/format/GML2';
 import olLayerVector from 'ol/layer/Vector';
-import XYZ from 'ol/source/XYZ';
-import TileLayer from 'ol/layer/Tile';
+//import XYZ from 'ol/source/XYZ';
+//import TileLayer from 'ol/layer/Tile';
 import olGeomPolygon from 'ol/geom/Polygon';
 import { fromExtent } from 'ol/geom/Polygon';
-import BingMaps from 'ol/source/BingMaps';
+//import BingMaps from 'ol/source/BingMaps';
 import olDraw, { createBox } from 'ol/interaction/Draw';
-import olControl from 'ol/control';
+//import olControl from 'ol/control';
 import olStyleStyle from 'ol/style/Style';
 import olStyleCircle from 'ol/style/Circle';
 import olStyleFill from 'ol/style/Fill';
@@ -38,10 +39,10 @@ export interface BaseMapLayerOption {
 
 
 /**
- * A wrapper around the openlayer object for use in the map layer preview
+ * A wrapper around the openlayer object for use in the portal.
  */
 @Injectable()
-export class OlMapObject {
+export class CsMapObject {
 
   private map: olMap;
   private groupLayer: {};
@@ -50,27 +51,61 @@ export class OlMapObject {
   private baseLayers = [];
   private baseMapLayers = [{ value: 'OSM', viewValue: 'OpenStreetMap', layerType: 'OSM' }];
 
-  constructor() {
-    // Use a basic Open Street Map for the preview map
-    for (let i = 0; i < this.baseMapLayers.length; ++i) {
-      this.baseLayers.push(new olTile({
-        visible: true,
-        source: new olOSM()
-      }));
+  constructor(private renderStatusService: RenderStatusService, @Inject('env') private env) {
+    if (env !== null) {
+      this.baseMapLayers = env.baseMapLayers;
     }
+    /*for (let i = 0; i < this.baseMapLayers.length; ++i) {
+      if ( this.baseMapLayers[i].layerType === 'OSM') {
+        this.baseLayers.push(new olTile({
+          visible: true,
+          source: new olOSM()
+        }));
+      } else if ( this.baseMapLayers[i].layerType === 'Bing') {
+        this.baseLayers.push(new TileLayer({
+          visible: false,
+          preload: Infinity,
+          source: new BingMaps({
+            key: 'AgfoWboIfoy68Vu38c2RE83rEEuvWKjQWV37g7stRUAPcDiGALCEKHefrDyWn1zM',
+            imagerySet: this.baseMapLayers[i].value,
+            // use maxZoom 19 to see stretched tiles instead of the BingMaps
+            // "no photos at this zoom level" tiles
+             maxZoom: 19
+          })
+        }));
+      } else if (this.baseMapLayers[i].layerType === 'ESRI') {
+        this.baseLayers.push(new TileLayer({
+          visible: false,
+          preload: Infinity,
+          source: new XYZ({
+            attributions: 'Tiles © <a href="https://services.arcgisonline.com/ArcGIS/rest/services/' + this.baseMapLayers[i].value + '/MapServer">ArcGIS</a>',
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/' + this.baseMapLayers[i].value + '/MapServer/tile/{z}/{y}/{x}',
+            maxZoom: 18
+          })
+        }));
+      } else if (this.baseMapLayers[i].layerType === 'Google') {
+        this.baseLayers.push(new TileLayer({
+          visible: false,
+          preload: Infinity,
+          source: new XYZ({
+            url: 'http://mt1.google.com/vt/lyrs=' + this.baseMapLayers[i].value + '&x={x}&y={y}&z={z}'
+          })
+        }));
+      }
+    }*/
     this.groupLayer = {};
-    this.map = new olMap({
+    /*this.map = new olMap({
       controls: [],
       layers: this.baseLayers,
       view: new olView({
         center: Constants.CENTRE_COORD,
         zoom: 4
       })
-    });
+    });*/
     const me = this;
 
     // Call a list of functions when the map is clicked on
-    this.map.on('click', function(evt) {
+    /*this.map.on('click', function(evt) {
       if (me.ignoreMapClick) {
         return;
       }
@@ -78,9 +113,47 @@ export class OlMapObject {
       for (const clickHandler of me.clickHandlerList) {
         clickHandler(pixel);
       }
-    });
+    });*/
 
   }
+/* public addGeocoderToMap() {
+      // Added ol-geocoder controller into map.
+      const GC = new  G('nominatim', {
+        provider: 'bing',
+        key: 'AgfoWboIfoy68Vu38c2RE83rEEuvWKjQWV37g7stRUAPcDiGALCEKHefrDyWn1zM',
+        lang: 'en',
+        placeholder: 'search',
+        limit: 5,
+        autoComplete: true,
+        keepOpen: true
+      });
+      const geocoderSource = GC.getSource();
+      const me = this;
+      GC.on('addresschosen', function (evt) {
+        const coord = evt.coordinate;
+        if (coord) {
+          geocoderSource.clear();
+          geocoderSource.addFeature(evt.feature); // add only the last one
+          me.map.getView().setCenter(coord);
+          me.map.getView().setZoom(9);
+        }
+      });
+      this.map.addControl(GC);
+  }*/
+
+  /*public switchBaseMap(newstyle: string): void {
+      for (let i = 0; i < this.baseLayers.length; ++i) {
+        this.baseLayers[i].setVisible(this.baseMapLayers[i].value === newstyle);
+        if (this.baseMapLayers[i].value === 'World_Imagery' && newstyle === 'Reference/World_Boundaries_and_Places') {
+          this.baseLayers[i].setVisible(true);
+        }
+      }
+
+  }*/
+
+  /*public addControlToMap(control: olControl) {
+    this.map.addControl(control);
+  }*/
 
   /**
    * Register a click handler callback function which is called when there is a click event
@@ -164,6 +237,7 @@ export class OlMapObject {
         this.map.removeLayer(layer);
       });
       delete this.groupLayer[id];
+      this.renderStatusService.resetLayer(id);
     }
   }
 
@@ -207,6 +281,7 @@ export class OlMapObject {
       activelayers.forEach(layer => {
         layer.getSource().updateParams({[param]: value});
       });
+      this.renderStatusService.resetLayer(layerId);
     }
   }
   /**

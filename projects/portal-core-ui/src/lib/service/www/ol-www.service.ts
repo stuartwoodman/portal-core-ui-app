@@ -17,7 +17,7 @@ import olIcon from 'ol/style/Icon';
 import olLayerVector from 'ol/layer/Vector';
 import olSourceVector from 'ol/source/Vector';
 import { Constants } from '../../utility/constants.service';
-import { RenderStatusService } from '../openlayermap/renderstatus/render-status.service';
+import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 
 /**
  * Use OlMapService to add layer to map. This service class adds www layer to the map

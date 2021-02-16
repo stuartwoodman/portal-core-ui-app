@@ -8,8 +8,10 @@ import { LayerHandlerService } from './service/cswrecords/layer-handler.service'
 import { FilterPanelService } from './service/filterpanel/filterpanel-service';
 import { OlMapObject } from './service/openlayermap/ol-map-object';
 import { OlMapService } from './service/openlayermap/ol-map.service';
-import { OlClipboardService } from './service/openlayermap/ol-clipboard.service';
-import { RenderStatusService } from './service/openlayermap/renderstatus/render-status.service';
+import { CsMapObject } from './service/cesium-map/cs-map-object';
+import { CsMapService } from './service/cesium-map/cs-map.service';
+import { CsClipboardService } from './service/cesium-map/cs-clipboard.service';
+import { RenderStatusService } from './service/cesium-map/renderstatus/render-status.service';
 import { ManageStateService } from './service/permanentlink/manage-state.service';
 import { DownloadWfsService } from './service/wfs/download/download-wfs.service';
 import { OlWMSService } from './service/wms/ol-wms.service';
@@ -44,6 +46,7 @@ import { SelectMapBoundingComponent } from './widget/selectmap.bounding';
   providers: [LayerHandlerService,
     OlWMSService,
     OlMapObject,
+    CsMapObject,
     OlWFSService,
     OlWWWService,
     DownloadWfsService,
@@ -67,8 +70,9 @@ static forRoot(env: any, conf: any): ModuleWithProviders<PortalCoreModule> {
     return {
       ngModule: PortalCoreModule,
       providers: [
-        OlClipboardService,
+        CsClipboardService,
         OlMapService,
+        CsMapService,
         {provide: 'env', useValue: env},
         {provide: 'conf', useValue: conf}
       ],

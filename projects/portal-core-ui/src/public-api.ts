@@ -15,10 +15,12 @@ export { TemporalExtentModel } from './lib/model/data/temporal-extent.model';
 
 export { LayerHandlerService } from './lib/service/cswrecords/layer-handler.service';
 export { FilterPanelService } from './lib/service/filterpanel/filterpanel-service';
-export { RenderStatusService } from './lib/service/openlayermap/renderstatus/render-status.service';
-export { OlClipboardService, Polygon } from './lib/service/openlayermap/ol-clipboard.service';
+export { RenderStatusService } from './lib/service/cesium-map/renderstatus/render-status.service';
+export { CsClipboardService, Polygon } from './lib/service/cesium-map/cs-clipboard.service';
 export { OlMapObject } from './lib/service/openlayermap/ol-map-object';
 export { OlMapService } from './lib/service/openlayermap/ol-map.service';
+export { CsMapObject } from './lib/service/cesium-map/cs-map-object';
+export { CsMapService } from './lib/service/cesium-map/cs-map.service';
 export { ManageStateService } from './lib/service/permanentlink/manage-state.service';
 export { MinTenemStyleService } from './lib/service/style/wms/min-tenem-style.service';
 export { NotificationService } from './lib/service/toppanel/notification.service';

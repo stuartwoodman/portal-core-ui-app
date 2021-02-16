@@ -14,7 +14,7 @@ import * as olProj from 'ol/proj';
 import * as extent from 'ol/extent';
 import { Constants } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
-import { RenderStatusService } from '../openlayermap/renderstatus/render-status.service';
+import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 import { MinTenemStyleService } from '../style/wms/min-tenem-style.service';
 
 
