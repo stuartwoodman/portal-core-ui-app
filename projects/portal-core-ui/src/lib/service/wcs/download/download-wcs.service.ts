@@ -15,7 +15,7 @@ import { UtilitiesService } from '../../../utility/utilities.service';
 
 
 /**
- * Use OlMapService to add layer to map. This service class adds wfs layer to the map
+ * Use Cesium to dowload map data.
  */
 @Injectable()
 export class DownloadWcsService {

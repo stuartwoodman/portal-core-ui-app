@@ -8,7 +8,7 @@ import {LayerModel} from '../../model/data/layer.model';
 import { OnlineResourceModel } from '../../model/data/onlineresource.model';
 import { PrimitiveModel } from '../../model/data/primitive.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
-import { OlMapObject } from '../openlayermap/ol-map-object';
+import { CsMapObject } from '../cesium-map/cs-map-object';
 import {HttpClient, HttpParams, HttpResponse} from '@angular/common/http';
 import olMap from 'ol/Map';
 import olPoint from 'ol/geom/Point';
@@ -24,19 +24,19 @@ import { UtilitiesService } from '../../utility/utilities.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 
 /**
- * Use Open layers to add layer to map. This service class adds wfs layer to the map
+ * Use Cesium to add layer to map. This service class adds wfs layer to the map
  */
 @Injectable()
-export class OlWFSService {
+export class CsWFSService {
 
   private map: olMap;
 
   constructor(private layerHandlerService: LayerHandlerService,
-                  private olMapObject: OlMapObject,
+                  private csMapObject: CsMapObject,
                   private http: HttpClient,
                   private gmlParserService: GMLParserService,
                   private renderStatusService: RenderStatusService, @Inject('env') private env) {
-    this.map = this.olMapObject.getMap();
+    this.map = this.csMapObject.getMap();
   }
 
   /**
@@ -103,7 +103,7 @@ export class OlWFSService {
        feature.layer = layer;
     // VT: we chose the first layer in the array based on the assumption that we only create a single vector
     // layer for each wfs layer. WMS may potentially contain more than 1 layer in the array. note the difference
-    (<olLayerVector>this.olMapObject.getLayerById(layer.id)[0]).getSource().addFeature(feature);
+    (<olLayerVector>this.csMapObject.getLayerById(layer.id)[0]).getSource().addFeature(feature);
   }
 
   public addLine(primitive: PrimitiveModel): void {
@@ -123,12 +123,12 @@ export class OlWFSService {
     const wfsOnlineResources = this.layerHandlerService.getWFSResource(layer);
 
     // VT: create the vector on the map if it does not exist.
-    if (!this.olMapObject.getLayerById(layer.id)) {
+    if (!this.csMapObject.getLayerById(layer.id)) {
         const markerLayer = new olLayerVector({
                     source: new olSourceVector({ features: []})
                 });
 
-        this.olMapObject.addLayerById(markerLayer, layer.id);
+        this.csMapObject.addLayerById(markerLayer, layer.id);
     }
 
     for (const onlineResource of wfsOnlineResources) {

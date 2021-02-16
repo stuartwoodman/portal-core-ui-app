@@ -13,11 +13,11 @@ import { BBox } from '@turf/helpers';
 import { LayerModel } from '../../model/data/layer.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
 import { ManageStateService } from '../permanentlink/manage-state.service';
-import { OlCSWService } from '../wcsw/ol-csw.service';
-import { OlWFSService } from '../wfs/ol-wfs.service';
+import { CsCSWService } from '../wcsw/cs-csw.service';
+import { CsWFSService } from '../wfs/cs-wfs.service';
 import { CsMapObject } from './cs-map-object';
-import { OlWMSService } from '../wms/ol-wms.service';
-import { OlWWWService } from '../www/ol-www.service';
+import { CsWMSService } from '../wms/cs-wms.service';
+import { CsWWWService } from '../www/cs-www.service';
 
 import { MapsManagerService } from 'angular-cesium';
 
@@ -33,9 +33,9 @@ export class CsMapService {
 
    private clickedLayerListBS = new BehaviorSubject<any>({});
 
-   constructor(private layerHandlerService: LayerHandlerService, private olWMSService: OlWMSService,
-     private olWFSService: OlWFSService, private csMapObject: CsMapObject, private manageStateService: ManageStateService, @Inject('conf') private conf,
-      private olCSWService: OlCSWService, private olWWWService: OlWWWService, private mapsManagerService: MapsManagerService) {
+   constructor(private layerHandlerService: LayerHandlerService, private csWMSService: CsWMSService,
+     private csWFSService: CsWFSService, private csMapObject: CsMapObject, private manageStateService: ManageStateService, @Inject('conf') private conf,
+      private csCSWService: CsCSWService, private csWWWService: CsWWWService, private mapsManagerService: MapsManagerService) {
 
      this.csMapObject.registerClickHandler(this.mapClickHandler.bind(this));
      this.addLayerSubject = new Subject<LayerModel>();
@@ -160,16 +160,16 @@ export class CsMapService {
      this.csMapObject.removeLayerById(layer.id);
      delete this.layerModelList[layer.id];
      if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
-       this.olCSWService.addLayer(layer, param);
+       this.csCSWService.addLayer(layer, param);
        this.cacheLayerModelList(layer.id, layer);
      } else if (this.layerHandlerService.containsWMS(layer)) {
-       this.olWMSService.addLayer(layer, param);
+       this.csWMSService.addLayer(layer, param);
        this.cacheLayerModelList(layer.id, layer);
      } else if (this.layerHandlerService.containsWFS(layer)) {
-       this.olWFSService.addLayer(layer, param);
+       this.csWFSService.addLayer(layer, param);
        this.layerModelList[layer.id] = layer;
      } else if (this.layerHandlerService.containsWWW(layer)) {
-       this.olWWWService.addLayer(layer, param);
+       this.csWWWService.addLayer(layer, param);
        this.layerModelList[layer.id] = layer;
      } else {
        throw new Error('No Suitable service found');

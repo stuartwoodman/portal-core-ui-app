@@ -25,14 +25,14 @@ export { ManageStateService } from './lib/service/permanentlink/manage-state.ser
 export { MinTenemStyleService } from './lib/service/style/wms/min-tenem-style.service';
 export { NotificationService } from './lib/service/toppanel/notification.service';
 export { DownloadWcsService } from './lib/service/wcs/download/download-wcs.service';
-export { OlCSWService } from './lib/service/wcsw/ol-csw.service';
+export { CsCSWService } from './lib/service/wcsw/cs-csw.service';
 export { DownloadWfsService } from './lib/service/wfs/download/download-wfs.service';
-export { OlWFSService } from './lib/service/wfs/ol-wfs.service';
+export { CsWFSService } from './lib/service/wfs/cs-wfs.service';
 export { QueryWFSService } from './lib/service/wfs/query-wfs.service';
 export { LegendService } from './lib/service/wms/legend.service';
-export { OlWMSService } from './lib/service/wms/ol-wms.service';
+export { CsWMSService } from './lib/service/wms/cs-wms.service';
 export { QueryWMSService } from './lib/service/wms/query-wms.service';
-export { OlWWWService } from './lib/service/www/ol-www.service';
+export { CsWWWService } from './lib/service/www/cs-www.service';
 
 export { ImgLoadingDirective } from './lib/uiutilities/imgloading.directive';
 export { KeysPipe, TrustResourceHtmlPipe, TrustResourceUrlPipe, QuerierFeatureSearchPipe } from './lib/uiutilities/pipes';

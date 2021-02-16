@@ -5,7 +5,7 @@ import { Injectable, Inject } from '@angular/core';
 import { LayerModel } from '../../model/data/layer.model';
 import { OnlineResourceModel } from '../../model/data/onlineresource.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
-import { OlMapObject } from '../openlayermap/ol-map-object';
+import { CsMapObject } from '../cesium-map/cs-map-object';
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import olMap from 'ol/Map';
 import olTile from 'ol/layer/Tile';
@@ -19,21 +19,21 @@ import { MinTenemStyleService } from '../style/wms/min-tenem-style.service';
 
 
 /**
- * Use Open Layers to add layer to map. This service class adds WMS layer to the map
+ * Use Cesium to add layer to map. This service class adds WMS layer to the map
  */
 @Injectable()
-export class OlWMSService {
+export class CsWMSService {
   private map: olMap;
   constructor(
     private layerHandlerService: LayerHandlerService,
-    private olMapObject: OlMapObject,
+    private csMapObject: CsMapObject,
     private http: HttpClient,
     private renderStatusService: RenderStatusService,
     @Inject('env') private env,
     @Inject('conf') private conf
 
   ) {
-    this.map = this.olMapObject.getMap();
+    this.map = this.csMapObject.getMap();
   }
 
 
@@ -415,7 +415,7 @@ export class OlWMSService {
             );
           });
 
-          this.olMapObject.addLayerById(wmsTile, layer.id);
+          this.csMapObject.addLayerById(wmsTile, layer.id);
         }
       );
     }

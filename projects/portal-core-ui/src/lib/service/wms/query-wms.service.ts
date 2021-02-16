@@ -5,7 +5,7 @@ import {catchError, map} from 'rxjs/operators';
 import {Injectable, Inject} from '@angular/core';
 import {HttpClient, HttpParams, HttpHeaders, HttpResponse} from '@angular/common/http';
 import {OnlineResourceModel} from '../../model/data/onlineresource.model';
-import {OlMapObject} from '../openlayermap/ol-map-object';
+import {CsMapObject} from '../cesium-map/cs-map-object';
 import {UtilitiesService} from '../../utility/utilities.service';
 import {Constants} from '../../utility/constants.service';
 
@@ -13,7 +13,7 @@ import {Constants} from '../../utility/constants.service';
 @Injectable()
 export class QueryWMSService {
 
-  constructor(private http: HttpClient, private olMapObject: OlMapObject, @Inject('env') private env) {
+  constructor(private http: HttpClient, private csMapObject: CsMapObject, @Inject('env') private env) {
   }
 
 
@@ -23,10 +23,10 @@ export class QueryWMSService {
    * @param clickCoord clicked on map coordinates
    */
   private useLocalTiles(layerName: string, clickCoord: number[]): [number, number, any, number] {
-    const mapObj = this.olMapObject.getMap();
+    const mapObj = this.csMapObject.getMap();
     const view = mapObj.getView();
     const viewResolution = view.getResolution();
-    const layers = this.olMapObject.getLayers();
+    const layers = this.csMapObject.getLayers();
 
     // Look for our layer
     for (const l in layers) {
@@ -85,7 +85,7 @@ export class QueryWMSService {
       formdata = formdata.append('HEIGHT', tileSize.toString());
     } else {
       // Uses the whole screen as the image in the WMS 'GetFeatureInfo' request 
-      const mapObj = this.olMapObject.getMap();
+      const mapObj = this.csMapObject.getMap();
       const bounds = mapObj.getView().calculateExtent();
       const bbox = [bounds[2].toString(), bounds[3].toString(), bounds[0].toString(), bounds[1].toString()].toString();
       const size = mapObj.getSize();

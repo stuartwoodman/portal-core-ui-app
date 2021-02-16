@@ -15,13 +15,17 @@ import { RenderStatusService } from './service/cesium-map/renderstatus/render-st
 import { ManageStateService } from './service/permanentlink/manage-state.service';
 import { DownloadWfsService } from './service/wfs/download/download-wfs.service';
 import { OlWMSService } from './service/wms/ol-wms.service';
+import { CsWMSService } from './service/wms/cs-wms.service';
 import { OlWFSService } from './service/wfs/ol-wfs.service';
+import { CsWFSService } from './service/wfs/cs-wfs.service';
 import { GMLParserService } from './utility/gmlparser.service';
 import { LegendService } from './service/wms/legend.service';
 import { NotificationService } from './service/toppanel/notification.service';
 import { OlCSWService } from './service/wcsw/ol-csw.service';
+import { CsCSWService } from './service/wcsw/cs-csw.service';
 import { DownloadWcsService } from './service/wcs/download/download-wcs.service';
 import { OlWWWService } from './service/www/ol-www.service';
+import { CsWWWService } from './service/www/cs-www.service';
 import { QueryWMSService} from './service/wms/query-wms.service';
 import { QueryWFSService} from './service/wfs/query-wfs.service';
 
@@ -45,10 +49,13 @@ import { SelectMapBoundingComponent } from './widget/selectmap.bounding';
     HttpClientModule, BrowserModule, FormsModule, SelectMapBoundingComponent],
   providers: [LayerHandlerService,
     OlWMSService,
+    CsWMSService,
     OlMapObject,
     CsMapObject,
     OlWFSService,
+    CsWFSService,
     OlWWWService,
+    CsWWWService,
     DownloadWfsService,
     DownloadWcsService,
     GMLParserService,
@@ -60,7 +67,8 @@ import { SelectMapBoundingComponent } from './widget/selectmap.bounding';
     QueryWMSService,
     QueryWFSService,
     ManageStateService,
-    OlCSWService
+    OlCSWService,
+    CsCSWService
   ]
 })
 

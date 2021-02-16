@@ -20,7 +20,7 @@ import { Constants } from '../../utility/constants.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 
 /**
- * Use OlMapService to add layer to map. This service class adds www layer to the map
+ * Use Open Layers to add layer to map. This service class adds www layer to the map
  */
 @Injectable()
 export class OlWWWService {
