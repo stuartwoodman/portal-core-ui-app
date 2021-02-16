@@ -15,6 +15,7 @@ import { DownloadWfsService } from './service/wfs/download/download-wfs.service'
 import { OlWMSService } from './service/wms/ol-wms.service';
 import { OlWFSService } from './service/wfs/ol-wfs.service';
 import { GMLParserService } from './utility/gmlparser.service';
+import { LayerStatusService } from './utility/layerstatus.service';
 import { LegendService } from './service/wms/legend.service';
 import { NotificationService } from './service/toppanel/notification.service';
 import { OlCSWService } from './service/wcsw/ol-csw.service';
@@ -57,7 +58,8 @@ import { SelectMapBoundingComponent } from './widget/selectmap.bounding';
     QueryWMSService,
     QueryWFSService,
     ManageStateService,
-    OlCSWService
+    OlCSWService,
+    LayerStatusService
   ]
 })
 

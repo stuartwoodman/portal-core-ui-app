@@ -41,6 +41,7 @@ export { GMLParserService } from './lib/utility/gmlparser.service';
 export { SimpleXMLService } from './lib/utility/simplexml.service';
 export { StopPropagationDirective } from './lib/utility/utilities.directives';
 export { UtilitiesService } from './lib/utility/utilities.service';
+export { LayerStatusService } from './lib/utility/layerstatus.service';
 
 export { RickshawService } from './lib/widget/chart/rickshaw/rickshaw.service';
 export { SelectMapBoundingComponent } from './lib/widget/selectmap.bounding';

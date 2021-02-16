@@ -16,6 +16,7 @@ import { Constants } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import { RenderStatusService } from '../openlayermap/renderstatus/render-status.service';
 import { MinTenemStyleService } from '../style/wms/min-tenem-style.service';
+import { LayerStatusService } from '../../utility/layerstatus.service';
 
 
 /**
@@ -29,6 +30,7 @@ export class OlWMSService {
     private olMapObject: OlMapObject,
     private http: HttpClient,
     private renderStatusService: RenderStatusService,
+    private layerStatusService: LayerStatusService,
     @Inject('env') private env,
     @Inject('conf') private conf
 
@@ -301,8 +303,8 @@ export class OlWMSService {
         continue;
       }
       if (
-        UtilitiesService.isEndpointFailing(
-          layer.stackdriverFailingHosts,
+        this.layerStatusService.isEndpointFailing(
+          layer.id,
           wmsOnlineResource
         )
       ) {
