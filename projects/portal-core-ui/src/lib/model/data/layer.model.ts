@@ -26,4 +26,5 @@ export class LayerModel {
   stackdriverFailingHosts: string[];
   ogcFilter: String;
   wfsUrls: String[];
+  keywords?: string[];
 }

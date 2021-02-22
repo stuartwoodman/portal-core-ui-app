@@ -1,12 +1,11 @@
+import { of as observableOf,  Observable } from 'rxjs';
 
-import {of as observableOf,  Observable } from 'rxjs';
-
-import {map} from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { CSWRecordModel } from '../../model/data/cswrecord.model';
 import { Injectable, Inject } from '@angular/core';
-import {HttpClient, HttpParams} from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 
-import {LayerModel} from '../../model/data/layer.model';
+import { LayerModel } from '../../model/data/layer.model';
 import { OnlineResourceModel } from '../../model/data/onlineresource.model';
 import { Constants } from '../../utility/constants.service';
 
@@ -18,7 +17,6 @@ import { Constants } from '../../utility/constants.service';
 export class LayerHandlerService {
 
   private layerRecord;
-  private getCSWUrl;
 
   constructor(private http: HttpClient, @Inject('env') private env) {
     this.layerRecord = [];
@@ -57,7 +55,6 @@ export class LayerHandlerService {
    * @Return a layer with the retrieved cswrecord wraped in a layer model.
    */
   public getCustomLayerRecord(serviceUrl: string): Observable<any> {
-    const me = this;
     const httpParams = new HttpParams().set('serviceUrl', serviceUrl);
 
     return this.http.get(this.env.portalBaseUrl + this.env.getCustomLayers, {
@@ -78,6 +75,9 @@ export class LayerHandlerService {
         itemLayer.hidden = false;
         itemLayer.layerMode = 'NA';
         itemLayer.name = item.name;
+        if (item.hasOwnProperty('keywords')) {
+          itemLayer.keywords = item.keywords;
+        }
         itemLayers['Results'].push(itemLayer);
       });
       return itemLayers;
@@ -246,7 +246,5 @@ export class LayerHandlerService {
 
     return onlineResourceResult;
   }
-
-
 
 }
