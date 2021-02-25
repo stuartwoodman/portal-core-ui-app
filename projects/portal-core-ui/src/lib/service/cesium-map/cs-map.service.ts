@@ -9,7 +9,6 @@ import {BehaviorSubject,  Subject } from 'rxjs';
 import { point } from '@turf/helpers';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import bboxPolygon from '@turf/bbox-polygon';
-import { BBox } from '@turf/helpers';
 import { LayerModel } from '../../model/data/layer.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
 import { ManageStateService } from '../permanentlink/manage-state.service';
@@ -20,6 +19,9 @@ import { CsWMSService } from '../wms/cs-wms.service';
 import { CsWWWService } from '../www/cs-www.service';
 
 import { MapsManagerService } from 'angular-cesium';
+
+declare var Cesium;
+
 
 /**
  * Wrapper class to provide all things related to the ol map such as adding layer or removing layer.
@@ -34,8 +36,9 @@ export class CsMapService {
    private clickedLayerListBS = new BehaviorSubject<any>({});
 
    constructor(private layerHandlerService: LayerHandlerService, private csWMSService: CsWMSService,
-     private csWFSService: CsWFSService, private csMapObject: CsMapObject, private manageStateService: ManageStateService, @Inject('conf') private conf,
-      private csCSWService: CsCSWService, private csWWWService: CsWWWService, private mapsManagerService: MapsManagerService) {
+     private csWFSService: CsWFSService, private csMapObject: CsMapObject, private manageStateService: ManageStateService,
+     private csCSWService: CsCSWService, private csWWWService: CsWWWService, private mapsManagerService: MapsManagerService,
+     @Inject('env') private env, @Inject('conf') private conf) {
 
      this.csMapObject.registerClickHandler(this.mapClickHandler.bind(this));
      this.addLayerSubject = new Subject<LayerModel>();
@@ -116,7 +119,7 @@ export class CsMapService {
    * records
    */
   public getCSWRecordsForExtent(extent: olExtent): CSWRecordModel[] {
-    let intersectedCSWRecordList: CSWRecordModel[] = [];
+    const intersectedCSWRecordList: CSWRecordModel[] = [];
     extent = olProj.transformExtent(extent, 'EPSG:3857', 'EPSG:4326');
     const groupLayers = this.csMapObject.getLayers();
     const map = this.csMapObject.getMap();
@@ -258,7 +261,7 @@ export class CsMapService {
    */
   public setLayerOpacity(layerId: string, opacity: number) {
     const viewer = this.mapsManagerService.getMap().getCesiumViewer();
-    const imageLayer = viewer.imageryLayers.get(1)
+    const imageLayer = viewer.imageryLayers.get(1);
     imageLayer.alpha = opacity;
     // this.csMapObject.setLayerOpacity(layerId, opacity);
   }
@@ -350,7 +353,8 @@ export class CsMapService {
   /**
    * Draw an extent on the map object
    * @param extent the extent to display on the map
-   * @param duration (Optional) the length of time in milliseconds to display the extent before it is removed. If not supplied the extent will not be removed.
+   * @param duration (Optional) the length of time in milliseconds to display
+   * the extent before it is removed. If not supplied the extent will not be removed.
    */
   public displayExtent(extent: olExtent, duration?: number) {
     this.csMapObject.displayExtent(extent, duration);
@@ -369,6 +373,123 @@ export class CsMapService {
    */
   public switchBaseMap(baseMap: string) {
     // this.csMapObject.switchBaseMap(baseMap);
+  }
+
+  /**
+   * Create a list of base maps from the environment file
+   */
+  public createBaseMapLayers(): any[] {
+    const me = this;
+    const baseMapLayers: any[] = [];
+    for (const layer of this.env.baseMapLayers) {
+      if (layer.layerType === 'OSM') {
+        baseMapLayers.push(
+          new Cesium.ProviderViewModel({
+            name: layer.viewValue,
+            iconUrl: Cesium.buildModuleUrl(
+              'Widgets/Images/ImageryProviders/openStreetMap.png'
+            ),
+            tooltip: layer.tooltip,
+            creationFunction() {
+              return new Cesium.OpenStreetMapImageryProvider({
+                url: 'https://a.tile.openstreetmap.org/',
+              });
+            },
+          })
+        );
+      } else if (layer.layerType === 'Bing' && this.env.hasOwnProperty('bingMapsKey') && this.env.bingMapsKey.trim()) {
+        let bingMapsStyle = Cesium.BingMapsStyle.AERIAL;
+        let bingMapsIcon = '';
+        switch (layer.value) {
+          case 'Aerial':
+            bingMapsStyle = Cesium.BingMapsStyle.AERIAL;
+            bingMapsIcon = 'bingAerial.png';
+            break;
+          case 'AerialWithLabels':
+            bingMapsStyle = Cesium.BingMapsStyle.AERIAL_WITH_LABELS;
+            bingMapsIcon = 'bingAerialLabels.png';
+            break;
+          case 'Road':
+          default:
+            bingMapsStyle = Cesium.BingMapsStyle.ROAD;
+            bingMapsIcon = 'bingRoads.png';
+            break;
+        }
+        baseMapLayers.push(
+          new Cesium.ProviderViewModel({
+            name: layer.viewValue,
+            iconUrl: Cesium.buildModuleUrl('Widgets/Images/ImageryProviders/' + bingMapsIcon),
+            tooltip: layer.tooltip,
+            creationFunction() {
+              return new Cesium.BingMapsImageryProvider({
+                url: 'https://dev.virtualearth.net',
+                key: me.env.bingMapsKey,
+                mapStyle: bingMapsStyle,
+                defaultAlpha: 1.0,
+              });
+            },
+          })
+        );
+      } else if (layer.layerType === 'ESRI') {
+        const esriUrl =
+          'https://services.arcgisonline.com/ArcGIS/rest/services/' + layer.value + '/MapServer';
+        let esriIcon = '';
+        switch (layer.value) {
+          case 'World_Imagery':
+            esriIcon = 'esriWorldImagery.png';
+            break;
+          case 'NatGeo_World_Map':
+            esriIcon = 'esriNationalGeographic.png';
+            break;
+          case 'World_Street_Map':
+            esriIcon = 'esriWorldStreetMap.png';
+            break;
+          // No provided icon
+          case 'World_Terrain_Base':
+            esriIcon = 'esriWorldTerrainBase.png';
+            break;
+          case 'World_Topo_Map':
+            esriIcon = 'esriWorldTopoMap.png';
+            break;
+          // Only shows internal borders
+          case 'Reference/World_Boundaries_and_Places':
+            esriIcon = 'esriWorldBoundariesAndPlaces.png';
+            break;
+          case 'Canvas/World_Dark_Gray_Base':
+            esriIcon = 'esriWorldDarkGrayBase.png';
+            break;
+          case 'Canvas/World_Light_Gray_Base':
+            esriIcon = 'esriWorldLightGrayBase.png';
+            break;
+        }
+        baseMapLayers.push(
+          new Cesium.ProviderViewModel({
+            name: layer.viewValue,
+            iconUrl: Cesium.buildModuleUrl('Widgets/Images/ImageryProviders/' + esriIcon),
+            tooltip: layer.tooltip,
+            creationFunction() {
+              return new Cesium.ArcGisMapServerImageryProvider({
+                url: esriUrl,
+              });
+            },
+          })
+        );
+      } else if (layer.layerType === 'NEII') {
+        baseMapLayers.push(
+          new Cesium.ProviderViewModel({
+            name: layer.viewValue,
+            iconUrl: Cesium.buildModuleUrl('Widgets/Images/ImageryProviders/naturalEarthII.png'),
+            tooltip: layer.tooltip,
+            creationFunction() {
+              return new Cesium.TileMapServiceImageryProvider({
+                url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII'),
+              });
+            },
+          })
+        );
+      }
+    }
+    return baseMapLayers;
   }
 
 }

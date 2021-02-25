@@ -1,11 +1,11 @@
-import {RenderStatusService} from './renderstatus/render-status.service';
-import {Constants} from '../../utility/constants.service';
+import { RenderStatusService } from './renderstatus/render-status.service';
+import { Constants } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
-import {Injectable , Inject} from '@angular/core';
+import { Injectable , Inject } from '@angular/core';
 import olMap from 'ol/Map';
 //import olTile from 'ol/layer/Tile';
 //import olOSM from 'ol/source/OSM';
-import olView from 'ol/View';
+//import olView from 'ol/View';
 import olLayer from 'ol/layer/Layer';
 import olSourceVector from 'ol/source/Vector';
 import olFormatGML2 from 'ol/format/GML2';
@@ -28,15 +28,7 @@ import * as olEasing from 'ol/easing';
 import {unByKey} from 'ol/Observable';
 import { Subject , BehaviorSubject} from 'rxjs';
 //import * as G from 'ol-geocoder';
-import {getVectorContext} from 'ol/render';
-
-export interface BaseMapLayerOption {
-  value: string;
-  viewValue: string;
-  layerType: string;
-}
-
-
+import { getVectorContext } from 'ol/render';
 
 /**
  * A wrapper around the openlayer object for use in the portal.
@@ -48,51 +40,9 @@ export class CsMapObject {
   private groupLayer: {};
   private clickHandlerList: ((p: any) => void )[] = [];
   private ignoreMapClick = false;
-  private baseLayers = [];
-  private baseMapLayers = [{ value: 'OSM', viewValue: 'OpenStreetMap', layerType: 'OSM' }];
 
   constructor(private renderStatusService: RenderStatusService, @Inject('env') private env) {
-    if (env !== null) {
-      this.baseMapLayers = env.baseMapLayers;
-    }
-    /*for (let i = 0; i < this.baseMapLayers.length; ++i) {
-      if ( this.baseMapLayers[i].layerType === 'OSM') {
-        this.baseLayers.push(new olTile({
-          visible: true,
-          source: new olOSM()
-        }));
-      } else if ( this.baseMapLayers[i].layerType === 'Bing') {
-        this.baseLayers.push(new TileLayer({
-          visible: false,
-          preload: Infinity,
-          source: new BingMaps({
-            key: 'AgfoWboIfoy68Vu38c2RE83rEEuvWKjQWV37g7stRUAPcDiGALCEKHefrDyWn1zM',
-            imagerySet: this.baseMapLayers[i].value,
-            // use maxZoom 19 to see stretched tiles instead of the BingMaps
-            // "no photos at this zoom level" tiles
-             maxZoom: 19
-          })
-        }));
-      } else if (this.baseMapLayers[i].layerType === 'ESRI') {
-        this.baseLayers.push(new TileLayer({
-          visible: false,
-          preload: Infinity,
-          source: new XYZ({
-            attributions: 'Tiles © <a href="https://services.arcgisonline.com/ArcGIS/rest/services/' + this.baseMapLayers[i].value + '/MapServer">ArcGIS</a>',
-            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/' + this.baseMapLayers[i].value + '/MapServer/tile/{z}/{y}/{x}',
-            maxZoom: 18
-          })
-        }));
-      } else if (this.baseMapLayers[i].layerType === 'Google') {
-        this.baseLayers.push(new TileLayer({
-          visible: false,
-          preload: Infinity,
-          source: new XYZ({
-            url: 'http://mt1.google.com/vt/lyrs=' + this.baseMapLayers[i].value + '&x={x}&y={y}&z={z}'
-          })
-        }));
-      }
-    }*/
+
     this.groupLayer = {};
     /*this.map = new olMap({
       controls: [],
@@ -116,6 +66,7 @@ export class CsMapObject {
     });*/
 
   }
+
 /* public addGeocoderToMap() {
       // Added ol-geocoder controller into map.
       const GC = new  G('nominatim', {
