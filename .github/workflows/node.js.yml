@@ -20,8 +20,11 @@ jobs:
       - run: npm install 
       - run: npm link @angular/cli
       - run: ng build portal-core-ui --prod
-      - run: cd dist/portal-core-ui
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          package: dist/portal-core-ui/package.json
+          dry-run: true
+          check-version: true
+          
         
