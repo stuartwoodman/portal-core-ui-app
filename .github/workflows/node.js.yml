@@ -24,6 +24,7 @@ jobs:
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: dist/portal-core-ui/package.json
+          access: public
           # Change dry-run to true for testing
           dry-run: false
           check-version: true
