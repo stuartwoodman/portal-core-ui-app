@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 10
-      - run: npm install -g @angular/cli
+      - run: npm install -g @angular/cli --save-dev @angular-devkit/build-angular
       - run: ng build portal-core-ui --prod
       - run: cd dist/portal-core-ui
       - uses: JS-DevTools/npm-publish@v1
