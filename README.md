@@ -79,21 +79,8 @@ Project paths that reference this asset will need to be updated to match.
 
 Note: I've yet to test where a deployed package puts these files, will update this file once we have a deployed version.
 
-### Deploying the package (Authorised Users)
+### Deploying the package 
 
 Make sure you have incremented both the version number in both the project's package.json file as well as the library's package.json file.
 
-From the root project directory, build the library with:
-
-`ng build portal-core-ui --prod`
-
-Log into your NPM account with:
-
-`npm adduser`
-
-Change to the build directory and publish the library:
-
-``` bash
-cd dist/portal-core-ui
-npm publish
-```
+After each push, Github Actions will automatically publish a new version into [npmjs](https://www.npmjs.com/package/@auscope/portal-core-ui).
