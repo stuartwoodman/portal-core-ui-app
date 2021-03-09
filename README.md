@@ -81,6 +81,6 @@ Note: I've yet to test where a deployed package puts these files, will update th
 
 ### Deploying the package 
 
-Make sure you have incremented both the version number in both the project's package.json file as well as the library's package.json file.
+To publish a new version, make sure you have incremented both the version number in both the project's package.json file as well as the library's package.json file.
 
-After each push, Github Actions will automatically publish a new version into [npmjs](https://www.npmjs.com/package/@auscope/portal-core-ui).
+After each push, Github Actions will automatically publish the new version into [npmjs](https://www.npmjs.com/package/@auscope/portal-core-ui).
