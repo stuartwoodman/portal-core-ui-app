@@ -34,7 +34,7 @@ to the 'projects'.$name.'architect'.'build'.'options' section in your 'angular.j
 
 Don't forget to unlink when you're no longer interested in using the development version of the library:
 
-`npm unlink portal-core-ui`
+`npm unlink @auscope/portal-core-ui`
 
 ### Adding a new Component (or Service, Model etc.)
 
