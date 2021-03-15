@@ -23,7 +23,6 @@ npm link
 In the project that uses the library (e.g. AuScope-Portal-UI or ngvl):
 
 ```
-cd node_modules/@auscope
 npm link portal-core-ui
 ```
 
@@ -52,7 +51,7 @@ Note that project imports will need to be modified to remove the path components
 
 Will become...
 
-`import { UtilitiesService } from 'portal-core-ui';`
+`import { UtilitiesService } from '@auscope/portal-core-ui';`
 
 With some modifications to the public-api.ts we can re-include the paths if necessary.
 
@@ -76,7 +75,7 @@ Add the files to the "assets" list in the file portal-core-ui/ng-package.json, e
 
 Note that for development that this will place the asset under:
 
-`./node_modules/portal-core-ui/src/lib/<directory>`
+`./node_modules/@auscope/portal-core-ui/src/lib/<directory>`
 
 Project paths that reference this asset will need to be updated to match.
 
