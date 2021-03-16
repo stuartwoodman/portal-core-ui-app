@@ -29,6 +29,8 @@ import {unByKey} from 'ol/Observable';
 import { Subject , BehaviorSubject} from 'rxjs';
 //import * as G from 'ol-geocoder';
 import { getVectorContext } from 'ol/render';
+import { CoordinateConverter, EditActions, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService } from 'angular-cesium';
+declare var Cesium;
 
 /**
  * A wrapper around the openlayer object for use in the portal.
@@ -40,8 +42,9 @@ export class CsMapObject {
   private groupLayer: {};
   private clickHandlerList: ((p: any) => void )[] = [];
   private ignoreMapClick = false;
+  private polygonEditable$:PolygonEditorObservable;
 
-  constructor(private renderStatusService: RenderStatusService, @Inject('env') private env) {
+  constructor(private renderStatusService: RenderStatusService, private polygonsCesiumEditor: PolygonsEditorService, @Inject('env') private env) {
 
     this.groupLayer = {};
     /*this.map = new olMap({
@@ -239,6 +242,7 @@ export class CsMapObject {
   * Method for drawing a polygon shape on the map. e.g selecting a polygon bounding box on the map
   * @returns a observable object that triggers an event when the user complete the drawing
   */
+
   public drawPolygon(): BehaviorSubject<olLayerVector> {
     this.ignoreMapClick = true;
     const source = new olSourceVector({ wrapX: false });
@@ -248,26 +252,50 @@ export class CsMapObject {
     });
     const vectorBS = new BehaviorSubject<olLayerVector>(vector);
 
-    this.map.addLayer(vector);
-    const draw = new olDraw({
-      source: source,
-      type: /** @type {ol.geom.GeometryType} */ ('Polygon')
-    });
-    const me = this;
-    draw.on('drawend', function (e) {
-      const coords = e.feature.getGeometry().getCoordinates()[0];
-      e.feature.set('bClipboardVector', true, true);
+    //this.map.addLayer(vector);
 
-      const coordString = coords.join(' ');
-      vector.set('polygonString', coordString);
-      vectorBS.next(vector);
-      me.map.removeInteraction(draw);
-      setTimeout(function() {
-        me.ignoreMapClick = false;
-      }, 500);
+    if (this.polygonEditable$) {
+      this.clearPolygon();
+    }
+    // create accepts PolygonEditOptions object
+    this.polygonEditable$ = this.polygonsCesiumEditor.create({
+      pointProps: {
+        color: Cesium.Color.CORNFLOWERBLUE.withAlpha(0.95),
+        outlineColor: Cesium.Color.BLACK.withAlpha(0.2),
+        outlineWidth: 1,
+        pixelSize: 13,
+      },
+      polygonProps: {
+        material: Cesium.Color.ALICEBLUE.withAlpha(0.4),
+        fill: true,
+      },
+      polylineProps: {
+        material: () => Cesium.Color.CORNFLOWERBLUE ,
+        width: 3,
+      },
     });
-    this.map.addInteraction(draw);
+    this.polygonEditable$.disable();
+    
+    this.polygonEditable$.subscribe((editUpdate: PolygonEditUpdate) => {
+      if (editUpdate.editAction === EditActions.ADD_LAST_POINT) {
+        const coords = this.polygonEditable$.getCurrentPoints()
+          .map(p => p.getPosition())
+            .map(cart => CoordinateConverter.cartesian3ToLatLon(cart))
+              .map(latLon => [latLon.lon, latLon.lat]);
+        const coordString = coords.join(' ');
+        vector.set('polygonString', coordString);
+        vectorBS.next(vector);
+       }
+
+    });
     return vectorBS;
+  }
+
+  clearPolygon() {
+    if (this.polygonEditable$) {
+      this.polygonEditable$.dispose();
+      this.polygonEditable$ = undefined;
+    }
   }
 
   public renderPolygon(polygon: any): BehaviorSubject<olLayerVector> {
