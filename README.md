@@ -23,7 +23,7 @@ npm link
 In the project that uses the library (e.g. AuScope-Portal-UI or ngvl):
 
 ```
-npm link portal-core-ui
+npm link @auscope/portal-core-ui
 ```
 
 This creates a symbolic link for node_modules/portal-core-ui that links to the distribution folder of the library project.
