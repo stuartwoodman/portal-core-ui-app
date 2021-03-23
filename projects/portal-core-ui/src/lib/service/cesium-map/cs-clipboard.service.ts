@@ -126,6 +126,7 @@ export class CsClipboardService {
   }
 
   public clearClipboard() {
+    this.csMapObject.clearPolygon();
     this.polygonBBox = null;
     this.polygonsBS.next(this.polygonBBox);
     if (this.vectorOnMap) {
