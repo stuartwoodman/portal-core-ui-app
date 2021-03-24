@@ -14,7 +14,7 @@ import { UtilitiesService } from '../../utility/utilities.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 import { MinTenemStyleService } from '../style/wms/min-tenem-style.service';
 import { MapsManagerService, AcMapComponent } from 'angular-cesium';
-import { WebMapServiceImageryProvider, ImageryLayer } from 'cesium';
+import { WebMapServiceImageryProvider, ImageryLayer, ArcGisMapServerImageryProvider, Resource } from 'cesium';
 
 /**
  * Use Cesium to add layer to map. This service class adds WMS layer to the map
@@ -348,13 +348,11 @@ export class CsWMSService {
             defaultExtent = camera.computeViewRectangle();
           }
 
-          // ArcGIS does not respond to POST requests
-          if (!UtilitiesService.isArcGIS(wmsOnlineResource) && this.wmsUrlTooLong(response, layer)) {
-
-              // TODO: ArcGIS WMS layer display
-              layer.csImgLayers.push(this.addCesiumLayer(layer, wmsOnlineResource));
+          // TODO: Use POST for long requests
+          if (this.wmsUrlTooLong(response, layer)) {
+            layer.csImgLayers.push(this.addCesiumLayer(layer, wmsOnlineResource, params, true));
           } else {
-            layer.csImgLayers.push(this.addCesiumLayer(layer, wmsOnlineResource));
+            layer.csImgLayers.push(this.addCesiumLayer(layer, wmsOnlineResource, params, false));
           }
         });
     }
@@ -375,7 +373,7 @@ export class CsWMSService {
      * @param wmsOnlineResource details of WMS service
      * @returns the new cesium ImageryLayer object
      */
-    private addCesiumLayer(layer, wmsOnlineResource): ImageryLayer {
+    private addCesiumLayer(layer, wmsOnlineResource, params, usePost: boolean): ImageryLayer {
       const viewer = this.map.getCesiumViewer();
       if (this.layerHandlerService.containsWMS(layer)) {
         this.renderStatusService.register(layer, wmsOnlineResource);
@@ -394,16 +392,36 @@ export class CsWMSService {
         }
         // Register tile loading callback function
         viewer.scene.globe.tileLoadProgressEvent.addEventListener(tileLoading);
-        
-        // Load layer on map
-        const wmsImagProv = new WebMapServiceImageryProvider({
-          url: UtilitiesService.rmParamURL(wmsOnlineResource.url),
-          layers: wmsOnlineResource.name,
-          parameters: {
-            transparent: true,
-            format: "image/png",
-          },
+        const url = UtilitiesService.rmParamURL(wmsOnlineResource.url);
+        let wmsImagProv;
+        console.log("params=", params);
+
+        // Set up WMS service
+        if (!UtilitiesService.isArcGIS(wmsOnlineResource)) {
+          if (!usePost) {
+            wmsImagProv = new WebMapServiceImageryProvider({
+              url: url,
+              layers: wmsOnlineResource.name,
+              parameters: params
+            });
+          } else {
+            // TODO: Force use of POST by overriding resource functions
+            const res = new Resource({url: url});
+            wmsImagProv = new WebMapServiceImageryProvider({
+              url: res,
+              layers: wmsOnlineResource.name,
+              parameters: params
+            });
+          }
+          
+        } else {
+          // NOTO BENE: CesiumJS does not allow additional parameters for ArcGIS, i.e. no styling
+          // So may need to use WebMapServiceImageryProvider instead 
+          wmsImagProv = new WebMapServiceImageryProvider({ // ArcGisMapServerImageryProvider({
+            url: url,
+            layers: wmsOnlineResource.name
         });
+      }
         wmsImagProv.errorEvent.addEventListener(this.errorEvent);
         
         const imgLayer = viewer.imageryLayers.addImageryProvider(wmsImagProv);
