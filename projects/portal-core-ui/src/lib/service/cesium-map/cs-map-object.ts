@@ -67,45 +67,6 @@ export class CsMapObject {
 
   }
 
-/* public addGeocoderToMap() {
-      // Added ol-geocoder controller into map.
-      const GC = new  G('nominatim', {
-        provider: 'bing',
-        key: 'AgfoWboIfoy68Vu38c2RE83rEEuvWKjQWV37g7stRUAPcDiGALCEKHefrDyWn1zM',
-        lang: 'en',
-        placeholder: 'search',
-        limit: 5,
-        autoComplete: true,
-        keepOpen: true
-      });
-      const geocoderSource = GC.getSource();
-      const me = this;
-      GC.on('addresschosen', function (evt) {
-        const coord = evt.coordinate;
-        if (coord) {
-          geocoderSource.clear();
-          geocoderSource.addFeature(evt.feature); // add only the last one
-          me.map.getView().setCenter(coord);
-          me.map.getView().setZoom(9);
-        }
-      });
-      this.map.addControl(GC);
-  }*/
-
-  /*public switchBaseMap(newstyle: string): void {
-      for (let i = 0; i < this.baseLayers.length; ++i) {
-        this.baseLayers[i].setVisible(this.baseMapLayers[i].value === newstyle);
-        if (this.baseMapLayers[i].value === 'World_Imagery' && newstyle === 'Reference/World_Boundaries_and_Places') {
-          this.baseLayers[i].setVisible(true);
-        }
-      }
-
-  }*/
-
-  /*public addControlToMap(control: olControl) {
-    this.map.addControl(control);
-  }*/
-
   /**
    * Register a click handler callback function which is called when there is a click event
    * @param clickHandler callback function, input parameter is the pixel coords that were clicked on
@@ -212,9 +173,9 @@ export class CsMapObject {
    * @param layerId the ID of the layer to change opacity
    * @param opacity the value of opacity between 0.0 and 1.0
    */
-  public setLayerOpacity(layerId: string, opacity: number) {
-    if (this.getLayerById(layerId) != null) {
-      const layers: [olLayer] = this.getLayerById(layerId);
+  public setLayerOpacity(layer, opacity: number) {
+    if (this.getLayerById(layer.id) != null) {
+      const layers: [olLayer] = this.getLayerById(layer);
       for (const layer of layers) {
         layer.setOpacity(opacity);
       }

@@ -5,35 +5,32 @@ import { Injectable, Inject } from '@angular/core';
 import { LayerModel } from '../../model/data/layer.model';
 import { OnlineResourceModel } from '../../model/data/onlineresource.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
-import { CsMapObject } from '../cesium-map/cs-map-object';
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
-import olMap from 'ol/Map';
-import olTile from 'ol/layer/Tile';
-import olTileWMS from 'ol/source/TileWMS';
+
 import * as olProj from 'ol/proj';
 import * as extent from 'ol/extent';
 import { Constants } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 import { MinTenemStyleService } from '../style/wms/min-tenem-style.service';
-
+import { MapsManagerService, AcMapComponent } from 'angular-cesium';
+import { WebMapServiceImageryProvider, ImageryLayer } from 'cesium';
 
 /**
  * Use Cesium to add layer to map. This service class adds WMS layer to the map
  */
 @Injectable()
 export class CsWMSService {
-  private map: olMap;
+  private map: AcMapComponent;
   constructor(
     private layerHandlerService: LayerHandlerService,
-    private csMapObject: CsMapObject,
     private http: HttpClient,
     private renderStatusService: RenderStatusService,
+    private mapsManagerService: MapsManagerService,
     @Inject('env') private env,
     @Inject('conf') private conf
 
-  ) {
-    this.map = this.csMapObject.getMap();
+  ) { 
   }
 
 
@@ -277,212 +274,144 @@ export class CsWMSService {
     }
   }
 
+  /**
+   * Removes wms layer from the map
+   * @method rmLayer
+   * @param layer the WMS layer to remove from the map.
+   */
+  public rmLayer(layer: LayerModel): void {
+    console.log("rmLayer(", layer, ")");
+    this.map = this.mapsManagerService.getMap();
+    const viewer = this.map.getCesiumViewer();
+    console.log("Before removing have ", viewer.imageryLayers.length, "layers");
+    for (const imgLayer of layer.csImgLayers) {
+      viewer.imageryLayers.remove(imgLayer);
+    }
+    console.log("After removing have ", viewer.imageryLayers.length, "layers");
+    this.renderStatusService.resetLayer(layer.id)
+  }
+
+  /** 
+   * Set layer opacity
+   * @method setOpacity
+   * @param layer layer whose opacity is to be changed
+   */
+  public setOpacity(layer: LayerModel, opacity: number) {
+    for (let imgLayer of layer.csImgLayers) {
+      imgLayer.alpha = opacity;
+    }   
+  }
 
   /**
    * Add a wms layer to the map
    * @method addLayer
-   * @param layer the wms layer to add to the map.
+   * @param layer the WMS layer to add to the map.
    */
   public addLayer(layer: LayerModel, param?: any): void {
     if (!param) {
       param = {};
     }
+    this.map = this.mapsManagerService.getMap();
 
     const wmsOnlineResources = this.layerHandlerService.getWMSResource(layer);
 
     for (const wmsOnlineResource of wmsOnlineResources) {
-      if (
-        UtilitiesService.filterProviderSkip(
-          param.optionalFilters,
-          wmsOnlineResource.url
-        )
-      ) {
+      if (UtilitiesService.filterProviderSkip(param.optionalFilters, wmsOnlineResource.url)) {
         this.renderStatusService.skip(layer, wmsOnlineResource);
         continue;
       }
-      if (
-        UtilitiesService.isEndpointFailing(
-          layer.stackdriverFailingHosts,
-          wmsOnlineResource
-        )
-      ) {
+      if (UtilitiesService.isEndpointFailing(layer.stackdriverFailingHosts, wmsOnlineResource)) {
         this.renderStatusService.addResource(layer, wmsOnlineResource);
         this.renderStatusService.updateComplete(layer, wmsOnlineResource, true);
         continue;
       }
-      const collatedParam = UtilitiesService.collateParam(
-        layer,
-        wmsOnlineResource,
-        param
-      );
-      const usePost = this.wmsUrlTooLong(
-        this.env.portalBaseUrl + layer.proxyStyleUrl + collatedParam.toString(),
-        layer
-      );
+      const collatedParam = UtilitiesService.collateParam(layer, wmsOnlineResource, param);
+      const usePost = this.wmsUrlTooLong(this.env.portalBaseUrl + layer.proxyStyleUrl + collatedParam.toString(), layer);
       this.getSldBody(layer.proxyStyleUrl, usePost, wmsOnlineResource, collatedParam).subscribe(
         response => {
           const me = this;
           const params = wmsOnlineResource.version.startsWith('1.3')
-            ? this.getWMS1_3_0param(
-                layer,
-                wmsOnlineResource,
-                collatedParam,
-                response
-              )
-            : this.getWMS1_1param(
-                layer,
-                wmsOnlineResource,
-                collatedParam,
-                response
-              );
-
-          let wmsTile;
+            ? this.getWMS1_3_0param(layer, wmsOnlineResource, collatedParam, response)
+            : this.getWMS1_1param(layer, wmsOnlineResource, collatedParam, response);
 
           let defaultExtent;
           if (wmsOnlineResource.geographicElements.length > 0) {
             const cswExtent = wmsOnlineResource.geographicElements[0];
-            let lonlatextent = extent.buffer(
-              [
-                cswExtent.westBoundLongitude,
-                cswExtent.southBoundLatitude,
-                cswExtent.eastBoundLongitude,
-                cswExtent.northBoundLatitude
-              ],
-              2
-            );
-            lonlatextent = extent.getIntersection(lonlatextent, [
-              -180,
-              -90,
-              180,
-              90
-            ]);
-            defaultExtent = olProj.transformExtent(
-              lonlatextent,
-              'EPSG:4326',
-              Constants.MAP_PROJ
-            );
+            let lonlatextent = extent.buffer([cswExtent.westBoundLongitude, cswExtent.southBoundLatitude, cswExtent.eastBoundLongitude,
+                                              cswExtent.northBoundLatitude], 2);
+            lonlatextent = extent.getIntersection(lonlatextent, [-180, -90, 180, 90]);
+            defaultExtent = olProj.transformExtent(lonlatextent, 'EPSG:4326', Constants.MAP_PROJ);
           } else {
-            defaultExtent = this.map
-              .getView()
-              .calculateExtent(this.map.getSize());
+            // FIXME: 'defaultExtent' is not the same as above
+            const cameraService = this.map.getCameraService();
+            const camera = cameraService.getCamera();
+            defaultExtent = camera.computeViewRectangle();
           }
 
           // ArcGIS does not respond to POST requests
           if (!UtilitiesService.isArcGIS(wmsOnlineResource) && this.wmsUrlTooLong(response, layer)) {
-            wmsTile = new olTile({
-              extent: defaultExtent,
-              source: new olTileWMS({
-                url: UtilitiesService.rmParamURL(wmsOnlineResource.url),
-                params: params,
-                serverType: 'geoserver',
-                projection: Constants.MAP_PROJ, // VT: testing if this breaks anything. If not this will fix tas weird projection issue
-                tileLoadFunction: function(image, src) {
-                  me.imagePostFunction(image, src);
-                }
-              })
-            });
+
+              // TODO: ArcGIS WMS layer display
+              layer.csImgLayers.push(this.addCesiumLayer(layer, wmsOnlineResource));
           } else {
-            wmsTile = new olTile({
-              extent: defaultExtent,
-              source: new olTileWMS({
-                url: UtilitiesService.rmParamURL(wmsOnlineResource.url),
-                params: params,
-                serverType: 'geoserver',
-                projection: Constants.MAP_PROJ, // VT: testing if this breaks anything. If not this will fix tas weird projection issue
-                maxGetUrlLength: 2048
-              })
-            });
+            layer.csImgLayers.push(this.addCesiumLayer(layer, wmsOnlineResource));
           }
-
-          wmsTile.sldBody = response;
-          wmsTile.onlineResource = wmsOnlineResource;
-          wmsTile.layer = layer;
-
-          me.renderStatusService.register(layer, wmsOnlineResource);
-          wmsTile.getSource().on('tileloadstart', function(event) {
-            me.renderStatusService.addResource(layer, wmsOnlineResource);
-          });
-
-          wmsTile.getSource().on('tileloadend', function(event) {
-            me.renderStatusService.updateComplete(layer, wmsOnlineResource);
-          });
-
-          wmsTile.getSource().on('tileloaderror', function(event) {
-            me.renderStatusService.updateComplete(
-              layer,
-              wmsOnlineResource,
-              true
-            );
-          });
-
-          this.csMapObject.addLayerById(wmsTile, layer.id);
-        }
-      );
+        });
     }
   }
 
-
-  /**
-   * An injected function into Openlayers to proxy the URL *IF* the URL is too long
-   */
-  public imagePostFunction(image, src) {
-    const img = image.getImage();
-    const dataEntries = src.split('&');
-    const url = this.env.portalBaseUrl + 'getWMSMapViaProxy.do?';
-    const params = {};
-    for (let i = 0; i < dataEntries.length; i++) {
-      if (i === 0) {
-        params['url'] = dataEntries[i];
-      } else {
-        if (dataEntries[i].toLowerCase().indexOf('layers') >= 0) {
-          params['layer'] = decodeURIComponent(dataEntries[i].split('=')[1]);
-        }
-        if (dataEntries[i].toLowerCase().indexOf('bbox') >= 0) {
-          params['bbox'] = decodeURIComponent(dataEntries[i].split('=')[1]);
-        }
-        if (dataEntries[i].toLowerCase().indexOf('sldurl') >= 0) {
-          params['sldUrl'] = decodeURIComponent(dataEntries[i].split('=')[1]);
-        }
-        if (dataEntries[i].toLowerCase().indexOf('sld_body') >= 0) {
-          const sldBodyBase64 = decodeURIComponent(
-            dataEntries[i].split('=')[1]
-          );
-          params['sldBody'] = window.atob(sldBodyBase64);
-        }
-        if (dataEntries[i].toLowerCase().indexOf('version') >= 0) {
-          params['version'] = decodeURIComponent(dataEntries[i].split('=')[1]);
-        }
-        if (
-          dataEntries[i].toLowerCase().indexOf('crs') === 0 ||
-          dataEntries[i].toLowerCase().indexOf('srs') === 0
-        ) {
-          params['crs'] = decodeURIComponent(dataEntries[i].split('=')[1]);
-        }
-        if (dataEntries[i].toLowerCase().indexOf('tiled') >= 0) {
-          params['tiled'] = decodeURIComponent(dataEntries[i].split('=')[1]);
-        }
-      }
+    /**
+     * Logs an error to console if WMS could not load on map
+     * @param evt event
+     */
+    public errorEvent(evt) {
+      console.error('ERROR! evt = ', evt);
     }
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', url, true);
 
-    xhr.responseType = 'arraybuffer';
-    xhr.onload = function(e) {
-      if (xhr.status === 200) {
-        const uInt8Array = new Uint8Array(xhr.response);
-        let i = uInt8Array.length;
-        const binaryString = new Array(i);
-        while (i--) {
-          binaryString[i] = String.fromCharCode(uInt8Array[i]);
+    /**
+     * Calls cesium to add wms layer to the map
+     * @method addCesiumLayer
+     * @param layer the WMS layer to add to the map.
+     * @param wmsOnlineResource details of WMS service
+     * @returns the new cesium ImageryLayer object
+     */
+    private addCesiumLayer(layer, wmsOnlineResource): ImageryLayer {
+      const viewer = this.map.getCesiumViewer();
+      if (this.layerHandlerService.containsWMS(layer)) {
+        this.renderStatusService.register(layer, wmsOnlineResource);
+
+        let tileLoadFlag = false;
+        // WMS tile loading callback function, l = number of tiles left to load
+        const tileLoading = (l: number) => {
+          if (l == 0) {
+              // When there are no more tiles to load it is complete
+              this.renderStatusService.updateComplete(layer, wmsOnlineResource);
+          } else if (!tileLoadFlag) {
+              // Initiate resource loading with render status service
+              tileLoadFlag = true;
+              this.renderStatusService.addResource(layer, wmsOnlineResource);
+          }
         }
-        const data = binaryString.join('');
-        const type = xhr.getResponseHeader('content-type');
-        if (type.indexOf('image') === 0) {
-          img.src = 'data:' + type + ';base64,' + window.btoa(data);
-        }
+        // Register tile loading callback function
+        viewer.scene.globe.tileLoadProgressEvent.addEventListener(tileLoading);
+        
+        // Load layer on map
+        const wmsImagProv = new WebMapServiceImageryProvider({
+          url: UtilitiesService.rmParamURL(wmsOnlineResource.url),
+          layers: wmsOnlineResource.name,
+          parameters: {
+            transparent: true,
+            format: "image/png",
+          },
+        });
+        wmsImagProv.errorEvent.addEventListener(this.errorEvent);
+        
+        const imgLayer = viewer.imageryLayers.addImageryProvider(wmsImagProv);
+        console.log("After adding have ", viewer.imageryLayers.length, "layers");
+        
+        return imgLayer;
       }
-    };
-    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    xhr.send($.param(params));
+      return null;
+    }
+
   }
-}
