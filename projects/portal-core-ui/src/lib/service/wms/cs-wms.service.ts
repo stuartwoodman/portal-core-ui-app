@@ -14,8 +14,9 @@ import { UtilitiesService } from '../../utility/utilities.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 import { MinTenemStyleService } from '../style/wms/min-tenem-style.service';
 import { MapsManagerService, AcMapComponent } from 'angular-cesium';
-import { WebMapServiceImageryProvider, ImageryLayer, ArcGisMapServerImageryProvider, Resource } from 'cesium';
+import { WebMapServiceImageryProvider, ImageryLayer, Resource, DefaultProxy } from 'cesium';
 
+import * as when from 'when';
 /**
  * Use Cesium to add layer to map. This service class adds WMS layer to the map
  */
@@ -47,13 +48,17 @@ export class CsWMSService {
 
   /**
    * Get WMS 1.3.0 related parameter
-   * @param layers the wms layer
-   * @param sld_body associated sld_body
+   * @param layer the WMS layer
+   * @param onlineResource where the request will be sent
+   * @param param request parameters
+   * @param usePost true if parameters are very long and a POST request may be required
+   * @param sld_body associated styling parameter sld_body
    */
   public getWMS1_3_0param(
     layer: LayerModel,
     onlineResource: OnlineResourceModel,
-    param,
+    param: any,
+    usePost: boolean,
     sld_body?: string
   ): any {
     const params = {
@@ -71,14 +76,14 @@ export class CsWMSService {
     };
 
     if (sld_body) {
-      /* ArcGIS cannot read base64 encoded styles */
-      if (!UtilitiesService.isArcGIS(onlineResource) && this.wmsUrlTooLong(sld_body, layer)) {
+      /* ArcGIS and POST requests cannot read base64 encoded styles */
+      if (!UtilitiesService.isArcGIS(onlineResource) && this.wmsUrlTooLong(sld_body, layer) && !usePost) {
         params['sld_body'] = window.btoa(sld_body);
       } else {
         params['sld_body'] = sld_body;
       }
     } else {
-      params['sldUrl'] = this.getSldUrl(layer, onlineResource, param);
+      params['sldUrl'] = this.getSldUrl(layer, param);
     }
     return params;
   }
@@ -87,14 +92,16 @@ export class CsWMSService {
   /**
    * get wms 1.1.0 related parameter
    * @param layer the WMS layer
-   * @param onlineResource details of the online resource
-   * @param param WMS parameters
-   * @param sld_body associated SLD_BODY
+   * @param onlineResource where the request will be sent
+   * @param param request parameters
+   * @param usePost true if parameters are very long and a POST request may be required
+   * @param sld_body associated styling parameter sld_body
    */
   public getWMS1_1param(
     layer: LayerModel,
     onlineResource: OnlineResourceModel,
     param: any,
+    usePost: boolean,
     sld_body?: string
   ): any {
     const params = {
@@ -110,14 +117,14 @@ export class CsWMSService {
       HEIGHT: Constants.TILE_SIZE
     };
     if (sld_body) {
-      /* ArcGIS cannot read base64 encoded styles */
-      if (!UtilitiesService.isArcGIS(onlineResource) && this.wmsUrlTooLong(sld_body, layer)) {
+      /* ArcGIS and POST requests cannot read base64 encoded styles */
+      if (!UtilitiesService.isArcGIS(onlineResource) && this.wmsUrlTooLong(sld_body, layer) && !usePost) {
         params['sld_body'] = window.btoa(sld_body);
       } else {
         params['sld_body'] = sld_body;
       }
     } else {
-      params['sldUrl'] = this.getSldUrl(layer, onlineResource, param);
+      params['sldUrl'] = this.getSldUrl(layer, param);
     }
     return params;
   }
@@ -193,8 +200,9 @@ export class CsWMSService {
 
   /**
    * Get the NvclFilter from the URL
-   * @param sldUrl the url containing the sld
-   * @return a observable of the http request
+   * @param layer layer
+   * @param param filter request parameters
+   * @return a observable of the HTTP request
    */
   public getNvclFilter(layer: LayerModel, param?: any): Observable<any> {
     if (!param) {
@@ -252,13 +260,11 @@ export class CsWMSService {
    * Get the WMS style URL if proxyStyleUrl is valid
    * @method getSldUrl
    * @param layer - the layer we would like to retrieve the SLD for if proxyStyleUrl is defined
-   * @param onlineResource - the onlineResource of the layer we are rendering
    * @param param - OPTIONAL - parameter to be passed into retrieving the SLD.Used in capdf
    * @return url - getUrl to retrieve sld
    */
   private getSldUrl(
     layer: LayerModel,
-    onlineResource: OnlineResourceModel,
     param?: any
   ) {
     if (layer.proxyStyleUrl) {
@@ -267,11 +273,9 @@ export class CsWMSService {
         new HttpParams()
       );
       httpParams = UtilitiesService.convertObjectToHttpParam(httpParams, param);
-
       return '/' + layer.proxyStyleUrl + '?' + httpParams.toString();
-    } else {
-      return null;
-    }
+    } 
+    return null;
   }
 
   /**
@@ -280,14 +284,11 @@ export class CsWMSService {
    * @param layer the WMS layer to remove from the map.
    */
   public rmLayer(layer: LayerModel): void {
-    console.log("rmLayer(", layer, ")");
     this.map = this.mapsManagerService.getMap();
     const viewer = this.map.getCesiumViewer();
-    console.log("Before removing have ", viewer.imageryLayers.length, "layers");
     for (const imgLayer of layer.csImgLayers) {
       viewer.imageryLayers.remove(imgLayer);
     }
-    console.log("After removing have ", viewer.imageryLayers.length, "layers");
     this.renderStatusService.resetLayer(layer.id)
   }
 
@@ -303,9 +304,10 @@ export class CsWMSService {
   }
 
   /**
-   * Add a wms layer to the map
+   * Add a WMS layer to the map
    * @method addLayer
    * @param layer the WMS layer to add to the map.
+   * @param param request parameters
    */
   public addLayer(layer: LayerModel, param?: any): void {
     if (!param) {
@@ -325,15 +327,19 @@ export class CsWMSService {
         this.renderStatusService.updateComplete(layer, wmsOnlineResource, true);
         continue;
       }
+      // Collate parameters for style request
       const collatedParam = UtilitiesService.collateParam(layer, wmsOnlineResource, param);
+      // Set 'usePost' if style request parameters are too long
       const usePost = this.wmsUrlTooLong(this.env.portalBaseUrl + layer.proxyStyleUrl + collatedParam.toString(), layer);
+      // Perform request for style data
       this.getSldBody(layer.proxyStyleUrl, usePost, wmsOnlineResource, collatedParam).subscribe(
         response => {
           const me = this;
+          const longResp = this.wmsUrlTooLong(response, layer);
+          // Create parameters for add layer request
           const params = wmsOnlineResource.version.startsWith('1.3')
-            ? this.getWMS1_3_0param(layer, wmsOnlineResource, collatedParam, response)
-            : this.getWMS1_1param(layer, wmsOnlineResource, collatedParam, response);
-
+            ? this.getWMS1_3_0param(layer, wmsOnlineResource, collatedParam, longResp, response)
+            : this.getWMS1_1param(layer, wmsOnlineResource, collatedParam, longResp, response);
           let defaultExtent;
           if (wmsOnlineResource.geographicElements.length > 0) {
             const cswExtent = wmsOnlineResource.geographicElements[0];
@@ -342,18 +348,15 @@ export class CsWMSService {
             lonlatextent = extent.getIntersection(lonlatextent, [-180, -90, 180, 90]);
             defaultExtent = olProj.transformExtent(lonlatextent, 'EPSG:4326', Constants.MAP_PROJ);
           } else {
-            // FIXME: 'defaultExtent' is not the same as above
+            // FIXME: 'defaultExtent' is not the same format as above
             const cameraService = this.map.getCameraService();
             const camera = cameraService.getCamera();
             defaultExtent = camera.computeViewRectangle();
           }
+          // TODO: Use 'defaultExtent'
 
-          // TODO: Use POST for long requests
-          if (this.wmsUrlTooLong(response, layer)) {
-            layer.csImgLayers.push(this.addCesiumLayer(layer, wmsOnlineResource, params, true));
-          } else {
-            layer.csImgLayers.push(this.addCesiumLayer(layer, wmsOnlineResource, params, false));
-          }
+          // Perform add layer request
+          layer.csImgLayers.push(this.addCesiumLayer(layer, wmsOnlineResource, params, longResp));
         });
     }
   }
@@ -367,14 +370,16 @@ export class CsWMSService {
     }
 
     /**
-     * Calls cesium to add wms layer to the map
+     * Calls CesiumJS to add WMS layer to the map
      * @method addCesiumLayer
      * @param layer the WMS layer to add to the map.
      * @param wmsOnlineResource details of WMS service
-     * @returns the new cesium ImageryLayer object
+     * @param usePost 
+     * @returns the new CesiumJS ImageryLayer object
      */
     private addCesiumLayer(layer, wmsOnlineResource, params, usePost: boolean): ImageryLayer {
       const viewer = this.map.getCesiumViewer();
+      const me = this;
       if (this.layerHandlerService.containsWMS(layer)) {
         this.renderStatusService.register(layer, wmsOnlineResource);
 
@@ -394,7 +399,6 @@ export class CsWMSService {
         viewer.scene.globe.tileLoadProgressEvent.addEventListener(tileLoading);
         const url = UtilitiesService.rmParamURL(wmsOnlineResource.url);
         let wmsImagProv;
-        console.log("params=", params);
 
         // Set up WMS service
         if (!UtilitiesService.isArcGIS(wmsOnlineResource)) {
@@ -405,8 +409,88 @@ export class CsWMSService {
               parameters: params
             });
           } else {
-            // TODO: Force use of POST by overriding resource functions
-            const res = new Resource({url: url});
+
+            // Keep old function call
+            let oldCreateImage = (Resource as any)._Implementations.createImage;
+            
+            // Overwrite CesiumJS 'createImage' function to allow us to do 'POST' requests via a proxy
+            // If there is a 'usepost' parameter in the URL, then 'POST' via proxy else uses standard 'GET'
+            // TODO: Implement a Resource constructor parameter instead of 'usepost'
+            (Resource as any)._Implementations.createImage = function (request, crossOrigin, deferred, flipY, preferImageBitmap) {
+              const url = request.url;
+              const jURL = new URL(url);
+              // If there's no 'usepost' parameter then call the old 'createImage' method which uses 'GET'
+              if (!jURL.searchParams.has('usepost')) {
+                return oldCreateImage(request, crossOrigin, deferred, flipY, preferImageBitmap);
+              }
+              // Initiate loading WMS tiles via POST & a proxy
+              (Resource as any).supportsImageBitmapOptions()
+                .then(function (supportsImageBitmap) {
+                  var responseType = "blob";
+                  let method = "POST";
+                  var xhrDeferred = when.defer();
+                  // Assemble parameters into a form for 'POST' request
+                  const postForm = new FormData();
+                  postForm.append('service', 'WMS');
+                  jURL.searchParams.forEach(function(val, key) {
+                    if (key == 'url') {
+                      postForm.append('url', val.split('?')[0]+'?service=WMS');
+                      let kvp = val.split('?')[1];
+                      if (kvp) {
+                        me.paramSubst(kvp.split('=')[0], kvp.split('=')[1], postForm);
+                      }
+                    } else {
+                      me.paramSubst(key, val, postForm);
+                    }
+                  });
+                  
+                  const newURL = jURL.origin + jURL.pathname;
+                  // Initiate request 
+                  var xhr = (Resource as any)._Implementations.loadWithXhr(
+                    newURL,
+                    responseType,
+                    method,
+                    postForm,
+                    undefined,
+                    xhrDeferred,
+                    undefined,
+                    undefined,
+                    undefined
+                  );
+            
+                  if (xhr && xhr.abort) {
+                    request.cancelFunction = function () {
+                      xhr.abort();
+                    };
+                  }
+                  return xhrDeferred.promise
+                    .then(function (blob) {
+                      if (!blob) {
+                        deferred.reject(
+                          new Error(
+                            "Successfully retrieved " +
+                              url +
+                              " but it contained no content."
+                          )
+                        );
+                        return;
+                      }
+                      return (Resource as any).createImageBitmapFromBlob(blob, {
+                        flipY: flipY,
+                        premultiplyAlpha: false,
+                      });
+                    })
+                    .then(deferred.resolve);
+                })
+                .otherwise(deferred.reject);
+            };
+            /* End of 'createImage' overwrite */
+
+            // Create a resource which uses our custom proxy
+            const res = new Resource({url: url, proxy: new MyDefaultProxy(me.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=')});
+            
+            // Force Resource to use 'POST' and our proxy
+            params['usepost'] = true;
             wmsImagProv = new WebMapServiceImageryProvider({
               url: res,
               layers: wmsOnlineResource.name,
@@ -415,21 +499,55 @@ export class CsWMSService {
           }
           
         } else {
-          // NOTO BENE: CesiumJS does not allow additional parameters for ArcGIS, i.e. no styling
-          // So may need to use WebMapServiceImageryProvider instead 
-          wmsImagProv = new WebMapServiceImageryProvider({ // ArcGisMapServerImageryProvider({
+          // NB: ArcGisMapServerImageryProvider does not allow additional parameters for ArcGIS, i.e. no styling
+          // So we use WebMapServiceImageryProvider instead 
+          wmsImagProv = new WebMapServiceImageryProvider({
             url: url,
-            layers: wmsOnlineResource.name
-        });
-      }
+            layers: wmsOnlineResource.name,
+            parameters: {
+              transparent: true,
+              format: "image/png"
+            }
+          });
+        }
         wmsImagProv.errorEvent.addEventListener(this.errorEvent);
-        
         const imgLayer = viewer.imageryLayers.addImageryProvider(wmsImagProv);
-        console.log("After adding have ", viewer.imageryLayers.length, "layers");
-        
         return imgLayer;
       }
       return null;
+    };
+
+    /**
+     * Function to add parameters to FormData object
+     * some parameters are converted to something that geoserver WMS can understand
+     * @method paramSubst
+     * @param key parameter key
+     * @param val parameter value
+     * @param postForm a FormData object to add key,val pairs to
+     */
+    private paramSubst(key: string, val: string, postForm: FormData) {
+      if (key == 'layers') {
+        postForm.append('layer', val);
+      } else if (key == 'sld_body') {
+        postForm.append('sldBody', val);
+      } else if (key != 'usepost') {
+        postForm.append(key, val);
+      }
     }
 
+}
+
+// Substitute our own proxy class to replace Cesium's 'Proxy' class
+// so that the parameters are not uuencoded
+class MyDefaultProxy {
+  proxy: string;
+  constructor(proxy) {
+  this.proxy = proxy;
   }
+  getURL: (any) => any;
+}
+MyDefaultProxy.prototype.getURL = function (resource) {
+  var prefix = this.proxy.indexOf("?") === -1 ? "?" : "";
+  return this.proxy + prefix + resource;
+};
+
