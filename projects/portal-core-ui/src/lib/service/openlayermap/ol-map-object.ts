@@ -1,4 +1,4 @@
-import {Constants} from '../../utility/constants.service';
+import {Constants, GeometryType } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import {Injectable , Inject} from '@angular/core';
 import olMap from 'ol/Map';
@@ -249,7 +249,7 @@ export class OlMapObject {
       return null;
     }
     let feature = null;
-    if (polygon.geometryType === Constants.geometryType.MULTIPOLYGON) {
+    if (polygon.geometryType === GeometryType.MULTIPOLYGON) {
       const gmlFormat = new olFormatGML2();
       const gml2 = polygon.raw;
       feature = gmlFormat.readFeatures(gml2, {featureProjection: 'EPSG:3857'})[0];

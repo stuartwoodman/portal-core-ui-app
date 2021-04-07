@@ -1,5 +1,5 @@
 import { RenderStatusService } from './renderstatus/render-status.service';
-import { Constants } from '../../utility/constants.service';
+import { GeometryType } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import { Injectable , Inject } from '@angular/core';
 import olMap from 'ol/Map';
@@ -30,7 +30,7 @@ import { Subject , BehaviorSubject} from 'rxjs';
 //import * as G from 'ol-geocoder';
 import { getVectorContext } from 'ol/render';
 import { CoordinateConverter, EditActions, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService } from 'angular-cesium';
-declare var Cesium;
+import { Color } from 'cesium';
 
 /**
  * A wrapper around the openlayer object for use in the portal.
@@ -221,17 +221,17 @@ export class CsMapObject {
     // create accepts PolygonEditOptions object
     this.polygonEditable$ = this.polygonsCesiumEditor.create({
       pointProps: {
-        color: Cesium.Color.CORNFLOWERBLUE.withAlpha(0.95),
-        outlineColor: Cesium.Color.BLACK.withAlpha(0.2),
+        color: Color.CORNFLOWERBLUE.withAlpha(0.95),
+        outlineColor: Color.BLACK.withAlpha(0.2),
         outlineWidth: 1,
         pixelSize: 13,
       },
       polygonProps: {
-        material: Cesium.Color.ALICEBLUE.withAlpha(0.4),
+        material: Color.ALICEBLUE.withAlpha(0.4),
         fill: true,
       },
       polylineProps: {
-        material: () => Cesium.Color.CORNFLOWERBLUE ,
+        material: () => Color.CORNFLOWERBLUE ,
         width: 3,
       },
     });
@@ -264,7 +264,7 @@ export class CsMapObject {
       return null;
     }
     let feature = null;
-    if (polygon.geometryType === Constants.geometryType.MULTIPOLYGON) {
+    if (polygon.geometryType === GeometryType.MULTIPOLYGON) {
       const gmlFormat = new olFormatGML2();
       const gml2 = polygon.raw;
       feature = gmlFormat.readFeatures(gml2, {featureProjection: 'EPSG:3857'})[0];

@@ -9,7 +9,7 @@ export class LayerModel {
   group: string;
   hidden: boolean;
   id: string;
-  csImgLayers: any;
+  csLayers: any;
   layerMode: string;
   name: string;
   order: string;

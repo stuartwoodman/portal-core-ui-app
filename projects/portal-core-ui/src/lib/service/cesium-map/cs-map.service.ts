@@ -5,7 +5,7 @@ import olLayerVector from 'ol/layer/Vector';
 import olLayer from 'ol/layer/Layer';
 import olFeature from 'ol/Feature';
 import * as olProj from 'ol/proj';
-import {BehaviorSubject,  Subject } from 'rxjs';
+import {BehaviorSubject,  from,  Subject } from 'rxjs';
 import { point } from '@turf/helpers';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import bboxPolygon from '@turf/bbox-polygon';
@@ -16,6 +16,8 @@ import { CsCSWService } from '../wcsw/cs-csw.service';
 import { CsWFSService } from '../wfs/cs-wfs.service';
 import { CsWMSService } from '../wms/cs-wms.service';
 import { CsWWWService } from '../www/cs-www.service';
+import { ResourceType } from '../../utility/constants.service';
+import { CsIrisService } from '../kml/cs-iris.service';
 
 import { MapsManagerService, EventRegistrationInput, CesiumEvent, PickOptions, EventResult } from 'angular-cesium';
 
@@ -39,7 +41,7 @@ export class CsMapService {
   constructor(private layerHandlerService: LayerHandlerService, private csWMSService: CsWMSService,
     private csWFSService: CsWFSService, private manageStateService: ManageStateService,
     private csCSWService: CsCSWService, private csWWWService: CsWWWService, 
-    private mapsManagerService: MapsManagerService,
+    private csIrisService: CsIrisService, private mapsManagerService: MapsManagerService,
     @Inject('env') private env, @Inject('conf') private conf)  {
 
     this.addLayerSubject = new Subject<LayerModel>();
@@ -48,17 +50,14 @@ export class CsMapService {
   init() {
     this.map = this.mapsManagerService.getMap();
     this.viewer = this.map.getCesiumViewer();
-    console.log("map=", this.map);
     const eventRegistration: EventRegistrationInput = {
       event: CesiumEvent.LEFT_CLICK, // Left mouse click
       pick: PickOptions.PICK_ONE // If lots of things are picked a 'picker' will help you choose one
     };
     const mapEventManager = this.mapsManagerService.getMap().getMapEventsManager();
-    console.log("ev-mgr=", mapEventManager);
     const clickEvent = mapEventManager.register(eventRegistration).subscribe((result) => {
       this.mapClickHandler(result);
     });
-    console.log('clickEvent=', clickEvent);
   }
 
   /**
@@ -77,7 +76,6 @@ export class CsMapService {
    public mapClickHandler(eventResult: EventResult) {
       try {
            const pixel = eventResult.movement.startPosition;
-           console.log("clicked:", pixel);
            // Convert pixel coords to map coords
            const clickCoord = []; // FIXME this.map.getCoordinateFromPixel(pixel);
            const lonlat = olProj.transform(clickCoord, 'EPSG:3857', 'EPSG:4326');
@@ -93,7 +91,7 @@ export class CsMapService {
                    for (const activeLayer of activeLayers[layerId]) {
                        if (layer === activeLayer) {
                            const layerModel = me.getLayerModel(layerId);
-                           if (!me.layerHandlerService.containsWMS(layerModel)) {
+                           if (!me.layerHandlerService.contains(layerModel, ResourceType.WMS)) {
                              continue;
                            }
                            const bbox = activeLayer.onlineResource.geographicElements[0];
@@ -176,42 +174,57 @@ export class CsMapService {
    * @param layer the layer to add to the map
    */
   public addLayer(layer: LayerModel, param: any): void {
-     // Remove old existing layer
-     if (this.layerExists(layer.id)) {
-       this.csWMSService.rmLayer(layer);
-       delete this.layerModelList[layer.id];
-     }
 
-     // Add a CSW layer to map
-     if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
-       // FIXME this.csCSWService.addLayer(layer, param);
-       // FIXME this.cacheLayerModelList(layer.id, layer);
+    // Add a CSW layer to map
+    if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
+      // FIXME this.csCSWService.addLayer(layer, param);
+      // FIXME this.cacheLayerModelList(layer.id, layer);
 
-     // Add a WMS layer to map
-     } else if (this.layerHandlerService.containsWMS(layer)) {
-       console.log("addLayer(", layer, ")");
-       this.csWMSService.addLayer(layer, param);
-       this.cacheLayerModelList(layer.id, layer);
+    // Add a WMS layer to map
+    } else if (this.layerHandlerService.contains(layer, ResourceType.WMS)) {
+      // Remove old existing layer
+      if (this.layerExists(layer.id)) {
+        this.csWMSService.rmLayer(layer);
+        delete this.layerModelList[layer.id];
+      }
+      // Add layer
+      this.csWMSService.addLayer(layer, param);
+      this.cacheLayerModelList(layer.id, layer);
 
      // Add a WFS layer to map
-     } else if (this.layerHandlerService.containsWFS(layer)) {
+     } else if (this.layerHandlerService.contains(layer, ResourceType.WFS)) {
        // FIXME this.csWFSService.addLayer(layer, param);
        // FIXME this.layerModelList[layer.id] = layer;
 
      // Add a WWW layer to map
-     } else if (this.layerHandlerService.containsWWW(layer)) {
+     } else if (this.layerHandlerService.contains(layer, ResourceType.WWW)) {
        // FIXME this.csWWWService.addLayer(layer, param);
        // FIXME this.layerModelList[layer.id] = layer;
 
-     } else {
-       throw new Error('No Suitable service found');
-     }
-   }
+     } else if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
+      // Remove old existing layer
+      if (this.layerExists(layer.id)) {
+        this.csIrisService.rmLayer(layer);
+        delete this.layerModelList[layer.id];
+      }
+      // Add layer
+      this.csIrisService.addLayer(layer, param);
+      this.cacheLayerModelList(layer.id, layer);
 
-   private cacheLayerModelList(id: string, layer: LayerModel) {
-     this.layerModelList[layer.id] = layer;
-     this.addLayerSubject.next(layer);
-   }
+    } else {
+      throw new Error('No Suitable service found');
+    }
+  }
+
+  /**
+   * Add new layer to layer model list
+   * @param id layer id
+   * @param layer layer
+   */
+  private cacheLayerModelList(id: string, layer: LayerModel) {
+    this.layerModelList[layer.id] = layer;
+    this.addLayerSubject.next(layer);
+  }
 
    /**
     *  In the event we have custom layer that is handled outside olMapService, we will want to register that layer here so that
@@ -247,9 +260,12 @@ export class CsMapService {
    * @param layer the layer to remove from the map
    */
   public removeLayer(layer: LayerModel): void {
-      console.log("removeLayer(", layer, ")");
       this.manageStateService.removeLayer(layer.id);
-      this.csWMSService.rmLayer(layer);
+      if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
+        this.csIrisService.rmLayer(layer);
+      } else {
+        this.csWMSService.rmLayer(layer);
+      }
       delete this.layerModelList[layer.id];
   }
 

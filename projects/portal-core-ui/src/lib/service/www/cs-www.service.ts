@@ -4,7 +4,7 @@ import { LayerModel } from '../../model/data/layer.model';
 import { OnlineResourceModel } from '../../model/data/onlineresource.model';
 import { PrimitiveModel } from '../../model/data/primitive.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
-import { Constants } from '../../utility/constants.service';
+import { GeometryType } from '../../utility/constants.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 import { CsMapObject } from '../cesium-map/cs-map-object';
 
@@ -65,24 +65,24 @@ export class CsWWWService {
           if (geoEl.eastBoundLongitude === geoEl.westBoundLongitude &&
               geoEl.southBoundLatitude === geoEl.northBoundLatitude) {
 
-            primitive.geometryType = Constants.geometryType.POINT;
+            primitive.geometryType = GeometryType.POINT;
             primitive.name = cswRecord.name;
             primitive.coords = {
               lng: geoEl.eastBoundLongitude,
               lat: geoEl.southBoundLatitude
             };
           } else {
-            primitive.geometryType = Constants.geometryType.POLYGON;
+            primitive.geometryType = GeometryType.POLYGON;
             primitive.name = cswRecord.name;
             primitive.coords = [[geoEl.eastBoundLongitude, geoEl.northBoundLatitude], [geoEl.westBoundLongitude, geoEl.northBoundLatitude],
               [geoEl.westBoundLongitude, geoEl.southBoundLatitude], [geoEl.eastBoundLongitude, geoEl.southBoundLatitude]];
           }
 
           switch (primitive.geometryType) {
-            case Constants.geometryType.POINT:
+            case GeometryType.POINT:
               this.addPoint(layer, cswRecord, primitive);
               break;
-            case Constants.geometryType.POLYGON:
+            case GeometryType.POLYGON:
               this.addPolygon(layer, cswRecord, primitive);
               break;
           }

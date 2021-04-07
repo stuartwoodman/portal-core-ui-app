@@ -9,12 +9,12 @@ import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/comm
 
 import * as olProj from 'ol/proj';
 import * as extent from 'ol/extent';
-import { Constants } from '../../utility/constants.service';
+import { Constants, ResourceType } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 import { MinTenemStyleService } from '../style/wms/min-tenem-style.service';
 import { MapsManagerService, AcMapComponent } from 'angular-cesium';
-import { WebMapServiceImageryProvider, ImageryLayer, Resource, DefaultProxy } from 'cesium';
+import { WebMapServiceImageryProvider, ImageryLayer, Resource } from 'cesium';
 
 import * as when from 'when';
 /**
@@ -286,9 +286,10 @@ export class CsWMSService {
   public rmLayer(layer: LayerModel): void {
     this.map = this.mapsManagerService.getMap();
     const viewer = this.map.getCesiumViewer();
-    for (const imgLayer of layer.csImgLayers) {
+    for (const imgLayer of layer.csLayers) {
       viewer.imageryLayers.remove(imgLayer);
     }
+    layer.csLayers = [];
     this.renderStatusService.resetLayer(layer.id)
   }
 
@@ -298,7 +299,7 @@ export class CsWMSService {
    * @param layer layer whose opacity is to be changed
    */
   public setOpacity(layer: LayerModel, opacity: number) {
-    for (let imgLayer of layer.csImgLayers) {
+    for (let imgLayer of layer.csLayers) {
       imgLayer.alpha = opacity;
     }   
   }
@@ -356,7 +357,7 @@ export class CsWMSService {
           // TODO: Use 'defaultExtent'
 
           // Perform add layer request
-          layer.csImgLayers.push(this.addCesiumLayer(layer, wmsOnlineResource, params, longResp));
+          layer.csLayers.push(this.addCesiumLayer(layer, wmsOnlineResource, params, longResp));
         });
     }
   }
@@ -380,7 +381,7 @@ export class CsWMSService {
     private addCesiumLayer(layer, wmsOnlineResource, params, usePost: boolean): ImageryLayer {
       const viewer = this.map.getCesiumViewer();
       const me = this;
-      if (this.layerHandlerService.containsWMS(layer)) {
+      if (this.layerHandlerService.contains(layer, ResourceType.WMS)) {
         this.renderStatusService.register(layer, wmsOnlineResource);
 
         let tileLoadFlag = false;
