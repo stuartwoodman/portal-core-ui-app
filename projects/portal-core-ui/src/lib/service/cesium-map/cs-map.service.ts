@@ -5,7 +5,7 @@ import olLayerVector from 'ol/layer/Vector';
 import olLayer from 'ol/layer/Layer';
 import olFeature from 'ol/Feature';
 import * as olProj from 'ol/proj';
-import {BehaviorSubject,  from,  Subject } from 'rxjs';
+import {BehaviorSubject, Subject } from 'rxjs';
 import { point } from '@turf/helpers';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import bboxPolygon from '@turf/bbox-polygon';
@@ -35,8 +35,8 @@ export class CsMapService {
   private addLayerSubject: Subject<LayerModel>;
 
   private clickedLayerListBS = new BehaviorSubject<any>({});
+  // Cesium map
   private map;
-  private viewer;
 
   constructor(private layerHandlerService: LayerHandlerService, private csWMSService: CsWMSService,
     private csWFSService: CsWFSService, private manageStateService: ManageStateService,
@@ -49,7 +49,6 @@ export class CsMapService {
 
   init() {
     this.map = this.mapsManagerService.getMap();
-    this.viewer = this.map.getCesiumViewer();
     const eventRegistration: EventRegistrationInput = {
       event: CesiumEvent.LEFT_CLICK, // Left mouse click
       pick: PickOptions.PICK_ONE // If lots of things are picked a 'picker' will help you choose one
