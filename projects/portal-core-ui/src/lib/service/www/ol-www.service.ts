@@ -16,7 +16,7 @@ import olStyleFill from 'ol/style/Fill';
 import olIcon from 'ol/style/Icon';
 import olLayerVector from 'ol/layer/Vector';
 import olSourceVector from 'ol/source/Vector';
-import { Constants } from '../../utility/constants.service';
+import { GeometryType } from '../../utility/constants.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 
 /**
@@ -124,24 +124,24 @@ export class OlWWWService {
           if (geoEl.eastBoundLongitude === geoEl.westBoundLongitude &&
               geoEl.southBoundLatitude === geoEl.northBoundLatitude) {
 
-            primitive.geometryType = Constants.geometryType.POINT;
+            primitive.geometryType = GeometryType.POINT;
             primitive.name = cswRecord.name;
             primitive.coords = {
               lng: geoEl.eastBoundLongitude,
               lat: geoEl.southBoundLatitude
             };
           } else {
-            primitive.geometryType = Constants.geometryType.POLYGON;
+            primitive.geometryType = GeometryType.POLYGON;
             primitive.name = cswRecord.name;
             primitive.coords = [[geoEl.eastBoundLongitude, geoEl.northBoundLatitude], [geoEl.westBoundLongitude, geoEl.northBoundLatitude],
               [geoEl.westBoundLongitude, geoEl.southBoundLatitude], [geoEl.eastBoundLongitude, geoEl.southBoundLatitude]];
           }
 
           switch (primitive.geometryType) {
-            case Constants.geometryType.POINT:
+            case GeometryType.POINT:
               this.addPoint(layer, cswRecord, primitive);
               break;
-            case Constants.geometryType.POLYGON:
+            case GeometryType.POLYGON:
               this.addPoloygon(layer, cswRecord, primitive);
               break;
           }

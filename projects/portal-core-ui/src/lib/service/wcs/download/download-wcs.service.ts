@@ -6,7 +6,7 @@ import {HttpClient, HttpParams, HttpHeaders, HttpResponse} from '@angular/common
 
 import { Bbox } from '../../../model/data/bbox.model';
 import { LayerModel } from '../../../model/data/layer.model';
-import { Constants } from '../../../utility/constants.service';
+import { ResourceType } from '../../../utility/constants.service';
 import { LayerHandlerService } from '../../cswrecords/layer-handler.service';
 
 
@@ -37,7 +37,7 @@ export class DownloadWcsService {
    */
   public download(layer: LayerModel, bbox: Bbox, inputCrs: string, downloadFormat: string, outputCrs: string): Observable<any> {
     try {
-      const ftpResources = this.layerHandlerService.getOnlineResources(layer, Constants.resourceType.FTP);
+      const ftpResources = this.layerHandlerService.getOnlineResources(layer, ResourceType.FTP);
       const ftpURL = (ftpResources.length > 0) ? ftpResources[0]['url'] : '';
       const wcsResources = this.layerHandlerService.getWCSResource(layer);
 

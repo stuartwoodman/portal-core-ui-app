@@ -18,6 +18,7 @@ import { OlWFSService } from '../wfs/ol-wfs.service';
 import { OlMapObject } from './ol-map-object';
 import { OlWMSService } from '../wms/ol-wms.service';
 import { OlWWWService } from '../www/ol-www.service';
+import { ResourceType } from '../../utility/constants.service';
 
 /**
  * Wrapper class used for the layer preview map as an open layers map
@@ -71,7 +72,7 @@ export class OlMapService {
                    for (const activeLayer of activeLayers[layerId]) {
                        if (layer === activeLayer) {
                            const layerModel = me.getLayerModel(layerId);
-                           if (!me.layerHandlerService.containsWMS(layerModel)) {
+                           if (!me.layerHandlerService.contains(layerModel, ResourceType.WMS)) {
                              continue;
                            }
                            const bbox = activeLayer.onlineResource.geographicElements[0];
@@ -160,13 +161,13 @@ export class OlMapService {
      if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
        this.olCSWService.addLayer(layer, param);
        this.cacheLayerModelList(layer.id, layer);
-     } else if (this.layerHandlerService.containsWMS(layer)) {
+     } else if (this.layerHandlerService.contains(layer, ResourceType.WMS)) {
        this.olWMSService.addLayer(layer, param);
        this.cacheLayerModelList(layer.id, layer);
-     } else if (this.layerHandlerService.containsWFS(layer)) {
+     } else if (this.layerHandlerService.contains(layer, ResourceType.WFS)) {
        this.olWFSService.addLayer(layer, param);
        this.layerModelList[layer.id] = layer;
-     } else if (this.layerHandlerService.containsWWW(layer)) {
+     } else if (this.layerHandlerService.contains(layer, ResourceType.WWW)) {
        this.olWWWService.addLayer(layer, param);
        this.layerModelList[layer.id] = layer;
      } else {

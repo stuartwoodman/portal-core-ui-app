@@ -33,12 +33,14 @@ export { LegendService } from './lib/service/wms/legend.service';
 export { CsWMSService } from './lib/service/wms/cs-wms.service';
 export { QueryWMSService } from './lib/service/wms/query-wms.service';
 export { CsWWWService } from './lib/service/www/cs-www.service';
+export { CsIrisService } from './lib/service/kml/cs-iris.service';
 
 export { ImgLoadingDirective } from './lib/uiutilities/imgloading.directive';
 export { KeysPipe, TrustResourceHtmlPipe, TrustResourceUrlPipe, QuerierFeatureSearchPipe } from './lib/uiutilities/pipes';
 export { PortalCorePipesModule } from './lib/uiutilities/portal-core.pipes.module';
 
-export { Constants } from './lib/utility/constants.service';
+export { Constants, ResourceType, GeometryType } from './lib/utility/constants.service';
+ 
 export { GMLParserService } from './lib/utility/gmlparser.service';
 export { SimpleXMLService } from './lib/utility/simplexml.service';
 export { StopPropagationDirective } from './lib/utility/utilities.directives';

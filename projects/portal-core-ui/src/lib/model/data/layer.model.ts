@@ -1,5 +1,4 @@
 import { CSWRecordModel } from './cswrecord.model';
-
 /**
  * A representation of a layer
  */
@@ -10,6 +9,7 @@ export class LayerModel {
   group: string;
   hidden: boolean;
   id: string;
+  csLayers: any;
   layerMode: string;
   name: string;
   order: string;

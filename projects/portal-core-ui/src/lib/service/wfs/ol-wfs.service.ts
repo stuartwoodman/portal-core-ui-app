@@ -19,7 +19,7 @@ import olIcon from 'ol/style/Icon';
 import olLayerVector from 'ol/layer/Vector';
 import olSourceVector from 'ol/source/Vector';
 import { GMLParserService } from '../../utility/gmlparser.service';
-import { Constants } from '../../utility/constants.service';
+import { Constants, GeometryType } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 
@@ -147,13 +147,13 @@ export class OlWFSService {
         }
         for (const primitive of primitives) {
           switch (primitive.geometryType) {
-            case Constants.geometryType.POINT:
+            case GeometryType.POINT:
                this.addPoint(layer, onlineResource, primitive);
               break;
-            case Constants.geometryType.LINESTRING:
+            case GeometryType.LINESTRING:
                this.addLine(primitive);
                break;
-            case Constants.geometryType.POLYGON:
+            case GeometryType.POLYGON:
                this.addPoloygon(primitive);
                break;
           }

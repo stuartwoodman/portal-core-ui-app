@@ -1,5 +1,5 @@
 import { RenderStatusService } from './renderstatus/render-status.service';
-import { Constants } from '../../utility/constants.service';
+import { GeometryType } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import { Injectable , Inject } from '@angular/core';
 import olMap from 'ol/Map';
@@ -30,7 +30,7 @@ import { Subject , BehaviorSubject} from 'rxjs';
 //import * as G from 'ol-geocoder';
 import { getVectorContext } from 'ol/render';
 import { CoordinateConverter, EditActions, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService } from 'angular-cesium';
-declare var Cesium;
+import { Color } from 'cesium';
 
 /**
  * A wrapper around the openlayer object for use in the portal.
@@ -69,45 +69,6 @@ export class CsMapObject {
     });*/
 
   }
-
-/* public addGeocoderToMap() {
-      // Added ol-geocoder controller into map.
-      const GC = new  G('nominatim', {
-        provider: 'bing',
-        key: 'AgfoWboIfoy68Vu38c2RE83rEEuvWKjQWV37g7stRUAPcDiGALCEKHefrDyWn1zM',
-        lang: 'en',
-        placeholder: 'search',
-        limit: 5,
-        autoComplete: true,
-        keepOpen: true
-      });
-      const geocoderSource = GC.getSource();
-      const me = this;
-      GC.on('addresschosen', function (evt) {
-        const coord = evt.coordinate;
-        if (coord) {
-          geocoderSource.clear();
-          geocoderSource.addFeature(evt.feature); // add only the last one
-          me.map.getView().setCenter(coord);
-          me.map.getView().setZoom(9);
-        }
-      });
-      this.map.addControl(GC);
-  }*/
-
-  /*public switchBaseMap(newstyle: string): void {
-      for (let i = 0; i < this.baseLayers.length; ++i) {
-        this.baseLayers[i].setVisible(this.baseMapLayers[i].value === newstyle);
-        if (this.baseMapLayers[i].value === 'World_Imagery' && newstyle === 'Reference/World_Boundaries_and_Places') {
-          this.baseLayers[i].setVisible(true);
-        }
-      }
-
-  }*/
-
-  /*public addControlToMap(control: olControl) {
-    this.map.addControl(control);
-  }*/
 
   /**
    * Register a click handler callback function which is called when there is a click event
@@ -215,9 +176,9 @@ export class CsMapObject {
    * @param layerId the ID of the layer to change opacity
    * @param opacity the value of opacity between 0.0 and 1.0
    */
-  public setLayerOpacity(layerId: string, opacity: number) {
-    if (this.getLayerById(layerId) != null) {
-      const layers: [olLayer] = this.getLayerById(layerId);
+  public setLayerOpacity(layer, opacity: number) {
+    if (this.getLayerById(layer.id) != null) {
+      const layers: [olLayer] = this.getLayerById(layer);
       for (const layer of layers) {
         layer.setOpacity(opacity);
       }
@@ -260,17 +221,17 @@ export class CsMapObject {
     // create accepts PolygonEditOptions object
     this.polygonEditable$ = this.polygonsCesiumEditor.create({
       pointProps: {
-        color: Cesium.Color.CORNFLOWERBLUE.withAlpha(0.95),
-        outlineColor: Cesium.Color.BLACK.withAlpha(0.2),
+        color: Color.CORNFLOWERBLUE.withAlpha(0.95),
+        outlineColor: Color.BLACK.withAlpha(0.2),
         outlineWidth: 1,
         pixelSize: 13,
       },
       polygonProps: {
-        material: Cesium.Color.ALICEBLUE.withAlpha(0.4),
+        material: Color.ALICEBLUE.withAlpha(0.4),
         fill: true,
       },
       polylineProps: {
-        material: () => Cesium.Color.CORNFLOWERBLUE ,
+        material: () => Color.CORNFLOWERBLUE ,
         width: 3,
       },
     });
@@ -303,7 +264,7 @@ export class CsMapObject {
       return null;
     }
     let feature = null;
-    if (polygon.geometryType === Constants.geometryType.MULTIPOLYGON) {
+    if (polygon.geometryType === GeometryType.MULTIPOLYGON) {
       const gmlFormat = new olFormatGML2();
       const gml2 = polygon.raw;
       feature = gmlFormat.readFeatures(gml2, {featureProjection: 'EPSG:3857'})[0];
