@@ -18,6 +18,7 @@ import { OlWMSService } from './service/wms/ol-wms.service';
 import { CsWMSService } from './service/wms/cs-wms.service';
 import { OlWFSService } from './service/wfs/ol-wfs.service';
 import { CsWFSService } from './service/wfs/cs-wfs.service';
+import { CsIrisService } from './service/kml/cs-iris.service';
 import { GMLParserService } from './utility/gmlparser.service';
 import { LegendService } from './service/wms/legend.service';
 import { NotificationService } from './service/toppanel/notification.service';
@@ -51,6 +52,7 @@ import { PolygonsEditorService } from 'angular-cesium';
   providers: [LayerHandlerService,
     OlWMSService,
     CsWMSService,
+    CsIrisService,
     OlMapObject,
     CsMapObject,
     OlWFSService,

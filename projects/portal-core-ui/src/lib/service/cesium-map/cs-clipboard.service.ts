@@ -3,7 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import * as olProj from 'ol/proj';
 import { CsMapObject } from './cs-map-object';
 import olLayerVector from 'ol/layer/Vector';
-import { Constants } from '../../utility/constants.service';
+import { GeometryType } from '../../utility/constants.service';
 
 /**
  * A wrapper around the clipboard object for use in the portal.
@@ -74,7 +74,7 @@ export class CsClipboardService {
           const coords = vector.get('polygonString');
           if ( coords ) {
             const newPolygon = {name: 'manual-' + Math.floor(Math.random() * 1000), srs: 'EPSG:3857',
-                geometryType: Constants.geometryType.POLYGON, coordinates: this.getGeometry(coords), olvector: vector};
+                geometryType: GeometryType.POLYGON, coordinates: this.getGeometry(coords), olvector: vector};
             this.polygonBBox = newPolygon;
             this.polygonsBS.next(this.polygonBBox);
             if (this.vectorOnMap) {
@@ -100,7 +100,7 @@ export class CsClipboardService {
     if (this.polygonBBox !== null && this.polygonBBox.name === newPolygon.name) {
       return;
     }
-    if (newPolygon.geometryType !== Constants.geometryType.MULTIPOLYGON) {
+    if (newPolygon.geometryType !== GeometryType.MULTIPOLYGON) {
       const coordsArray = newPolygon.coordinates.split(' ');
       const coords = [];
       // transform from 'EPSG:4326'to 'EPSG:3857' format
@@ -139,7 +139,7 @@ export class CsClipboardService {
 export interface Polygon {
   name: string;
   srs: string;
-  geometryType: string;
+  geometryType: GeometryType;
   coordinates: string;
   raw?: string;
   olvector?: olLayerVector;

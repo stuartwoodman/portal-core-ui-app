@@ -5,7 +5,7 @@ import olLayerVector from 'ol/layer/Vector';
 import olLayer from 'ol/layer/Layer';
 import olFeature from 'ol/Feature';
 import * as olProj from 'ol/proj';
-import {BehaviorSubject,  Subject } from 'rxjs';
+import {BehaviorSubject, Subject } from 'rxjs';
 import { point } from '@turf/helpers';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import bboxPolygon from '@turf/bbox-polygon';
@@ -14,35 +14,48 @@ import { LayerHandlerService } from '../cswrecords/layer-handler.service';
 import { ManageStateService } from '../permanentlink/manage-state.service';
 import { CsCSWService } from '../wcsw/cs-csw.service';
 import { CsWFSService } from '../wfs/cs-wfs.service';
-import { CsMapObject } from './cs-map-object';
 import { CsWMSService } from '../wms/cs-wms.service';
 import { CsWWWService } from '../www/cs-www.service';
-
-import { MapsManagerService, RectangleEditorObservable } from 'angular-cesium'; 
-
-declare var Cesium;
-
+import { ResourceType } from '../../utility/constants.service';
+import { CsIrisService } from '../kml/cs-iris.service';
+import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, PickOptions, EventResult } from 'angular-cesium';
+import  { ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle,
+   BingMapsImageryProvider, ArcGisMapServerImageryProvider, TileMapServiceImageryProvider } from 'cesium';
 
 /**
- * Wrapper class to provide all things related to the ol map such as adding layer or removing layer.
+ * Wrapper class to provide all things related to the drawing of polygons and bounding boxes in CesiumJS
  */
 @Injectable()
 export class CsMapService {
 
-   // VT: a storage to keep track of the layers that have been added to the map. This is use to handle click events.
-   private layerModelList: { [key: string]: LayerModel; } = {};
-   private addLayerSubject: Subject<LayerModel>;
+  // VT: a storage to keep track of the layers that have been added to the map. This is use to handle click events.
+  private layerModelList: { [key: string]: LayerModel; } = {};
+  private addLayerSubject: Subject<LayerModel>;
 
-   private clickedLayerListBS = new BehaviorSubject<any>({});
+  private clickedLayerListBS = new BehaviorSubject<any>({});
+  // Cesium map
+  private map;
 
-   constructor(private layerHandlerService: LayerHandlerService, private csWMSService: CsWMSService,
-     private csWFSService: CsWFSService, private csMapObject: CsMapObject, private manageStateService: ManageStateService,
-     private csCSWService: CsCSWService, private csWWWService: CsWWWService, private mapsManagerService: MapsManagerService,
-     @Inject('env') private env, @Inject('conf') private conf) {
+  constructor(private layerHandlerService: LayerHandlerService, private csWMSService: CsWMSService,
+    private csWFSService: CsWFSService, private manageStateService: ManageStateService,
+    private csCSWService: CsCSWService, private csWWWService: CsWWWService, 
+    private csIrisService: CsIrisService, private mapsManagerService: MapsManagerService,
+    @Inject('env') private env, @Inject('conf') private conf)  {
 
-     this.csMapObject.registerClickHandler(this.mapClickHandler.bind(this));
-     this.addLayerSubject = new Subject<LayerModel>();
-   }
+    this.addLayerSubject = new Subject<LayerModel>();
+    }
+
+  init() {
+    this.map = this.mapsManagerService.getMap();
+    const eventRegistration: EventRegistrationInput = {
+      event: CesiumEvent.LEFT_CLICK, // Left mouse click
+      pick: PickOptions.PICK_ONE // If lots of things are picked a 'picker' will help you choose one
+    };
+    const mapEventManager = this.mapsManagerService.getMap().getMapEventsManager();
+    const clickEvent = mapEventManager.register(eventRegistration).subscribe((result) => {
+      this.mapClickHandler(result);
+    });
+  }
 
   /**
    * get a observable subject that triggers an event whenever a map is clicked on
@@ -57,26 +70,25 @@ export class CsMapService {
     * Gets called when a map click event is recognised
     * @param pixel coordinates of clicked on pixel (units: pixels)
     */
-   public mapClickHandler(pixel: number[]) {
+   public mapClickHandler(eventResult: EventResult) {
       try {
+           const pixel = eventResult.movement.startPosition;
            // Convert pixel coords to map coords
-           const map = this.csMapObject.getMap();
-           const clickCoord = map.getCoordinateFromPixel(pixel);
+           const clickCoord = []; // FIXME this.map.getCoordinateFromPixel(pixel);
            const lonlat = olProj.transform(clickCoord, 'EPSG:3857', 'EPSG:4326');
            const clickPoint = point(lonlat);
 
            // Compile a list of clicked on layers
-           // NOTO BENE: forEachLayerAtPixel() cannot be used because it causes CORS problems
-           const activeLayers = this.csMapObject.getLayers();
+           const activeLayers = [] // this.map.getLayers(); // FIXME
            const clickedLayerList: olLayer[] = [];
-           const layerColl = map.getLayers();
+           const layerColl = this.map.getLayers(); // FIXME
            const me = this;
            layerColl.forEach(function(layer) {
                for (const layerId in activeLayers) {
                    for (const activeLayer of activeLayers[layerId]) {
                        if (layer === activeLayer) {
                            const layerModel = me.getLayerModel(layerId);
-                           if (!me.layerHandlerService.containsWMS(layerModel)) {
+                           if (!me.layerHandlerService.contains(layerModel, ResourceType.WMS)) {
                              continue;
                            }
                            const bbox = activeLayer.onlineResource.geographicElements[0];
@@ -92,13 +104,13 @@ export class CsMapService {
 
            // Compile a list of clicked on features
            const clickedFeatureList: olFeature[] = [];
-           const featureHit = map.forEachFeatureAtPixel(pixel, function(feature) {
+           /*const featureHit = this.map.forEachFeatureAtPixel(pixel, function(feature) {  // FIXME
               // LJ: skip the olFeature
               if (feature.get('bClipboardVector')) {
                 return;
               }
               clickedFeatureList.push(feature);
-           });
+           });*/
 
            this.clickedLayerListBS.next({
              clickedFeatureList: clickedFeatureList,
@@ -121,9 +133,8 @@ export class CsMapService {
   public getCSWRecordsForExtent(extent: olExtent): CSWRecordModel[] {
     const intersectedCSWRecordList: CSWRecordModel[] = [];
     extent = olProj.transformExtent(extent, 'EPSG:3857', 'EPSG:4326');
-    const groupLayers = this.csMapObject.getLayers();
-    const map = this.csMapObject.getMap();
-    const mapLayerColl = map.getLayers();
+    const groupLayers = [] // this.map.getLayers(); // FIXME
+    const mapLayerColl = []; // this.map.getLayers(); // FIXME
     const me = this;
     mapLayerColl.forEach(function(layer) {
        for (const layerId in groupLayers) {
@@ -159,30 +170,58 @@ export class CsMapService {
    * Add layer to the wms
    * @param layer the layer to add to the map
    */
-   public addLayer(layer: LayerModel, param: any): void {
-     this.csMapObject.removeLayerById(layer.id);
-     delete this.layerModelList[layer.id];
-     if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
-       this.csCSWService.addLayer(layer, param);
-       this.cacheLayerModelList(layer.id, layer);
-     } else if (this.layerHandlerService.containsWMS(layer)) {
-       this.csWMSService.addLayer(layer, param);
-       this.cacheLayerModelList(layer.id, layer);
-     } else if (this.layerHandlerService.containsWFS(layer)) {
-       this.csWFSService.addLayer(layer, param);
-       this.layerModelList[layer.id] = layer;
-     } else if (this.layerHandlerService.containsWWW(layer)) {
-       this.csWWWService.addLayer(layer, param);
-       this.layerModelList[layer.id] = layer;
-     } else {
-       throw new Error('No Suitable service found');
-     }
-   }
+  public addLayer(layer: LayerModel, param: any): void {
 
-   private cacheLayerModelList(id: string, layer: LayerModel) {
-     this.layerModelList[layer.id] = layer;
-     this.addLayerSubject.next(layer);
-   }
+    // Add a CSW layer to map
+    if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
+      // FIXME this.csCSWService.addLayer(layer, param);
+      // FIXME this.cacheLayerModelList(layer.id, layer);
+
+    // Add a WMS layer to map
+    } else if (this.layerHandlerService.contains(layer, ResourceType.WMS)) {
+      // Remove old existing layer
+      if (this.layerExists(layer.id)) {
+        this.csWMSService.rmLayer(layer);
+        delete this.layerModelList[layer.id];
+      }
+      // Add layer
+      this.csWMSService.addLayer(layer, param);
+      this.cacheLayerModelList(layer.id, layer);
+
+     // Add a WFS layer to map
+     } else if (this.layerHandlerService.contains(layer, ResourceType.WFS)) {
+       // FIXME this.csWFSService.addLayer(layer, param);
+       // FIXME this.layerModelList[layer.id] = layer;
+
+     // Add a WWW layer to map
+     } else if (this.layerHandlerService.contains(layer, ResourceType.WWW)) {
+       // FIXME this.csWWWService.addLayer(layer, param);
+       // FIXME this.layerModelList[layer.id] = layer;
+
+     } else if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
+      // Remove old existing layer
+      if (this.layerExists(layer.id)) {
+        this.csIrisService.rmLayer(layer);
+        delete this.layerModelList[layer.id];
+      }
+      // Add layer
+      this.csIrisService.addLayer(layer, param);
+      this.cacheLayerModelList(layer.id, layer);
+
+    } else {
+      throw new Error('No Suitable service found');
+    }
+  }
+
+  /**
+   * Add new layer to layer model list
+   * @param id layer id
+   * @param layer layer
+   */
+  private cacheLayerModelList(id: string, layer: LayerModel) {
+    this.layerModelList[layer.id] = layer;
+    this.addLayerSubject.next(layer);
+  }
 
    /**
     *  In the event we have custom layer that is handled outside olMapService, we will want to register that layer here so that
@@ -219,7 +258,11 @@ export class CsMapService {
    */
   public removeLayer(layer: LayerModel): void {
       this.manageStateService.removeLayer(layer.id);
-      this.csMapObject.removeLayerById(layer.id);
+      if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
+        this.csIrisService.rmLayer(layer);
+      } else {
+        this.csWMSService.rmLayer(layer);
+      }
       delete this.layerModelList[layer.id];
   }
 
@@ -246,24 +289,13 @@ export class CsMapService {
     }
   }
 
-  /*
-   * Set the layer hidden property
-   */
-  public setLayerVisibility(layerId: string, visible: boolean) {
-    this.layerModelList[layerId].hidden = !visible;
-    this.csMapObject.setLayerVisibility(layerId, visible);
-  }
-
   /**
    * Set the opacity of a layer
    * @param layerId the ID of the layer to change opacity
    * @param opacity the value of opacity between 0.0 and 1.0
    */
-  public setLayerOpacity(layerId: string, opacity: number) {
-    const viewer = this.mapsManagerService.getMap().getCesiumViewer();
-    const imageLayer = viewer.imageryLayers.get(1);
-    imageLayer.alpha = opacity;
-    // this.csMapObject.setLayerOpacity(layerId, opacity);
+  public setLayerOpacity(layer: LayerModel, opacity: number) {
+    this.csWMSService.setOpacity(layer, opacity);
   }
 
   /**
@@ -278,36 +310,25 @@ export class CsMapService {
   }
 
   /**
-   * Set or modify a layer's source parameter.
-   * For example, to change the time position of a WMS layer:
-   *    setLayerSourceParam('TIME', '2003-08-08T00:00:00.000Z');
-   * @param param the source parameter name
-   * @param value the new source parameter value
-   */
-  public setLayerSourceParam(layerId: string, param: string, value: any) {
-    this.csMapObject.setLayerSourceParam(layerId, param, value);
-  }
-
-  /**
    * Fit the map to the extent that is provided
    * @param extent An array of numbers representing an extent: [minx, miny, maxx, maxy]
    */
   public fitView(extent: [number, number, number, number]): void {
-      this.csMapObject.getMap().getView().fit(extent);
+      // FIXME this.map.getMap().getView().fit(extent);
   }
 
   /**
    * Zoom the map in one level
    */
   public zoomMapIn(): void {
-    this.csMapObject.zoomIn();
+    // FIXME this.csMapObject.zoomIn();
   }
 
   /**
    * Zoom the map out one level
    */
   public zoomMapOut(): void {
-    this.csMapObject.zoomOut();
+    // FIXME this.csMapObject.zoomOut();
   }
 
   /**
@@ -323,7 +344,8 @@ export class CsMapService {
     * @returns the layer vector on which the dot is drawn on. This provides a handle for the dot to be deleted
     */
   public drawDot(coord): olLayerVector {
-    return this.csMapObject.drawDot(coord);
+    // FIXME return this.csMapObject.drawDot(coord);
+    return null;
   }
 
   /**
@@ -331,7 +353,8 @@ export class CsMapService {
   * @returns the polygon coordinates string BS on which the polygon is drawn on.
   */
   public drawPolygon(): BehaviorSubject<olLayerVector> {
-    return this.csMapObject.drawPolygon();
+    // FIXME return this.csMapObject.drawPolygon();
+    return null;
   }
 
   /**
@@ -339,7 +362,7 @@ export class CsMapService {
    * @param the vector layer to be removed
    */
   public removeVector(vector: olLayerVector) {
-    this.csMapObject.removeVector(vector);
+    // FIXME this.csMapObject.removeVector(vector);
   }
 
   /**
@@ -347,7 +370,8 @@ export class CsMapService {
    * @returns the map extent
    */
   public getMapExtent(): olExtent {
-    return this.csMapObject.getMapExtent();
+    // FIXME return this.csMapObject.getMapExtent();
+    return null;
   }
 
   /**
@@ -357,14 +381,14 @@ export class CsMapService {
    * the extent before it is removed. If not supplied the extent will not be removed.
    */
   public displayExtent(extent: olExtent, duration?: number) {
-    this.csMapObject.displayExtent(extent, duration);
+    // FIXME this.csMapObject.displayExtent(extent, duration);
   }
 
   /**
    * Call updateSize on map to handle scale changes
    */
   public updateSize() {
-    this.csMapObject.updateSize();
+    // FIXME this.csMapObject.updateSize();
   }
 
   /**
@@ -375,6 +399,8 @@ export class CsMapService {
     // this.csMapObject.switchBaseMap(baseMap);
   }
 
+
+ 
   /**
    * Create a list of base maps from the environment file
    */
@@ -384,48 +410,48 @@ export class CsMapService {
     for (const layer of this.env.baseMapLayers) {
       if (layer.layerType === 'OSM') {
         baseMapLayers.push(
-          new Cesium.ProviderViewModel({
+          new ProviderViewModel({
             name: layer.viewValue,
-            iconUrl: Cesium.buildModuleUrl(
+            iconUrl: buildModuleUrl(
               'Widgets/Images/ImageryProviders/openStreetMap.png'
             ),
             tooltip: layer.tooltip,
             creationFunction() {
-              return new Cesium.OpenStreetMapImageryProvider({
+              return new OpenStreetMapImageryProvider({
                 url: 'https://a.tile.openstreetmap.org/',
               });
             },
           })
         );
       } else if (layer.layerType === 'Bing' && this.env.hasOwnProperty('bingMapsKey') && this.env.bingMapsKey.trim()) {
-        let bingMapsStyle = Cesium.BingMapsStyle.AERIAL;
+        let bingMapsStyle = BingMapsStyle.AERIAL;
         let bingMapsIcon = '';
         switch (layer.value) {
           case 'Aerial':
-            bingMapsStyle = Cesium.BingMapsStyle.AERIAL;
+            bingMapsStyle = BingMapsStyle.AERIAL;
             bingMapsIcon = 'bingAerial.png';
             break;
           case 'AerialWithLabels':
-            bingMapsStyle = Cesium.BingMapsStyle.AERIAL_WITH_LABELS;
+            bingMapsStyle = BingMapsStyle.AERIAL_WITH_LABELS;
             bingMapsIcon = 'bingAerialLabels.png';
             break;
           case 'Road':
           default:
-            bingMapsStyle = Cesium.BingMapsStyle.ROAD;
+            bingMapsStyle = BingMapsStyle.ROAD;
             bingMapsIcon = 'bingRoads.png';
             break;
         }
         baseMapLayers.push(
-          new Cesium.ProviderViewModel({
+          new ProviderViewModel({
             name: layer.viewValue,
-            iconUrl: Cesium.buildModuleUrl('Widgets/Images/ImageryProviders/' + bingMapsIcon),
+            iconUrl: buildModuleUrl('Widgets/Images/ImageryProviders/' + bingMapsIcon),
             tooltip: layer.tooltip,
             creationFunction() {
-              return new Cesium.BingMapsImageryProvider({
+              return new BingMapsImageryProvider({
                 url: 'https://dev.virtualearth.net',
                 key: me.env.bingMapsKey,
                 mapStyle: bingMapsStyle,
-                defaultAlpha: 1.0,
+                // defaultAlpha: 1.0,
               });
             },
           })
@@ -463,12 +489,12 @@ export class CsMapService {
             break;
         }
         baseMapLayers.push(
-          new Cesium.ProviderViewModel({
+          new ProviderViewModel({
             name: layer.viewValue,
-            iconUrl: Cesium.buildModuleUrl('Widgets/Images/ImageryProviders/' + esriIcon),
+            iconUrl: buildModuleUrl('Widgets/Images/ImageryProviders/' + esriIcon),
             tooltip: layer.tooltip,
             creationFunction() {
-              return new Cesium.ArcGisMapServerImageryProvider({
+              return new ArcGisMapServerImageryProvider({
                 url: esriUrl,
               });
             },
@@ -476,13 +502,13 @@ export class CsMapService {
         );
       } else if (layer.layerType === 'NEII') {
         baseMapLayers.push(
-          new Cesium.ProviderViewModel({
+          new ProviderViewModel({
             name: layer.viewValue,
-            iconUrl: Cesium.buildModuleUrl('Widgets/Images/ImageryProviders/naturalEarthII.png'),
+            iconUrl: buildModuleUrl('Widgets/Images/ImageryProviders/naturalEarthII.png'),
             tooltip: layer.tooltip,
             creationFunction() {
-              return new Cesium.TileMapServiceImageryProvider({
-                url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII'),
+              return new TileMapServiceImageryProvider({
+                url: buildModuleUrl('Assets/Textures/NaturalEarthII'),
               });
             },
           })

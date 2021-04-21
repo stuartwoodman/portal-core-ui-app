@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 
 import { SimpleXMLService } from './simplexml.service';
-
-import { Constants } from './constants.service';
+import { Constants, GeometryType } from './constants.service';
 import { UtilitiesService } from './utilities.service';
 
 // import { UtilitiesService } from '';
@@ -132,7 +131,7 @@ export class GMLParserService {
             description: description,
             srsName: srsName,
             coords: parsedCoordList,
-            geometryType : Constants.geometryType.LINESTRING,
+            geometryType : GeometryType.LINESTRING,
             featureNode: featureNode
         };
     }
@@ -154,7 +153,7 @@ export class GMLParserService {
             name: name,
             srs: srsName,
             coordinates: parsedGeom,
-            geometryType : Constants.geometryType.MULTIPOLYGON,
+            geometryType : GeometryType.MULTIPOLYGON,
         };
 
 
@@ -189,7 +188,7 @@ export class GMLParserService {
             description: description,
             srsName: srsName,
             coords: parsedCoordList,
-            geometryType : Constants.geometryType.POLYGON,
+            geometryType : GeometryType.POLYGON,
             featureNode: featureNode
         };
 
@@ -226,7 +225,7 @@ export class GMLParserService {
             description: description,
             srsName: srsName,
             coords: point,
-            geometryType : Constants.geometryType.POINT,
+            geometryType : GeometryType.POINT,
             featureNode: featureNode
         };
 
@@ -262,7 +261,7 @@ export class GMLParserService {
             description: description,
             srsName:srsName,
             coords: point,
-            geometryType : Constants.geometryType.POINT
+            geometryType : GeometryType.POINT
         }
      */
     makePrimitives(rootNode: any): any {

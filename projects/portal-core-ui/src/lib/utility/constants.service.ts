@@ -3,48 +3,42 @@ import { Injectable } from '@angular/core';
 declare var window: any;
 declare var XPathResult: any;
 
+export enum ResourceType {
+  WMS = "WMS",
+  WFS = "WFS",
+  WCS = "WCS",
+  WWW = "WWW",
+  OPeNDAP = "OPeNDAP",
+  FTP = "FTP",
+  SOS = "SOS",
+  IRIS = "IRIS",
+  CSWService = "CSWService",
+  NCSS = "NCSS",
+  UNSUPPORTED = 'Unsupported',
+  OTHERS = 'OTHERS'
+}
+
+export enum GeometryType {
+  POINT = "POINT",
+  LINESTRING = "LINESTRING",
+  POLYGON = "POLYGON",
+  MULTIPOLYGON = "MULTIPOLYGON"
+};
+  
+
 /**
- * Constances
+ * Constants
  */
 // @dynamic
 @Injectable()
 export class Constants {
 
-     public static resourceType = {
-        WMS: 'WMS',
-        WFS: 'WFS',
-        WCS: 'WCS',
-        WWW: 'WWW',
-        OPeNDAP : 'OPeNDAP',
-        FTP : 'FTP',
-        SOS : 'SOS',
-        IRIS : 'IRIS',
-        CSWService : 'CSWService',
-        NCSS : 'NCSS',
-        UNSUPPORTED : 'Unsupported',
-        OTHERS: 'OTHERS'
-    };
-
-     public static WMSVersion = {
-        '1.1.1': '1.1.1',
-        '1.1.0': '1.1.0',
-        '1.3.0': '1.3.0'
-    };
-
-     public static geometryType = {
-        'POINT': 'POINT',
-        'LINESTRING': 'LINESTRING',
-        'POLYGON': 'POLYGON',
-        'MULTIPOLYGON': 'MULTIPOLYGON'
-    };
-
-
-     public static analyticLoader = {
+    public static analyticLoader = {
         'capdf-hydrogeochem' : 'views/analytic/capdf-hydrogeochem.htm',
         'pressuredb-borehole' : 'views/analytic/pressureDb.htm'
     };
 
-     public static rendererLoader = {
+    public static rendererLoader = {
         'nvcl-borehole': 'WFSService',
         'gsml-borehole': 'WFSService',
         'mineral-tenements' : 'WMSService'
@@ -87,10 +81,12 @@ export class Constants {
     ['http://maps.google.com/mapfiles/kml/paddle/orange-blank.png', 'orange'],
     ['http://maps.google.com/mapfiles/kml/paddle/purple-blank.png', 'purple'],
     ['http://maps.google.com/mapfiles/kml/paddle/purple-circle.png', 'purple']];
+
     public static getRandomPaddle(): string {
       const random = Math.floor(Math.random() * Constants.paddlesList.length);
       return Constants.paddlesList[random][0];
     }
+
     public static getMatchingPolygonColor(iconUrl: string): string {
       for (const list of Constants.paddlesList) {
         if (iconUrl === list[0]) {
