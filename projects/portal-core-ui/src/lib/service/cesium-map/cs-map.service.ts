@@ -18,7 +18,7 @@ import { CsMapObject } from './cs-map-object';
 import { CsWMSService } from '../wms/cs-wms.service';
 import { CsWWWService } from '../www/cs-www.service';
 
-import { MapsManagerService } from 'angular-cesium';
+import { MapsManagerService, RectangleEditorObservable } from 'angular-cesium'; 
 
 declare var Cesium;
 
@@ -314,7 +314,7 @@ export class CsMapService {
    * DrawBound
    * @returns a observable object that triggers an event when the user have completed the task
    */
-  public drawBound(): Subject<olLayerVector> {
+  public drawBound(): RectangleEditorObservable {
     return this.csMapObject.drawBox();
   }
 
