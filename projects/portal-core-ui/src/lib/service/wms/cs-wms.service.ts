@@ -146,7 +146,7 @@ export class CsWMSService {
 
     // For ArcGIS mineral tenements layer we can get SLD_BODY parameter locally
     if (UtilitiesService.isArcGIS(onlineResource) && onlineResource.name === 'MineralTenement') {
-      return Observable.create(observer => {
+      return new Observable(observer => {
         param.styles = 'mineralTenementStyle';
         const x = MinTenemStyleService.getMineralTenementsSld(onlineResource.name, param.styles, param.ccProperty);
         observer.next(x);
@@ -155,7 +155,7 @@ export class CsWMSService {
     }
 
     if (!sldUrl) {
-      return Observable.create(observer => {
+      return new Observable(observer => {
         observer.next(null);
         observer.complete();
       });
@@ -402,115 +402,104 @@ export class CsWMSService {
         let wmsImagProv;
 
         // Set up WMS service
-        if (!UtilitiesService.isArcGIS(wmsOnlineResource)) {
-          if (!usePost) {
-            wmsImagProv = new WebMapServiceImageryProvider({
-              url: url,
-              layers: wmsOnlineResource.name,
-              parameters: params
-            });
-          } else {
-
-            // Keep old function call
-            let oldCreateImage = (Resource as any)._Implementations.createImage;
-            
-            // Overwrite CesiumJS 'createImage' function to allow us to do 'POST' requests via a proxy
-            // If there is a 'usepost' parameter in the URL, then 'POST' via proxy else uses standard 'GET'
-            // TODO: Implement a Resource constructor parameter instead of 'usepost'
-            (Resource as any)._Implementations.createImage = function (request, crossOrigin, deferred, flipY, preferImageBitmap) {
-              const url = request.url;
-              const jURL = new URL(url);
-              // If there's no 'usepost' parameter then call the old 'createImage' method which uses 'GET'
-              if (!jURL.searchParams.has('usepost')) {
-                return oldCreateImage(request, crossOrigin, deferred, flipY, preferImageBitmap);
-              }
-              // Initiate loading WMS tiles via POST & a proxy
-              (Resource as any).supportsImageBitmapOptions()
-                .then(function (supportsImageBitmap) {
-                  var responseType = "blob";
-                  let method = "POST";
-                  var xhrDeferred = when.defer();
-                  // Assemble parameters into a form for 'POST' request
-                  const postForm = new FormData();
-                  postForm.append('service', 'WMS');
-                  jURL.searchParams.forEach(function(val, key) {
-                    if (key == 'url') {
-                      postForm.append('url', val.split('?')[0]+'?service=WMS');
-                      let kvp = val.split('?')[1];
-                      if (kvp) {
-                        me.paramSubst(kvp.split('=')[0], kvp.split('=')[1], postForm);
-                      }
-                    } else {
-                      me.paramSubst(key, val, postForm);
-                    }
-                  });
-                  
-                  const newURL = jURL.origin + jURL.pathname;
-                  // Initiate request 
-                  var xhr = (Resource as any)._Implementations.loadWithXhr(
-                    newURL,
-                    responseType,
-                    method,
-                    postForm,
-                    undefined,
-                    xhrDeferred,
-                    undefined,
-                    undefined,
-                    undefined
-                  );
-            
-                  if (xhr && xhr.abort) {
-                    request.cancelFunction = function () {
-                      xhr.abort();
-                    };
-                  }
-                  return xhrDeferred.promise
-                    .then(function (blob) {
-                      if (!blob) {
-                        deferred.reject(
-                          new Error(
-                            "Successfully retrieved " +
-                              url +
-                              " but it contained no content."
-                          )
-                        );
-                        return;
-                      }
-                      return (Resource as any).createImageBitmapFromBlob(blob, {
-                        flipY: flipY,
-                        premultiplyAlpha: false,
-                      });
-                    })
-                    .then(deferred.resolve);
-                })
-                .otherwise(deferred.reject);
-            };
-            /* End of 'createImage' overwrite */
-
-            // Create a resource which uses our custom proxy
-            const res = new Resource({url: url, proxy: new MyDefaultProxy(me.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=')});
-            
-            // Force Resource to use 'POST' and our proxy
-            params['usepost'] = true;
-            wmsImagProv = new WebMapServiceImageryProvider({
-              url: res,
-              layers: wmsOnlineResource.name,
-              parameters: params
-            });
-          }
-          
-        } else {
+        if (!usePost || UtilitiesService.isArcGIS(wmsOnlineResource) ) {
           // NB: ArcGisMapServerImageryProvider does not allow additional parameters for ArcGIS, i.e. no styling
-          // So we use WebMapServiceImageryProvider instead 
+          // So we use a normal GET request & WebMapServiceImageryProvider instead
           wmsImagProv = new WebMapServiceImageryProvider({
             url: url,
             layers: wmsOnlineResource.name,
-            parameters: {
-              transparent: true,
-              format: "image/png"
+            parameters: params
+          });
+        } else {
+
+          // Keep old function call
+          let oldCreateImage = (Resource as any)._Implementations.createImage;
+          
+          // Overwrite CesiumJS 'createImage' function to allow us to do 'POST' requests via a proxy
+          // If there is a 'usepost' parameter in the URL, then 'POST' via proxy else uses standard 'GET'
+          // TODO: Implement a Resource constructor parameter instead of 'usepost'
+          (Resource as any)._Implementations.createImage = function (request, crossOrigin, deferred, flipY, preferImageBitmap) {
+            const url = request.url;
+            const jURL = new URL(url);
+            // If there's no 'usepost' parameter then call the old 'createImage' method which uses 'GET'
+            if (!jURL.searchParams.has('usepost')) {
+              return oldCreateImage(request, crossOrigin, deferred, flipY, preferImageBitmap);
             }
+            // Initiate loading WMS tiles via POST & a proxy
+            (Resource as any).supportsImageBitmapOptions()
+              .then(function (supportsImageBitmap) {
+                var responseType = "blob";
+                let method = "POST";
+                var xhrDeferred = when.defer();
+                // Assemble parameters into a form for 'POST' request
+                const postForm = new FormData();
+                postForm.append('service', 'WMS');
+                jURL.searchParams.forEach(function(val, key) {
+                  if (key == 'url') {
+                    postForm.append('url', val.split('?')[0]+'?service=WMS');
+                    let kvp = val.split('?')[1];
+                    if (kvp) {
+                      me.paramSubst(kvp.split('=')[0], kvp.split('=')[1], postForm);
+                    }
+                  } else {
+                    me.paramSubst(key, val, postForm);
+                  }
+                });
+                
+                const newURL = jURL.origin + jURL.pathname;
+                // Initiate request 
+                var xhr = (Resource as any)._Implementations.loadWithXhr(
+                  newURL,
+                  responseType,
+                  method,
+                  postForm,
+                  undefined,
+                  xhrDeferred,
+                  undefined,
+                  undefined,
+                  undefined
+                );
+          
+                if (xhr && xhr.abort) {
+                  request.cancelFunction = function () {
+                    xhr.abort();
+                  };
+                }
+                return xhrDeferred.promise
+                  .then(function (blob) {
+                    if (!blob) {
+                      deferred.reject(
+                        new Error(
+                          "Successfully retrieved " +
+                            url +
+                            " but it contained no content."
+                        )
+                      );
+                      return;
+                    }
+                    return (Resource as any).createImageBitmapFromBlob(blob, {
+                      flipY: flipY,
+                      premultiplyAlpha: false,
+                    });
+                  })
+                  .then(deferred.resolve);
+              })
+              .otherwise(deferred.reject);
+          };
+          /* End of 'createImage' overwrite */
+
+          // Create a resource which uses our custom proxy
+          const res = new Resource({url: url, proxy: new MyDefaultProxy(me.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=')});
+          
+          // Force Resource to use 'POST' and our proxy
+          params['usepost'] = true;
+          wmsImagProv = new WebMapServiceImageryProvider({
+            url: res,
+            layers: wmsOnlineResource.name,
+            parameters: params
           });
         }
+
         wmsImagProv.errorEvent.addEventListener(this.errorEvent);
         const imgLayer = viewer.imageryLayers.addImageryProvider(wmsImagProv);
         return imgLayer;
