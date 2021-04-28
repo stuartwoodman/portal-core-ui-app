@@ -14,13 +14,12 @@ import { LayerHandlerService } from '../cswrecords/layer-handler.service';
 import { ManageStateService } from '../permanentlink/manage-state.service';
 import { CsCSWService } from '../wcsw/cs-csw.service';
 import { CsWFSService } from '../wfs/cs-wfs.service';
+import { CsMapObject } from './cs-map-object';
 import { CsWMSService } from '../wms/cs-wms.service';
 import { CsWWWService } from '../www/cs-www.service';
 import { ResourceType } from '../../utility/constants.service';
 import { CsIrisService } from '../kml/cs-iris.service';
-
-import { MapsManagerService, EventRegistrationInput, CesiumEvent, PickOptions, EventResult } from 'angular-cesium';
-
+import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, PickOptions, EventResult } from 'angular-cesium';
 import  { ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle,
    BingMapsImageryProvider, ArcGisMapServerImageryProvider, TileMapServiceImageryProvider } from 'cesium';
 
@@ -39,13 +38,14 @@ export class CsMapService {
   private map;
 
   constructor(private layerHandlerService: LayerHandlerService, private csWMSService: CsWMSService,
-    private csWFSService: CsWFSService, private manageStateService: ManageStateService,
+    private csWFSService: CsWFSService, private csMapObject: CsMapObject, private manageStateService: ManageStateService,
     private csCSWService: CsCSWService, private csWWWService: CsWWWService, 
     private csIrisService: CsIrisService, private mapsManagerService: MapsManagerService,
     @Inject('env') private env, @Inject('conf') private conf)  {
-
+    
+    this.csMapObject.registerClickHandler(this.mapClickHandler.bind(this));
     this.addLayerSubject = new Subject<LayerModel>();
-    }
+  }
 
   init() {
     this.map = this.mapsManagerService.getMap();
@@ -337,9 +337,8 @@ export class CsMapService {
    * DrawBound
    * @returns a observable object that triggers an event when the user have completed the task
    */
-  public drawBound(): Subject<olLayerVector> {
-    // FIXME return this.csMapObject.drawBox();
-    return null;
+  public drawBound(): RectangleEditorObservable {
+    return this.csMapObject.drawBox();
   }
 
   /**

@@ -29,8 +29,11 @@ import {unByKey} from 'ol/Observable';
 import { Subject , BehaviorSubject} from 'rxjs';
 //import * as G from 'ol-geocoder';
 import { getVectorContext } from 'ol/render';
-import { CoordinateConverter, EditActions, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService } from 'angular-cesium';
+
+import { CoordinateConverter, EditActions, PolygonEditorObservable, 
+    PolygonEditUpdate, PolygonsEditorService, RectangleEditorObservable, RectanglesEditorService } from 'angular-cesium';
 import { Color } from 'cesium';
+
 
 /**
  * A wrapper around the openlayer object for use in the portal.
@@ -44,7 +47,8 @@ export class CsMapObject {
   private ignoreMapClick = false;
   private polygonEditable$:PolygonEditorObservable;
 
-  constructor(private renderStatusService: RenderStatusService, private polygonsCesiumEditor: PolygonsEditorService, @Inject('env') private env) {
+  constructor(private renderStatusService: RenderStatusService, private rectangleEditor: RectanglesEditorService, 
+      private polygonsCesiumEditor: PolygonsEditorService, @Inject('env') private env) {
 
     this.groupLayer = {};
     /*this.map = new olMap({
@@ -306,34 +310,8 @@ export class CsMapObject {
  * Method for drawing a box on the map. e.g selecting a bounding box on the map
  * @returns a observable object that triggers an event when the user complete the drawing
  */
-  public drawBox(): Subject<olLayerVector> {
-    this.ignoreMapClick = true;
-    const source = new olSourceVector({wrapX: false});
-
-    const vector = new olLayerVector({
-      source: source
-    });
-
-    const vectorBS = new Subject<olLayerVector>();
-
-
-    this.map.addLayer(vector);
-    const draw = new olDraw({
-      source: source,
-      type: /** @type {ol.geom.GeometryType} */ ('Circle'),
-      geometryFunction: createBox()
-    });
-    const me = this;
-    draw.on('drawend', function() {
-      me.map.removeInteraction(draw);
-      setTimeout(function() {
-        me.map.removeLayer(vector);
-        vectorBS.next(vector);
-        me.ignoreMapClick = false;
-      }, 500);
-    });
-    this.map.addInteraction(draw);
-    return vectorBS;
+  public drawBox(): RectangleEditorObservable {
+    return this.rectangleEditor.create();
   }
 
   /**
