@@ -173,6 +173,10 @@ export class CsMapService {
    * @param layer the layer to add to the map
    */
   public addLayer(layer: LayerModel, param: any): void {
+    // initiate csLayers to prevent undefined errors
+    if (!layer.csLayers) {
+       layer.csLayers = [];
+    }
 
     // Add a CSW layer to map
     if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
