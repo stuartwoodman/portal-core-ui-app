@@ -32,7 +32,7 @@ import { getVectorContext } from 'ol/render';
 
 import { CoordinateConverter, EditActions, PolygonEditorObservable, 
     PolygonEditUpdate, PolygonsEditorService, RectangleEditorObservable, RectanglesEditorService } from 'angular-cesium';
-import { Color } from 'cesium';
+import { Cartesian3, Color, Ellipsoid } from 'cesium';
 
 
 /**
@@ -232,7 +232,7 @@ export class CsMapObject {
       },
       polygonProps: {
         material: Color.ALICEBLUE.withAlpha(0.4),
-        fill: true,
+        fill: false,
       },
       polylineProps: {
         material: () => Color.CORNFLOWERBLUE ,
@@ -243,11 +243,14 @@ export class CsMapObject {
     
     this.polygonEditable$.subscribe((editUpdate: PolygonEditUpdate) => {
       if (editUpdate.editAction === EditActions.ADD_LAST_POINT) {
-        const coords = this.polygonEditable$.getCurrentPoints()
-          .map(p => p.getPosition())
-            .map(cart => CoordinateConverter.cartesian3ToLatLon(cart))
-              .map(latLon => [latLon.lon, latLon.lat]);
-        const coordString = coords.join(' ');
+        const cartesian3 = this.polygonEditable$.getCurrentPoints()
+          .map(p => p.getPosition());
+        
+        cartesian3.push(cartesian3[0])
+        const coords = cartesian3
+            .map(cart => Ellipsoid.WGS84.cartesianToCartographic(<Cartesian3>cart))
+              .map(latLon => [latLon.latitude * 180/Math.PI , latLon.longitude * 180/Math.PI]);
+        var coordString = coords.join(' ');               
         vector.set('polygonString', coordString);
         vectorBS.next(vector);
        }

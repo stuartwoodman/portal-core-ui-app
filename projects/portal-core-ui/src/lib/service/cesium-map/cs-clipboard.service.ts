@@ -47,23 +47,24 @@ export class CsClipboardService {
     this.bFilterLayers = !this.bFilterLayers ;
     this.filterLayersBS.next(this.bFilterLayers );
   }
+
   public getGeometry(coords: String): any {
-    const geometry = '<gml:MultiPolygon srsName=\"urn:ogc:def:crs:EPSG::3857\">' +
-    '<gml:polygonMember>' +
-    '<gml:Polygon srsName=\"EPSG:3857\">' +
-    '<gml:outerBoundaryIs>' +
-    '<gml:LinearRing>' +
-    '<gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">' +
-    coords +
-    '</gml:coordinates>' +
-    '</gml:LinearRing>' +
-    '</gml:outerBoundaryIs>' +
-    '</gml:Polygon>' +
-    '</gml:polygonMember>' +
-    '</gml:MultiPolygon>';
+    const geometry = 
+      '<gml:MultiPolygon srsName=\"urn:ogc:def:crs:EPSG::4326\">' +
+        '<gml:polygonMember>' +
+          '<gml:Polygon srsName=\"EPSG:4326\">' +
+            '<gml:outerBoundaryIs>' +
+              '<gml:LinearRing>' +
+                '<gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">' +
+                  coords +
+                '</gml:coordinates>' +
+              '</gml:LinearRing>' +
+            '</gml:outerBoundaryIs>' +
+          '</gml:Polygon>' +
+        '</gml:polygonMember>' +
+      '</gml:MultiPolygon>';
     return geometry;
   }
-
   /**
    * Method for drawing a polygon on the map.
    * @returns the polygon coordinates string BS on which the polygon is drawn on.
@@ -73,7 +74,7 @@ export class CsClipboardService {
         (vector) => {
           const coords = vector.get('polygonString');
           if ( coords ) {
-            const newPolygon = {name: 'manual-' + Math.floor(Math.random() * 1000), srs: 'EPSG:3857',
+            const newPolygon = {name: 'manual-' + Math.floor(Math.random() * 1000), srs: 'EPSG:4326',
                 geometryType: GeometryType.POLYGON, coordinates: this.getGeometry(coords), olvector: vector};
             this.polygonBBox = newPolygon;
             this.polygonsBS.next(this.polygonBBox);
