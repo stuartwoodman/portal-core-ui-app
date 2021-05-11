@@ -30,9 +30,8 @@ import { Subject , BehaviorSubject} from 'rxjs';
 //import * as G from 'ol-geocoder';
 import { getVectorContext } from 'ol/render';
 
-import { CoordinateConverter, EditActions, PolygonEditorObservable, 
-    PolygonEditUpdate, PolygonsEditorService, RectangleEditorObservable, RectanglesEditorService } from 'angular-cesium';
-import { Cartesian3, Color, Ellipsoid } from 'cesium';
+import { EditActions, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService, RectangleEditorObservable, RectanglesEditorService } from 'angular-cesium';
+import { Cartesian3, Color, ColorMaterialProperty, Ellipsoid } from 'cesium';
 
 
 /**
@@ -222,24 +221,24 @@ export class CsMapObject {
     if (this.polygonEditable$) {
       this.clearPolygon();
     }
+
     // create accepts PolygonEditOptions object
-    this.polygonEditable$ = this.polygonsCesiumEditor.create({
+    this.polygonEditable$ = this.polygonsCesiumEditor.create({     
       pointProps: {
-        color: Color.CORNFLOWERBLUE.withAlpha(0.95),
-        outlineColor: Color.BLACK.withAlpha(0.2),
+        color: Color.SKYBLUE .withAlpha(0.9),
+        outlineColor: Color.BLACK.withAlpha(0.8),
         outlineWidth: 1,
         pixelSize: 13,
       },
       polygonProps: {
-        material: Color.ALICEBLUE.withAlpha(0.4),
-        fill: false,
+        material:new ColorMaterialProperty(Color.LIGHTSKYBLUE.withAlpha(0.05)),
+        fill: true,
       },
       polylineProps: {
-        material: () => Color.CORNFLOWERBLUE ,
+        material: () => new ColorMaterialProperty(Color.SKYBLUE.withAlpha(0.7)),
         width: 3,
-      },
+      },    
     });
-    this.polygonEditable$.disable();
     
     this.polygonEditable$.subscribe((editUpdate: PolygonEditUpdate) => {
       if (editUpdate.editAction === EditActions.ADD_LAST_POINT) {
@@ -253,9 +252,9 @@ export class CsMapObject {
         var coordString = coords.join(' ');               
         vector.set('polygonString', coordString);
         vectorBS.next(vector);
+        this.polygonEditable$.disable();
        }
-
-    });
+    });    
     return vectorBS;
   }
 
