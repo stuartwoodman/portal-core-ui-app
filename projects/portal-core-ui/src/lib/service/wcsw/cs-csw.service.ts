@@ -6,18 +6,20 @@ import { LayerHandlerService } from '../cswrecords/layer-handler.service';
 
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 import { MapsManagerService, AcMapComponent } from 'angular-cesium';
-import { Rectangle, Color, ColorMaterialProperty, Cartesian3, Cartesian2, NearFarScalar, HorizontalOrigin, DistanceDisplayCondition, Entity } from 'cesium';
+import { Rectangle, Color, ColorMaterialProperty, Cartesian3, Cartesian2, CallbackProperty, HorizontalOrigin, DistanceDisplayCondition, Entity } from 'cesium';
 
-
+// Alpha of the CSW bounding box rectangles
 const POLYGON_ALPHA = 0.4;
+
+// Colour of the CSW bounding box rectangles
 const POLYGON_COLOUR = new Color(0.0, 0.0, 1.0, POLYGON_ALPHA);
+
+// Colour of the font used to label the CSW rectangles on the map 
 const FONT_COLOUR = Color.BLACK;
 
 /**
- * Use Cesium to add csw layer like reports to map. This service class adds csw layer to the map
+ * Use Cesium to add CSW layer like reports to map. This service class adds CSW layer to the map as a rectangle and a label
  */
-
-
 @Injectable()
 export class CsCSWService {
 
@@ -27,6 +29,7 @@ export class CsCSWService {
 
   private map: AcMapComponent = null;
   private viewer: any = null;
+  private opacity: number = 1.0;
   
 
   constructor(private layerHandlerService: LayerHandlerService,
@@ -60,7 +63,7 @@ export class CsCSWService {
   public setOpacity(layer, opacity: number) {
     for (const entity of layer.csLayers) {
       if (entity.rectangle) {
-        entity.rectangle.material.color.setValue(Color.fromAlpha(POLYGON_COLOUR, POLYGON_ALPHA*opacity));
+        this.opacity = opacity;
       } else if (entity.label) {
         entity.label.fillColor = Color.fromAlpha(FONT_COLOUR, opacity);
       }
@@ -94,6 +97,7 @@ export class CsCSWService {
    * @param bbox - bounding box object; members: westBoundLongitude, southBoundLatitude, eastBoundLongitude, northBoundLatitude
    */
   private addPolygon(name, bbox): Entity {
+    const me = this;
     return this.viewer.entities.add({
       name: name,
       rectangle: {
@@ -103,7 +107,10 @@ export class CsCSWService {
           bbox.eastBoundLongitude, // East
           bbox.northBoundLatitude // North
         ),
-        material: new ColorMaterialProperty(POLYGON_COLOUR)
+        // 'CallBackProperty' is used to avoid flickering when material colour is changed
+        material: new ColorMaterialProperty(new CallbackProperty(function(time, result) {
+          return Color.fromAlpha(POLYGON_COLOUR, POLYGON_ALPHA*me.opacity);
+         }, true))
       },
     });
   }
