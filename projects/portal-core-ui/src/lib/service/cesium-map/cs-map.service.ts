@@ -180,8 +180,14 @@ export class CsMapService {
 
     // Add a CSW layer to map
     if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
-      // FIXME this.csCSWService.addLayer(layer, param);
-      // FIXME this.cacheLayerModelList(layer.id, layer);
+      // Remove old existing layer
+      if (this.layerExists(layer.id)) {
+        this.csCSWService.rmLayer(layer);
+        delete this.layerModelList[layer.id];
+      }
+      // Add layer
+      this.csCSWService.addLayer(layer, param);
+      this.cacheLayerModelList(layer.id, layer);
 
     // Add a WMS layer to map
     } else if (this.layerHandlerService.contains(layer, ResourceType.WMS)) {
@@ -264,7 +270,9 @@ export class CsMapService {
    */
   public removeLayer(layer: LayerModel): void {
       this.manageStateService.removeLayer(layer.id);
-      if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
+      if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
+        this.csCSWService.rmLayer(layer);
+      } else if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
         this.csIrisService.rmLayer(layer);
       } else {
         this.csWMSService.rmLayer(layer);
@@ -301,7 +309,11 @@ export class CsMapService {
    * @param opacity the value of opacity between 0.0 and 1.0
    */
   public setLayerOpacity(layer: LayerModel, opacity: number) {
-    this.csWMSService.setOpacity(layer, opacity);
+    if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
+      this.csCSWService.setOpacity(layer, opacity);
+    } else {
+      this.csWMSService.setOpacity(layer, opacity);
+    }
   }
 
   /**

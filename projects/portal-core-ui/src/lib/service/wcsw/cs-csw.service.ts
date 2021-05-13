@@ -1,28 +1,24 @@
 
-import { CSWRecordModel } from '../../model/data/cswrecord.model';
 import { Injectable, Inject } from '@angular/core';
 import { LayerModel } from '../../model/data/layer.model';
 import { OnlineResourceModel } from '../../model/data/onlineresource.model';
-import { PrimitiveModel } from '../../model/data/primitive.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
-import { CsMapObject } from '../cesium-map/cs-map-object';
-import { HttpClient } from '@angular/common/http';
-import olMap from 'ol/Map';
-import olPoint from 'ol/geom/Point';
-import olPolygon from 'ol/geom/Polygon';
-import * as olProj from 'ol/proj';
-import olFeature from 'ol/Feature';
-import olStyle from 'ol/style/Style';
-import olIcon from 'ol/style/Icon';
-import olLayerVector from 'ol/layer/Vector';
-import olSourceVector from 'ol/source/Vector';
-import olStyleStroke from 'ol/style/Stroke';
-import olStyleFill from 'ol/style/Fill';
-import { Constants, GeometryType } from '../../utility/constants.service';
+
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
+import { MapsManagerService, AcMapComponent } from 'angular-cesium';
+import { Rectangle, Color, ColorMaterialProperty, Cartesian3, Cartesian2, CallbackProperty, HorizontalOrigin, DistanceDisplayCondition, Entity } from 'cesium';
+
+// Alpha of the CSW bounding box rectangles
+const POLYGON_ALPHA = 0.4;
+
+// Colour of the CSW bounding box rectangles
+const POLYGON_COLOUR = new Color(0.0, 0.0, 1.0, POLYGON_ALPHA);
+
+// Colour of the font used to label the CSW rectangles on the map 
+const FONT_COLOUR = Color.BLACK;
 
 /**
- * Use Cesium to add csw layer like reports to map. This service class adds csw layer to the map
+ * Use Cesium to add CSW layer like reports to map. This service class adds CSW layer to the map as a rectangle and a label
  */
 @Injectable()
 export class CsCSWService {
@@ -31,150 +27,131 @@ export class CsCSWService {
   // so that the querier will be able to know which layer have been rendered as csw
   public static cswDiscoveryRendered = [];
 
-  private map: olMap;
+  private map: AcMapComponent = null;
+  private viewer: any = null;
+  private opacity: number = 1.0;
+  
 
   constructor(private layerHandlerService: LayerHandlerService,
-                  private csMapObject: CsMapObject,
-                  private http: HttpClient,
-                  private renderStatusService: RenderStatusService, @Inject('env') private env) {
-    this.map = this.csMapObject.getMap();
+                  private renderStatusService: RenderStatusService, 
+                  private mapsManagerService: MapsManagerService,
+                  @Inject('env') private env) {
   }
 
-
+  
   /**
-   * Add geometry type point to the map
-   * @param layer the layer where this point derived from
-   * @param primitive the point primitive
+   * rmLayer - remove layer from map
+   * @param layer layer to be removed
    */
-  public addPoint(layer: LayerModel, cswRecord: CSWRecordModel, primitive: PrimitiveModel): void {
-     const geom = new olPoint(olProj.transform([primitive.coords.lng, primitive.coords.lat], (primitive.srsName ? primitive.srsName : 'EPSG:4326'), 'EPSG:3857'));
-       const feature = new olFeature(geom);
-       feature.setStyle([
-          new olStyle({
-             image: new olIcon(({
-                     anchor: [0.5, 1],
-                     anchorXUnits: 'fraction',
-                     anchorYUnits: 'fraction',
-                     // size: [32, 32],
-                     scale: 0.5,
-                     opacity: 1,
-                     src: layer.iconUrl ? layer.iconUrl : Constants.getRandomPaddle()
-           }))
-          })
-       ]);
-
-       if (primitive.name) {
-         feature.setId(primitive.name);
-       }
-       feature.cswRecord = cswRecord;
-       feature.layer = layer;
-    // VT: we chose the first layer in the array based on the assumption that we only create a single vector
-    // layer for each wfs layer. WMS may potentially contain more than 1 layer in the array. note the difference
-    (<olLayerVector>this.csMapObject.getLayerById(layer.id)[0]).getSource().addFeature(feature);
-    if (!CsCSWService.cswDiscoveryRendered.includes(feature.layer.id)) {
-      CsCSWService.cswDiscoveryRendered.push(layer.id);
+  public rmLayer(layer) {
+    if (!this.map) {
+      this.map = this.mapsManagerService.getMap();
+      this.viewer = this.map.getCesiumViewer();
     }
+    for (const entity of layer.csLayers) {
+      this.viewer.entities.remove(entity);
+    }
+    layer.csLayers = [];
+    this.renderStatusService.resetLayer(layer.id);
   }
 
-  public addLine(primitive: PrimitiveModel): void {
-
-  }
-
-  public addPolygon(layer: LayerModel, cswRecord: CSWRecordModel, primitive: PrimitiveModel): void {
-
-    const feature = new olFeature({
-      geometry: new olPolygon([primitive.coords])
-    });
-
-    feature.getGeometry().transform((primitive.srsName ? primitive.srsName : 'EPSG:4326'), 'EPSG:3857');
-
-    feature.setStyle([
-      new olStyle({
-        stroke: new olStyleStroke({
-          color: Constants.getMatchingPolygonColor(layer.iconUrl),
-          width: 3
-        }),
-        fill: new olStyleFill({
-          color: 'rgba(0, 0, 255, 0.1)'
-        })
-      })
-    ]);
-
-    if (primitive.name) {
-      feature.setId(primitive.name);
-    }
-    feature.cswRecord = cswRecord;
-    feature.layer = layer;
-
-    (<olLayerVector>this.csMapObject.getLayerById(layer.id)[0]).getSource().addFeature(feature);
-    if (!CsCSWService.cswDiscoveryRendered.includes(feature.layer.id)) {
-      CsCSWService.cswDiscoveryRendered.push(layer.id);
+  /**
+   * setOpacity - sets opacity 
+   * @param layer 
+   * @param opacity value from 0.0 to 1.0 
+   */
+  public setOpacity(layer, opacity: number) {
+    for (const entity of layer.csLayers) {
+      if (entity.rectangle) {
+        this.opacity = opacity;
+      } else if (entity.label) {
+        entity.label.fillColor = Color.fromAlpha(FONT_COLOUR, opacity);
+      }
     }
   }
 
   /**
-   * Add the csw layer
+   * addLabel - adds a label to screen
+   * @param name - name to be put on label 
+   * @param long - longitude in degrees
+   * @param lat - latitude in degrees
+   */
+  private addLabel(name:string, long: number, lat: number): Entity {
+    return this.viewer.entities.add({
+      position : Cartesian3.fromDegrees(long, lat),
+      label : {
+          text : name.substring(0,45),  // Label only displays first 45 characters
+          font : '16px sans-serif',
+          fillColor:  FONT_COLOUR,
+          showBackground : false,
+          horizontalOrigin : HorizontalOrigin.LEFT,
+          distanceDisplayCondition: new DistanceDisplayCondition(0.0, 7000000.0),
+          pixelOffset: new Cartesian2(5, 20)
+      }
+    });
+  }
+
+  /**
+   * addPolygon - adds a polygon to screen
+   * @param name - name to be put on label 
+   * @param bbox - bounding box object; members: westBoundLongitude, southBoundLatitude, eastBoundLongitude, northBoundLatitude
+   */
+  private addPolygon(name, bbox): Entity {
+    const me = this;
+    return this.viewer.entities.add({
+      name: name,
+      rectangle: {
+        coordinates: Rectangle.fromDegrees(
+          bbox.westBoundLongitude, // West
+          bbox.southBoundLatitude,  // South
+          bbox.eastBoundLongitude, // East
+          bbox.northBoundLatitude // North
+        ),
+        // 'CallBackProperty' is used to avoid flickering when material colour is changed
+        material: new ColorMaterialProperty(new CallbackProperty(function(time, result) {
+          return Color.fromAlpha(POLYGON_COLOUR, POLYGON_ALPHA*me.opacity);
+         }, true))
+      },
+    });
+  }
+
+  /**
+   * Add the CSW layer
    * @param layer the layer to add to the map
-   * @param the wfs layer to be added to the map
+   * @param param the WFS layer to be added to the map
    */
   public addLayer(layer: LayerModel, param?: any): void {
     const cswRecords = this.layerHandlerService.getCSWRecord(layer);
+    this.map = this.mapsManagerService.getMap();
+    this.viewer = this.map.getCesiumViewer();
 
-    // VT: create the vector on the map if it does not exist.
-    if (!this.csMapObject.getLayerById(layer.id)) {
-        const markerLayer = new olLayerVector({
-                    source: new olSourceVector({ features: []})
-                });
-
-        this.csMapObject.addLayerById(markerLayer, layer.id);
-    }
     const onlineResource = new OnlineResourceModel();
-    onlineResource.url = 'Not applicable, rendering from csw records';
+    onlineResource.url = 'Rendering from csw records';
     this.renderStatusService.addResource(layer, onlineResource);
+
+    // Render each CSW record on map
     for (const cswRecord of cswRecords) {
-      // VT do some filter based on the parameter here
-
-      const primitive = new PrimitiveModel();
-
       const geoEls = cswRecord.geographicElements;
       for (let j = 0; j < geoEls.length; j++) {
         const geoEl = geoEls[j];
+        // Check for bounding box
         if (geoEl.eastBoundLongitude && geoEl.westBoundLongitude && geoEl.southBoundLatitude && geoEl.northBoundLatitude) {
-          const primitive = new PrimitiveModel();
-          if (geoEl.eastBoundLongitude === geoEl.westBoundLongitude &&
+          // If the BBOX is a point or line then render a little square on map
+          if (geoEl.eastBoundLongitude === geoEl.westBoundLongitude ||
             geoEl.southBoundLatitude === geoEl.northBoundLatitude) {
-
-
-            primitive.geometryType = GeometryType.POINT;
-            primitive.name = cswRecord.name;
-            primitive.coords = {
-              lng: geoEl.eastBoundLongitude,
-              lat: geoEl.southBoundLatitude
-            };
+            const littleBox: any = { ...geoEl };
+            littleBox.westBoundLongitude = littleBox.eastBoundLongitude - 0.5;
+            littleBox.southBoundLatitude = littleBox.northBoundLatitude - 0.5;
+            layer.csLayers.push(this.addPolygon(cswRecord.name, littleBox));
           } else {
-            primitive.geometryType = GeometryType.POLYGON;
-            primitive.name = cswRecord.name;
-            primitive.coords = [[geoEl.eastBoundLongitude, geoEl.northBoundLatitude], [geoEl.westBoundLongitude, geoEl.northBoundLatitude],
-              [geoEl.westBoundLongitude, geoEl.southBoundLatitude], [geoEl.eastBoundLongitude, geoEl.southBoundLatitude]];
+            // Render polygon same size as bounding box
+            layer.csLayers.push(this.addPolygon(cswRecord.name, geoEl));
           }
-
-          switch (primitive.geometryType) {
-            case GeometryType.POINT:
-              this.addPoint(layer, cswRecord, primitive);
-              break;
-            case GeometryType.POLYGON:
-              this.addPolygon(layer, cswRecord, primitive);
-              break;
-          }
-
-
+          layer.csLayers.push(this.addLabel(cswRecord.name, geoEl.eastBoundLongitude, geoEl.northBoundLatitude));
         }
       }
-
     }
     this.renderStatusService.updateComplete(layer, onlineResource);
   }
-
-
 
 }
