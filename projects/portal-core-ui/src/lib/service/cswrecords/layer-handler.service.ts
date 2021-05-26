@@ -9,6 +9,7 @@ import {HttpClient, HttpParams} from '@angular/common/http';
 import {LayerModel} from '../../model/data/layer.model';
 import {OnlineResourceModel} from '../../model/data/onlineresource.model';
 import {ResourceType} from '../../utility/constants.service';
+import { ImagerySplitDirection } from 'cesium';
 
 /**
  * Service class to handle jobs relating to getting csw records from the server
@@ -78,6 +79,7 @@ export class LayerHandlerService {
         itemLayer.hidden = false;
         itemLayer.layerMode = 'NA';
         itemLayer.name = item.name;
+        itemLayer.splitDirection = ImagerySplitDirection.NONE;
         itemLayers['Results'].push(itemLayer);
       });
       return itemLayers;
