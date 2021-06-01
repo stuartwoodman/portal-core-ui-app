@@ -1,4 +1,6 @@
 import { CSWRecordModel } from './cswrecord.model';
+import { ImagerySplitDirection } from 'cesium';
+
 /**
  * A representation of a layer
  */
@@ -26,4 +28,6 @@ export class LayerModel {
   stackdriverFailingHosts: string[];
   ogcFilter: String;
   wfsUrls: String[];
+  // ImagerySplitDirection.[LEFT|RIGHT|NONE], NONE by default, made optional for compatibility
+  splitDirection?: ImagerySplitDirection;
 }
