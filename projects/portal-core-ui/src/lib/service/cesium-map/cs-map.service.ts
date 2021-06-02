@@ -20,8 +20,8 @@ import { CsWWWService } from '../www/cs-www.service';
 import { ResourceType } from '../../utility/constants.service';
 import { CsIrisService } from '../kml/cs-iris.service';
 import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, PickOptions, EventResult } from 'angular-cesium';
-import  { ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle,
-   BingMapsImageryProvider, ArcGisMapServerImageryProvider, TileMapServiceImageryProvider } from 'cesium';
+import { ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle,
+   BingMapsImageryProvider, ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, ImagerySplitDirection } from 'cesium';
 
 /**
  * Wrapper class to provide all things related to the drawing of polygons and bounding boxes in CesiumJS
@@ -37,12 +37,14 @@ export class CsMapService {
   // Cesium map
   private map;
 
+  // If the split map pane is visible or not
+  private splitMapShown = false;
+
   constructor(private layerHandlerService: LayerHandlerService, private csWMSService: CsWMSService,
     private csWFSService: CsWFSService, private csMapObject: CsMapObject, private manageStateService: ManageStateService,
     private csCSWService: CsCSWService, private csWWWService: CsWWWService, 
     private csIrisService: CsIrisService, private mapsManagerService: MapsManagerService,
     @Inject('env') private env, @Inject('conf') private conf)  {
-    
     this.csMapObject.registerClickHandler(this.mapClickHandler.bind(this));
     this.addLayerSubject = new Subject<LayerModel>();
   }
@@ -257,6 +259,7 @@ export class CsMapService {
         itemLayer.hidden = false;
         itemLayer.layerMode = 'NA';
         itemLayer.name = cswRecord.name;
+        itemLayer.splitDirection = ImagerySplitDirection.NONE;
         try {
             this.addLayer(itemLayer, {});
         } catch (error) {
@@ -534,6 +537,37 @@ export class CsMapService {
       }
     }
     return baseMapLayers;
+  }
+
+  /**
+   * Set the direction of the split pane that the specified layer is to appear in
+   * @param layer the layer to appear in the left, right or both split panes
+   * @param splitDirection the direction the layer is to appear in (ImageryLayerSplitDirection.[LEFT|RIGHT|NONE])
+   */
+  public setLayerSplitDirection(layer: LayerModel, splitDirection: ImagerySplitDirection) {
+    const viewer = this.map.getCesiumViewer();
+    for (const cesiumLayer of layer.csLayers) {
+      const layerIndex = viewer.imageryLayers.indexOf(cesiumLayer);
+      const imageryLayer = viewer.imageryLayers.get(layerIndex);
+      if (imageryLayer !== undefined) {
+        imageryLayer.splitDirection = splitDirection;
+      }
+    }
+  }
+
+  /**
+   * Is the map split shown?
+   */
+  public getSplitMapShown(): boolean {
+    return this.splitMapShown;
+  }
+
+  /**
+   * Set whether the map split is shown
+   * @param splitMapShown set the map split shown to this value
+   */
+  public setSplitMapShown(splitMapShown: boolean) {
+    this.splitMapShown = splitMapShown;
   }
 
 }

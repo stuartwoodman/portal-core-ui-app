@@ -190,7 +190,7 @@ export class CsWMSService {
           map(response => {
             return response;
           }),
-	  catchError((error: HttpResponse<any>) => {
+          catchError((error: HttpResponse<any>) => {
             return observableThrowError(error);
           })
         );
@@ -248,7 +248,7 @@ export class CsWMSService {
           map(response => {
             return response;
           }),
-	  catchError((error: HttpResponse<any>) => {
+          catchError((error: HttpResponse<any>) => {
             return observableThrowError(error);
           })
         );
@@ -274,7 +274,7 @@ export class CsWMSService {
       );
       httpParams = UtilitiesService.convertObjectToHttpParam(httpParams, param);
       return '/' + layer.proxyStyleUrl + '?' + httpParams.toString();
-    } 
+    }
     return null;
   }
 
@@ -290,7 +290,7 @@ export class CsWMSService {
       viewer.imageryLayers.remove(imgLayer);
     }
     layer.csLayers = [];
-    this.renderStatusService.resetLayer(layer.id)
+    this.renderStatusService.resetLayer(layer.id);
   }
 
   /** 
@@ -301,7 +301,7 @@ export class CsWMSService {
   public setOpacity(layer: LayerModel, opacity: number) {
     for (let imgLayer of layer.csLayers) {
       imgLayer.alpha = opacity;
-    }   
+    }
   }
 
   /**
@@ -387,7 +387,7 @@ export class CsWMSService {
         let tileLoadFlag = false;
         // WMS tile loading callback function, l = number of tiles left to load
         const tileLoading = (l: number) => {
-          if (l == 0) {
+          if (l === 0) {
               // When there are no more tiles to load it is complete
               this.renderStatusService.updateComplete(layer, wmsOnlineResource);
           } else if (!tileLoadFlag) {
@@ -395,7 +395,7 @@ export class CsWMSService {
               tileLoadFlag = true;
               this.renderStatusService.addResource(layer, wmsOnlineResource);
           }
-        }
+        };
         // Register tile loading callback function
         viewer.scene.globe.tileLoadProgressEvent.addEventListener(tileLoading);
         const url = UtilitiesService.rmParamURL(wmsOnlineResource.url);
@@ -414,7 +414,7 @@ export class CsWMSService {
 
           // Keep old function call
           let oldCreateImage = (Resource as any)._Implementations.createImage;
-          
+
           // Overwrite CesiumJS 'createImage' function to allow us to do 'POST' requests via a proxy
           // If there is a 'usepost' parameter in the URL, then 'POST' via proxy else uses standard 'GET'
           // TODO: Implement a Resource constructor parameter instead of 'usepost'
@@ -445,7 +445,7 @@ export class CsWMSService {
                     me.paramSubst(key, val, postForm);
                   }
                 });
-                
+
                 const newURL = jURL.origin + jURL.pathname;
                 // Initiate request 
                 var xhr = (Resource as any)._Implementations.loadWithXhr(
@@ -459,7 +459,7 @@ export class CsWMSService {
                   undefined,
                   undefined
                 );
-          
+
                 if (xhr && xhr.abort) {
                   request.cancelFunction = function () {
                     xhr.abort();
@@ -490,7 +490,7 @@ export class CsWMSService {
 
           // Create a resource which uses our custom proxy
           const res = new Resource({url: url, proxy: new MyDefaultProxy(me.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=')});
-          
+
           // Force Resource to use 'POST' and our proxy
           params['usepost'] = true;
           wmsImagProv = new WebMapServiceImageryProvider({
@@ -505,7 +505,7 @@ export class CsWMSService {
         return imgLayer;
       }
       return null;
-    };
+    }
 
     /**
      * Function to add parameters to FormData object
@@ -516,11 +516,11 @@ export class CsWMSService {
      * @param postForm a FormData object to add key,val pairs to
      */
     private paramSubst(key: string, val: string, postForm: FormData) {
-      if (key == 'layers') {
+      if (key === 'layers') {
         postForm.append('layer', val);
-      } else if (key == 'sld_body') {
+      } else if (key === 'sld_body') {
         postForm.append('sldBody', val);
-      } else if (key != 'usepost') {
+      } else if (key !== 'usepost') {
         postForm.append(key, val);
       }
     }
