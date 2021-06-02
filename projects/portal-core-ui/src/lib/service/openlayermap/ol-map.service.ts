@@ -12,7 +12,7 @@ import bboxPolygon from '@turf/bbox-polygon';
 import { BBox } from '@turf/helpers';
 import { LayerModel } from '../../model/data/layer.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
-import { ManageStateService } from '../permanentlink/manage-state.service';
+import { OlManageStateService } from '../permanentlink/ol-manage-state.service';
 import { OlCSWService } from '../wcsw/ol-csw.service';
 import { OlWFSService } from '../wfs/ol-wfs.service';
 import { OlMapObject } from './ol-map-object';
@@ -33,7 +33,7 @@ export class OlMapService {
    private clickedLayerListBS = new BehaviorSubject<any>({});
 
    constructor(private layerHandlerService: LayerHandlerService, private olWMSService: OlWMSService,
-     private olWFSService: OlWFSService, private olMapObject: OlMapObject, private manageStateService: ManageStateService, @Inject('conf') private conf,
+     private olWFSService: OlWFSService, private olMapObject: OlMapObject, private manageStateService: OlManageStateService, @Inject('conf') private conf,
       private olCSWService: OlCSWService, private olWWWService: OlWWWService) {
 
      this.olMapObject.registerClickHandler(this.mapClickHandler.bind(this));
@@ -358,4 +358,12 @@ export class OlMapService {
   public updateSize() {
     this.olMapObject.updateSize();
   }
+
+   /**
+   * Change the OL Map's basemap
+   * @param baseMap the basemap's ID value (string)
+   */
+    public switchBaseMap(baseMap: string) {
+      this.olMapObject.switchBaseMap(baseMap);
+    }
 }
