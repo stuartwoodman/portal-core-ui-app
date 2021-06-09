@@ -421,7 +421,6 @@ export class CsMapService {
   }
 
 
- 
   /**
    * Create a list of base maps from the environment file
    */
@@ -433,9 +432,7 @@ export class CsMapService {
         baseMapLayers.push(
           new ProviderViewModel({
             name: layer.viewValue,
-            iconUrl: buildModuleUrl(
-              'Widgets/Images/ImageryProviders/openStreetMap.png'
-            ),
+            iconUrl: buildModuleUrl('assets/cesium/Widgets/Images/ImageryProviders/openStreetMap.png'),
             tooltip: layer.tooltip,
             creationFunction() {
               return new OpenStreetMapImageryProvider({
@@ -444,7 +441,8 @@ export class CsMapService {
             },
           })
         );
-      } else if (layer.layerType === 'Bing' && this.env.hasOwnProperty('bingMapsKey') && this.env.bingMapsKey.trim()) {
+      } else if (layer.layerType === 'Bing' && this.env.hasOwnProperty('bingMapsKey') &&
+                 this.env.bingMapsKey.trim() && this.env.bingMapsKey !== 'Bing_Maps_Key') {
         let bingMapsStyle = BingMapsStyle.AERIAL;
         let bingMapsIcon = '';
         switch (layer.value) {
@@ -465,7 +463,7 @@ export class CsMapService {
         baseMapLayers.push(
           new ProviderViewModel({
             name: layer.viewValue,
-            iconUrl: buildModuleUrl('Widgets/Images/ImageryProviders/' + bingMapsIcon),
+            iconUrl: buildModuleUrl('assets/cesium/Widgets/Images/ImageryProviders/' + bingMapsIcon),
             tooltip: layer.tooltip,
             creationFunction() {
               return new BingMapsImageryProvider({
@@ -512,7 +510,7 @@ export class CsMapService {
         baseMapLayers.push(
           new ProviderViewModel({
             name: layer.viewValue,
-            iconUrl: buildModuleUrl('Widgets/Images/ImageryProviders/' + esriIcon),
+            iconUrl: buildModuleUrl('assets/cesium/Widgets/Images/ImageryProviders/' + esriIcon),
             tooltip: layer.tooltip,
             creationFunction() {
               return new ArcGisMapServerImageryProvider({
@@ -525,11 +523,11 @@ export class CsMapService {
         baseMapLayers.push(
           new ProviderViewModel({
             name: layer.viewValue,
-            iconUrl: buildModuleUrl('Widgets/Images/ImageryProviders/naturalEarthII.png'),
+            iconUrl: buildModuleUrl('assets/cesium/Widgets/Images/ImageryProviders/naturalEarthII.png'),
             tooltip: layer.tooltip,
             creationFunction() {
               return new TileMapServiceImageryProvider({
-                url: buildModuleUrl('Assets/Textures/NaturalEarthII'),
+                url: buildModuleUrl('assets/cesium/Assets/Textures/NaturalEarthII'),
               });
             },
           })
