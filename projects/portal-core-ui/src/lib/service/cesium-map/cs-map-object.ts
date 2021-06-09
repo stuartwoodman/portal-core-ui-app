@@ -1,21 +1,22 @@
-import {Constants, GeometryType } from '../../utility/constants.service';
+import { RenderStatusService } from './renderstatus/render-status.service';
+import { GeometryType } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
-import {Injectable , Inject} from '@angular/core';
+import { Injectable , Inject } from '@angular/core';
 import olMap from 'ol/Map';
-import olTile from 'ol/layer/Tile';
-import olOSM from 'ol/source/OSM';
-import olView from 'ol/View';
+//import olTile from 'ol/layer/Tile';
+//import olOSM from 'ol/source/OSM';
+//import olView from 'ol/View';
 import olLayer from 'ol/layer/Layer';
 import olSourceVector from 'ol/source/Vector';
 import olFormatGML2 from 'ol/format/GML2';
 import olLayerVector from 'ol/layer/Vector';
-import XYZ from 'ol/source/XYZ';
-import TileLayer from 'ol/layer/Tile';
+//import XYZ from 'ol/source/XYZ';
+//import TileLayer from 'ol/layer/Tile';
 import olGeomPolygon from 'ol/geom/Polygon';
 import { fromExtent } from 'ol/geom/Polygon';
-import BingMaps from 'ol/source/BingMaps';
+//import BingMaps from 'ol/source/BingMaps';
 import olDraw, { createBox } from 'ol/interaction/Draw';
-import olControl from 'ol/control';
+//import olControl from 'ol/control';
 import olStyleStyle from 'ol/style/Style';
 import olStyleCircle from 'ol/style/Circle';
 import olStyleFill from 'ol/style/Fill';
@@ -27,50 +28,40 @@ import * as olEasing from 'ol/easing';
 import {unByKey} from 'ol/Observable';
 import { Subject , BehaviorSubject} from 'rxjs';
 //import * as G from 'ol-geocoder';
-import {getVectorContext} from 'ol/render';
+import { getVectorContext } from 'ol/render';
 
-export interface BaseMapLayerOption {
-  value: string;
-  viewValue: string;
-  layerType: string;
-}
-
+import { EditActions, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService, RectangleEditorObservable, RectanglesEditorService } from 'angular-cesium';
+import { Cartesian3, Color, ColorMaterialProperty, Ellipsoid } from 'cesium';
 
 
 /**
- * A wrapper around the openlayer object for use in the map layer preview
+ * A wrapper around the openlayer object for use in the portal.
  */
 @Injectable()
-export class OlMapObject {
+export class CsMapObject {
 
   private map: olMap;
   private groupLayer: {};
   private clickHandlerList: ((p: any) => void )[] = [];
   private ignoreMapClick = false;
-  private baseLayers = [];
-  private baseMapLayers = [{ value: 'OSM', viewValue: 'OpenStreetMap', layerType: 'OSM' }];
+  private polygonEditable$:PolygonEditorObservable;
 
-  constructor() {
-    // Use a basic Open Street Map for the preview map
-    for (let i = 0; i < this.baseMapLayers.length; ++i) {
-      this.baseLayers.push(new olTile({
-        visible: true,
-        source: new olOSM()
-      }));
-    }
+  constructor(private renderStatusService: RenderStatusService, private rectangleEditor: RectanglesEditorService, 
+      private polygonsCesiumEditor: PolygonsEditorService, @Inject('env') private env) {
+
     this.groupLayer = {};
-    this.map = new olMap({
+    /*this.map = new olMap({
       controls: [],
       layers: this.baseLayers,
       view: new olView({
         center: Constants.CENTRE_COORD,
         zoom: 4
       })
-    });
+    });*/
     const me = this;
 
     // Call a list of functions when the map is clicked on
-    this.map.on('click', function(evt) {
+    /*this.map.on('click', function(evt) {
       if (me.ignoreMapClick) {
         return;
       }
@@ -78,7 +69,7 @@ export class OlMapObject {
       for (const clickHandler of me.clickHandlerList) {
         clickHandler(pixel);
       }
-    });
+    });*/
 
   }
 
@@ -164,6 +155,7 @@ export class OlMapObject {
         this.map.removeLayer(layer);
       });
       delete this.groupLayer[id];
+      this.renderStatusService.resetLayer(id);
     }
   }
 
@@ -187,9 +179,9 @@ export class OlMapObject {
    * @param layerId the ID of the layer to change opacity
    * @param opacity the value of opacity between 0.0 and 1.0
    */
-  public setLayerOpacity(layerId: string, opacity: number) {
-    if (this.getLayerById(layerId) != null) {
-      const layers: [olLayer] = this.getLayerById(layerId);
+  public setLayerOpacity(layer, opacity: number) {
+    if (this.getLayerById(layer.id) != null) {
+      const layers: [olLayer] = this.getLayerById(layer);
       for (const layer of layers) {
         layer.setOpacity(opacity);
       }
@@ -207,12 +199,14 @@ export class OlMapObject {
       activelayers.forEach(layer => {
         layer.getSource().updateParams({[param]: value});
       });
+      this.renderStatusService.resetLayer(layerId);
     }
   }
   /**
   * Method for drawing a polygon shape on the map. e.g selecting a polygon bounding box on the map
   * @returns a observable object that triggers an event when the user complete the drawing
   */
+
   public drawPolygon(): BehaviorSubject<olLayerVector> {
     this.ignoreMapClick = true;
     const source = new olSourceVector({ wrapX: false });
@@ -222,26 +216,53 @@ export class OlMapObject {
     });
     const vectorBS = new BehaviorSubject<olLayerVector>(vector);
 
-    this.map.addLayer(vector);
-    const draw = new olDraw({
-      source: source,
-      type: /** @type {ol.geom.GeometryType} */ ('Polygon')
-    });
-    const me = this;
-    draw.on('drawend', function (e) {
-      const coords = e.feature.getGeometry().getCoordinates()[0];
-      e.feature.set('bClipboardVector', true, true);
+    //this.map.addLayer(vector);
 
-      const coordString = coords.join(' ');
-      vector.set('polygonString', coordString);
-      vectorBS.next(vector);
-      me.map.removeInteraction(draw);
-      setTimeout(function() {
-        me.ignoreMapClick = false;
-      }, 500);
+    if (this.polygonEditable$) {
+      this.clearPolygon();
+    }
+
+    // create accepts PolygonEditOptions object
+    this.polygonEditable$ = this.polygonsCesiumEditor.create({     
+      pointProps: {
+        color: Color.SKYBLUE .withAlpha(0.9),
+        outlineColor: Color.BLACK.withAlpha(0.8),
+        outlineWidth: 1,
+        pixelSize: 13,
+      },
+      polygonProps: {
+        material:new ColorMaterialProperty(Color.LIGHTSKYBLUE.withAlpha(0.05)),
+        fill: true,
+      },
+      polylineProps: {
+        material: () => new ColorMaterialProperty(Color.SKYBLUE.withAlpha(0.7)),
+        width: 3,
+      },    
     });
-    this.map.addInteraction(draw);
+    
+    this.polygonEditable$.subscribe((editUpdate: PolygonEditUpdate) => {
+      if (editUpdate.editAction === EditActions.ADD_LAST_POINT) {
+        const cartesian3 = this.polygonEditable$.getCurrentPoints()
+          .map(p => p.getPosition());
+        
+        cartesian3.push(cartesian3[0])
+        const coords = cartesian3
+            .map(cart => Ellipsoid.WGS84.cartesianToCartographic(<Cartesian3>cart))
+              .map(latLon => [latLon.latitude * 180/Math.PI , latLon.longitude * 180/Math.PI]);
+        var coordString = coords.join(' ');               
+        vector.set('polygonString', coordString);
+        vectorBS.next(vector);
+        this.polygonEditable$.disable();
+       }
+    });    
     return vectorBS;
+  }
+
+  clearPolygon() {
+    if (this.polygonEditable$) {
+      this.polygonEditable$.dispose();
+      this.polygonEditable$ = undefined;
+    }
   }
 
   public renderPolygon(polygon: any): BehaviorSubject<olLayerVector> {
@@ -291,34 +312,8 @@ export class OlMapObject {
  * Method for drawing a box on the map. e.g selecting a bounding box on the map
  * @returns a observable object that triggers an event when the user complete the drawing
  */
-  public drawBox(): Subject<olLayerVector> {
-    this.ignoreMapClick = true;
-    const source = new olSourceVector({wrapX: false});
-
-    const vector = new olLayerVector({
-      source: source
-    });
-
-    const vectorBS = new Subject<olLayerVector>();
-
-
-    this.map.addLayer(vector);
-    const draw = new olDraw({
-      source: source,
-      type: /** @type {ol.geom.GeometryType} */ ('Circle'),
-      geometryFunction: createBox()
-    });
-    const me = this;
-    draw.on('drawend', function() {
-      me.map.removeInteraction(draw);
-      setTimeout(function() {
-        me.map.removeLayer(vector);
-        vectorBS.next(vector);
-        me.ignoreMapClick = false;
-      }, 500);
-    });
-    this.map.addInteraction(draw);
-    return vectorBS;
+  public drawBox(): RectangleEditorObservable {
+    return this.rectangleEditor.create();
   }
 
   /**

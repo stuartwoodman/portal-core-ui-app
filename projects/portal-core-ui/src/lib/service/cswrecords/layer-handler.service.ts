@@ -2,13 +2,14 @@
 import {of as observableOf,  Observable } from 'rxjs';
 
 import {map} from 'rxjs/operators';
-import { CSWRecordModel } from '../../model/data/cswrecord.model';
-import { Injectable, Inject } from '@angular/core';
+import {CSWRecordModel} from '../../model/data/cswrecord.model';
+import {Injectable, Inject } from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
 
 import {LayerModel} from '../../model/data/layer.model';
-import { OnlineResourceModel } from '../../model/data/onlineresource.model';
-import { Constants } from '../../utility/constants.service';
+import {OnlineResourceModel} from '../../model/data/onlineresource.model';
+import {ResourceType} from '../../utility/constants.service';
+import { ImagerySplitDirection } from 'cesium';
 
 /**
  * Service class to handle jobs relating to getting csw records from the server
@@ -78,29 +79,31 @@ export class LayerHandlerService {
         itemLayer.hidden = false;
         itemLayer.layerMode = 'NA';
         itemLayer.name = item.name;
+        itemLayer.splitDirection = ImagerySplitDirection.NONE;
         itemLayers['Results'].push(itemLayer);
       });
       return itemLayers;
     }));
   }
 
-
   /**
-   * Check if layer contains wms records
-   * @param layer the layer to query for wms records
-   * @return true if wms resource exists
+   * Check if layer contains resources of a certain kind (WMS, WFS, IRIS ...)
+   * @param layer the layer to query for resource types
+   * @param resourceType resource type
+   * @return true if resource type exists in layer
    */
-  public containsWMS(layer: LayerModel): boolean {
-     const cswRecords: CSWRecordModel[] = layer.cswRecords;
-      for (const cswRecord of cswRecords) {
-         for (const onlineResource of cswRecord.onlineResources) {
-           if (onlineResource.type === 'WMS') {
-             return true;
-           }
-         }
+  public contains(layer: LayerModel, resourceType: ResourceType): boolean {
+    const cswRecords: CSWRecordModel[] = layer.cswRecords;
+    for (const cswRecord of cswRecords) {
+      for (const onlineResource of cswRecord.onlineResources) {
+        if (onlineResource.type === resourceType) {
+          return true;
+        }
       }
-      return false;
+    }
+    return false;
   }
+
 
   /**
    * Retrieve the CSW record associated with this layer
@@ -117,7 +120,7 @@ export class LayerHandlerService {
    * @param layer the layer to query for wms records
    */
   public getWMSResource (layer: LayerModel): OnlineResourceModel[] {
-       return this.getOnlineResources(layer, Constants.resourceType.WMS);
+       return this.getOnlineResources(layer, ResourceType.WMS);
   }
 
    /**
@@ -125,68 +128,18 @@ export class LayerHandlerService {
    * @param layer the layer to query for wms records
    */
   public getWCSResource (layer: LayerModel): OnlineResourceModel[] {
-       return this.getOnlineResources(layer, Constants.resourceType.WCS);
+       return this.getOnlineResources(layer, ResourceType.WCS);
   }
 
-  /**
-   * Check if layer contains wfs records
-   * @param layer the layer to query for wfs records
-   * @return true if wfs resource exists
-   */
-  public containsWFS(layer: LayerModel): boolean {
-     const cswRecords: CSWRecordModel[] = layer.cswRecords;
-      for (const cswRecord of cswRecords) {
-         for (const onlineResource of cswRecord.onlineResources) {
-           if (onlineResource.type === Constants.resourceType.WFS) {
-             return true;
-           }
-         }
-      }
-      return false;
-  }
-
-   /**
-   * Check if layer contains wcs records
-   * @param layer the layer to query for wcs records
-   * @return true if wcs resource exists
-   */
-  public containsWCS(layer: LayerModel): boolean {
-     const cswRecords: CSWRecordModel[] = layer.cswRecords;
-      for (const cswRecord of cswRecords) {
-         for (const onlineResource of cswRecord.onlineResources) {
-           if (onlineResource.type === Constants.resourceType.WCS) {
-             return true;
-           }
-         }
-      }
-      return false;
-  }
 
   /**
    * Search and retrieve only wfs records
    * @param layer the layer to query for wfs records
    */
   public getWFSResource (layer: LayerModel): OnlineResourceModel[] {
-    return this.getOnlineResources(layer, Constants.resourceType.WFS);
+    return this.getOnlineResources(layer, ResourceType.WFS);
   }
   
-   /**
-   * Check if layer contains www records
-   * @param layer the layer to query for www records
-   * @return true if www resource exists
-   */
-  public containsWWW(layer: LayerModel): boolean {
-     const cswRecords: CSWRecordModel[] = layer.cswRecords;
-      for (const cswRecord of cswRecords) {
-         for (const onlineResource of cswRecord.onlineResources) {
-           if (onlineResource.type === Constants.resourceType.WWW) {
-             return true;
-           }
-         }
-      }
-      return false;
-  }
-
   /**
     * Extract resources based on the type. If type is not defined, return all the resource
     * @method getOnlineResources
@@ -194,7 +147,7 @@ export class LayerHandlerService {
     * @param resourceType - OPTIONAL a enum of the resource type. The ENUM constant is defined on app.js
     * @return resources - an array of the resource. empty array if none is found
     */
-  public getOnlineResources(layer: LayerModel, resourceType?: string): OnlineResourceModel[] {
+  public getOnlineResources(layer: LayerModel, resourceType?: ResourceType): OnlineResourceModel[] {
     const cswRecords: CSWRecordModel[] = layer.cswRecords;
     const onlineResourceResult = [];
     const uniqueURLSet = new Set<string>();
@@ -225,7 +178,7 @@ export class LayerHandlerService {
     * @param resourceType - OPTIONAL a enum of the resource type. The ENUM constant is defined on app.js
     * @return resources - an array of the resource. empty array if none is found
     */
-  public getOnlineResourcesFromCSW(cswRecord: CSWRecordModel, resourceType?: string): OnlineResourceModel[] {
+  public getOnlineResourcesFromCSW(cswRecord: CSWRecordModel, resourceType?: ResourceType): OnlineResourceModel[] {
 
     const onlineResourceResult = [];
     const uniqueURLSet = new Set<string>();

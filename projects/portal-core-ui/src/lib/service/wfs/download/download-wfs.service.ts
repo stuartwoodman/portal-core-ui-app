@@ -12,7 +12,7 @@ import * as $ from 'jquery';
 declare var gtag: Function;
 
 /**
- * Use OlMapService to add layer to map. This service class adds wfs layer to the map
+ * Service to download WFS data
  */
 // @dynamic
 @Injectable()

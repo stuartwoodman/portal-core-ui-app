@@ -4,34 +4,20 @@ import { LayerModel } from '../../model/data/layer.model';
 import { OnlineResourceModel } from '../../model/data/onlineresource.model';
 import { PrimitiveModel } from '../../model/data/primitive.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
-import { OlMapObject } from '../openlayermap/ol-map-object';
-import olMap from 'ol/Map';
-import olPoint from 'ol/geom/Point';
-import olPolygon from 'ol/geom/Polygon';
-import * as olProj from 'ol/proj';
-import olFeature from 'ol/Feature';
-import olStyle from 'ol/style/Style';
-import olStyleStroke from 'ol/style/Stroke';
-import olStyleFill from 'ol/style/Fill';
-import olIcon from 'ol/style/Icon';
-import olLayerVector from 'ol/layer/Vector';
-import olSourceVector from 'ol/source/Vector';
 import { GeometryType } from '../../utility/constants.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
+import { CsMapObject } from '../cesium-map/cs-map-object';
 
 /**
- * Use Open Layers to add layer to map. This service class adds www layer to the map
+ * Use Cesium to add layer to map. This service class adds www layer to the map
  */
 @Injectable()
-export class OlWWWService {
+export class CsWWWService {
 
-  private map: olMap;
-
-
-  constructor(private layerHandlerService: LayerHandlerService,
+  constructor(private csMapObject: CsMapObject,
+              private layerHandlerService: LayerHandlerService,
               private renderStatusService: RenderStatusService,
-              private olMapObject: OlMapObject, @Inject('env') private env) {
-    this.map = this.olMapObject.getMap();
+              @Inject('env') private env) {
   }
 
   /**
@@ -40,56 +26,14 @@ export class OlWWWService {
    * @param primitive the point primitive
    */
   public addPoint(layer: LayerModel, cswRecord: CSWRecordModel, primitive: PrimitiveModel): void {
-     const geom = new olPoint(olProj.transform([primitive.coords.lng, primitive.coords.lat], (primitive.srsName ? primitive.srsName : 'EPSG:4326'), 'EPSG:3857'));
-       const feature = new olFeature(geom);
-       feature.setStyle([
-          new olStyle({
-             image: new olIcon(({
-                     anchor: [0.5, 1],
-                     anchorXUnits: 'fraction',
-                     anchorYUnits: 'fraction',
-                     // size: [32, 32],
-                     scale: 0.5,
-                     opacity: 1,
-                     src: layer.iconUrl
-           }))
-          })
-       ]);
 
-       if (primitive.name) {
-         feature.setId(primitive.name);
-       }
-       feature.cswRecord = cswRecord;
-       feature.layer = layer;
-    // VT: we chose the first layer in the array based on the assumption that we only create a single vector
-    // layer for each wfs layer. WMS may potentially contain more than 1 layer in the array. note the difference
-    (<olLayerVector>this.olMapObject.getLayerById(layer.id)[0]).getSource().addFeature(feature);
+    // FIXME Use cs map service & cesium to add a point
   }
 
 
-  public addPoloygon(layer: LayerModel, cswRecord: CSWRecordModel, primitive: PrimitiveModel): void {
-
-    const feature = new olFeature({
-      geometry: new olPolygon([primitive.coords])
-    });
-    feature.getGeometry().transform((primitive.srsName ? primitive.srsName : 'EPSG:4326'), 'EPSG:3857');
-    feature.setStyle([
-      new olStyle({
-        stroke: new olStyleStroke({
-          color: 'blue',
-          width: 3
-        }),
-        fill: new olStyleFill({
-          color: 'rgba(0, 0, 255, 0.1)'
-        })
-      })
-    ]);
-    if (primitive.name) {
-      feature.setId(primitive.name);
-    }
-    feature.cswRecord = cswRecord;
-    feature.layer = layer;
-    (<olLayerVector>this.olMapObject.getLayerById(layer.id)[0]).getSource().addFeature(feature);
+  public addPolygon(layer: LayerModel, cswRecord: CSWRecordModel, primitive: PrimitiveModel): void {
+  
+    // FIXME Use cs map service & cesium to add a polgon
   }
 
   /**
@@ -101,12 +45,9 @@ export class OlWWWService {
     const cswRecords = this.layerHandlerService.getCSWRecord(layer);
 
     // VT: create the vector on the map if it does not exist.
-    if (!this.olMapObject.getLayerById(layer.id)) {
-        const markerLayer = new olLayerVector({
-                    source: new olSourceVector({ features: []})
-                });
-        this.olMapObject.addLayerById(markerLayer, layer.id);
-    }
+    //if (!this.csMapService.getLayerById(layer.id)) {
+       // FIXME Use cs map service & cesium to create a vector
+    //}
 
     const onlineResource = new OnlineResourceModel();
     onlineResource.url = 'Not applicable, rendering from www records';
@@ -142,7 +83,7 @@ export class OlWWWService {
               this.addPoint(layer, cswRecord, primitive);
               break;
             case GeometryType.POLYGON:
-              this.addPoloygon(layer, cswRecord, primitive);
+              this.addPolygon(layer, cswRecord, primitive);
               break;
           }
 

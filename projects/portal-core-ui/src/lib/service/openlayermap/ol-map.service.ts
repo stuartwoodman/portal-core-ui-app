@@ -18,11 +18,10 @@ import { OlWFSService } from '../wfs/ol-wfs.service';
 import { OlMapObject } from './ol-map-object';
 import { OlWMSService } from '../wms/ol-wms.service';
 import { OlWWWService } from '../www/ol-www.service';
-
-
+import { ResourceType } from '../../utility/constants.service';
 
 /**
- * Wrapper class to provide all things related to the ol map such as adding layer or removing layer.
+ * Wrapper class used for the layer preview map as an open layers map
  */
 @Injectable()
 export class OlMapService {
@@ -73,7 +72,7 @@ export class OlMapService {
                    for (const activeLayer of activeLayers[layerId]) {
                        if (layer === activeLayer) {
                            const layerModel = me.getLayerModel(layerId);
-                           if (!me.layerHandlerService.containsWMS(layerModel)) {
+                           if (!me.layerHandlerService.contains(layerModel, ResourceType.WMS)) {
                              continue;
                            }
                            const bbox = activeLayer.onlineResource.geographicElements[0];
@@ -118,13 +117,13 @@ export class OlMapService {
   public getCSWRecordsForExtent(extent: olExtent): CSWRecordModel[] {
     let intersectedCSWRecordList: CSWRecordModel[] = [];
     extent = olProj.transformExtent(extent, 'EPSG:3857', 'EPSG:4326');
-    const activeLayers = this.olMapObject.getLayers();
+    const groupLayers = this.olMapObject.getLayers();
     const map = this.olMapObject.getMap();
     const mapLayerColl = map.getLayers();
     const me = this;
     mapLayerColl.forEach(function(layer) {
-       for (const layerId in activeLayers) {
-           for (const activeLayer of activeLayers[layerId]) {
+       for (const layerId in groupLayers) {
+           for (const activeLayer of groupLayers[layerId]) {
                if (layer === activeLayer) {
                    const layerModel = me.getLayerModel(layerId);
                    /*
@@ -132,7 +131,7 @@ export class OlMapService {
                       continue;
                    }
                    */
-                   for (const cswRecord of layerModel.cswRecords) {
+                     for (const cswRecord of layerModel.cswRecords) {
                        let cswRecordIntersects: boolean = false;
                        for (const bbox of cswRecord.geographicElements) {
                            const tBbox = [bbox.westBoundLongitude, bbox.southBoundLatitude, bbox.eastBoundLongitude, bbox.northBoundLatitude];
@@ -162,13 +161,13 @@ export class OlMapService {
      if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
        this.olCSWService.addLayer(layer, param);
        this.cacheLayerModelList(layer.id, layer);
-     } else if (this.layerHandlerService.containsWMS(layer)) {
+     } else if (this.layerHandlerService.contains(layer, ResourceType.WMS)) {
        this.olWMSService.addLayer(layer, param);
        this.cacheLayerModelList(layer.id, layer);
-     } else if (this.layerHandlerService.containsWFS(layer)) {
+     } else if (this.layerHandlerService.contains(layer, ResourceType.WFS)) {
        this.olWFSService.addLayer(layer, param);
        this.layerModelList[layer.id] = layer;
-     } else if (this.layerHandlerService.containsWWW(layer)) {
+     } else if (this.layerHandlerService.contains(layer, ResourceType.WWW)) {
        this.olWWWService.addLayer(layer, param);
        this.layerModelList[layer.id] = layer;
      } else {
@@ -359,13 +358,4 @@ export class OlMapService {
   public updateSize() {
     this.olMapObject.updateSize();
   }
-
-  /**
-   * Change the OL Map's basemap
-   * @param baseMap the basemap's ID value (string)
-   */
-  public switchBaseMap(baseMap: string) {
-    this.olMapObject.switchBaseMap(baseMap);
-  }
-
 }

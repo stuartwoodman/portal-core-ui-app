@@ -11,7 +11,7 @@ or
 
 ### Build the library
 
-`ng build portal-core-ui`
+`npm run build portal-core-ui`
 
 ### Create a link to the library
 

@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import * as olProj from 'ol/proj';
-import { OlMapObject } from './ol-map-object';
+import { CsMapObject } from './cs-map-object';
 import olLayerVector from 'ol/layer/Vector';
-import { Constants } from '../../utility/constants.service';
+import { GeometryType } from '../../utility/constants.service';
 
 /**
  * A wrapper around the clipboard object for use in the portal.
  */
 @Injectable()
-export class OlClipboardService {
+export class CsClipboardService {
   private polygonBBox: Polygon;
   public polygonsBS: BehaviorSubject<Polygon>;
 
@@ -21,7 +21,7 @@ export class OlClipboardService {
   private bFilterLayers: Boolean = false;
   public filterLayersBS = new BehaviorSubject<Boolean>(this.bFilterLayers);
 
-  constructor(private olMapObject: OlMapObject) {
+  constructor(private csMapObject: CsMapObject) {
     this.vectorOnMap = null;
     this.polygonBBox = null;
     this.polygonsBS = new BehaviorSubject<Polygon>(this.polygonBBox);
@@ -47,38 +47,39 @@ export class OlClipboardService {
     this.bFilterLayers = !this.bFilterLayers ;
     this.filterLayersBS.next(this.bFilterLayers );
   }
+
   public getGeometry(coords: String): any {
-    const geometry = '<gml:MultiPolygon srsName=\"urn:ogc:def:crs:EPSG::3857\">' +
-    '<gml:polygonMember>' +
-    '<gml:Polygon srsName=\"EPSG:3857\">' +
-    '<gml:outerBoundaryIs>' +
-    '<gml:LinearRing>' +
-    '<gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">' +
-    coords +
-    '</gml:coordinates>' +
-    '</gml:LinearRing>' +
-    '</gml:outerBoundaryIs>' +
-    '</gml:Polygon>' +
-    '</gml:polygonMember>' +
-    '</gml:MultiPolygon>';
+    const geometry = 
+      '<gml:MultiPolygon srsName=\"urn:ogc:def:crs:EPSG::4326\">' +
+        '<gml:polygonMember>' +
+          '<gml:Polygon srsName=\"EPSG:4326\">' +
+            '<gml:outerBoundaryIs>' +
+              '<gml:LinearRing>' +
+                '<gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">' +
+                  coords +
+                '</gml:coordinates>' +
+              '</gml:LinearRing>' +
+            '</gml:outerBoundaryIs>' +
+          '</gml:Polygon>' +
+        '</gml:polygonMember>' +
+      '</gml:MultiPolygon>';
     return geometry;
   }
-
   /**
    * Method for drawing a polygon on the map.
    * @returns the polygon coordinates string BS on which the polygon is drawn on.
    */
   public drawPolygon() {
-    this.olMapObject.drawPolygon().subscribe(
+    this.csMapObject.drawPolygon().subscribe(
         (vector) => {
           const coords = vector.get('polygonString');
           if ( coords ) {
-            const newPolygon = {name: 'manual-' + Math.floor(Math.random() * 1000), srs: 'EPSG:3857',
-                geometryType: Constants.geometryType.POLYGON, coordinates: this.getGeometry(coords), olvector: vector};
+            const newPolygon = {name: 'manual-' + Math.floor(Math.random() * 1000), srs: 'EPSG:4326',
+                geometryType: GeometryType.POLYGON, coordinates: this.getGeometry(coords), olvector: vector};
             this.polygonBBox = newPolygon;
             this.polygonsBS.next(this.polygonBBox);
             if (this.vectorOnMap) {
-              this.olMapObject.removeVector(this.vectorOnMap);
+              this.csMapObject.removeVector(this.vectorOnMap);
             }
             this.vectorOnMap = vector;
           }
@@ -86,10 +87,10 @@ export class OlClipboardService {
   }
   public renderPolygon() {
     if (this.vectorOnMap) {
-      this.olMapObject.removeVector(this.vectorOnMap);
+      this.csMapObject.removeVector(this.vectorOnMap);
     }
     if (this.polygonBBox) {
-      this.olMapObject.renderPolygon(this.polygonBBox).subscribe(
+      this.csMapObject.renderPolygon(this.polygonBBox).subscribe(
         (vector) => {
           this.vectorOnMap = vector;
         });
@@ -100,7 +101,7 @@ export class OlClipboardService {
     if (this.polygonBBox !== null && this.polygonBBox.name === newPolygon.name) {
       return;
     }
-    if (newPolygon.geometryType !== Constants.geometryType.MULTIPOLYGON) {
+    if (newPolygon.geometryType !== GeometryType.MULTIPOLYGON) {
       const coordsArray = newPolygon.coordinates.split(' ');
       const coords = [];
       // transform from 'EPSG:4326'to 'EPSG:3857' format
@@ -126,10 +127,11 @@ export class OlClipboardService {
   }
 
   public clearClipboard() {
+    this.csMapObject.clearPolygon();
     this.polygonBBox = null;
     this.polygonsBS.next(this.polygonBBox);
     if (this.vectorOnMap) {
-      this.olMapObject.removeVector(this.vectorOnMap);
+      this.csMapObject.removeVector(this.vectorOnMap);
     }
     this.vectorOnMap = null;
   }
@@ -138,7 +140,7 @@ export class OlClipboardService {
 export interface Polygon {
   name: string;
   srs: string;
-  geometryType: string;
+  geometryType: GeometryType;
   coordinates: string;
   raw?: string;
   olvector?: olLayerVector;

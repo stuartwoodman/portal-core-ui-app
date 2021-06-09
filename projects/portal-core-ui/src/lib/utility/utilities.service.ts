@@ -1,10 +1,12 @@
 import { OnlineResourceModel } from '../model/data/onlineresource.model';
+import { Bbox } from '../model/data/bbox.model';
 import { Injectable } from '@angular/core';
 import {HttpParams} from '@angular/common/http';
 import * as _ from 'lodash';
 import * as $ from 'jquery';
 
 declare function unescape(s: string): string;
+declare var Cesium;
 
 /**
  * Port over from old portal-core extjs for dealing with xml in wfs
@@ -507,5 +509,36 @@ export class UtilitiesService {
     public static getPolygonFilter(filter: string) {
         return filter.slice( filter.indexOf('<ogc:Intersects>') , filter.indexOf('</ogc:Intersects>') + '</ogc:Intersects>'.length);      
     }
-
+    
+    /**
+     * Reproject cesium rectangle into EPSG:4326 bbox object.
+     * @param points an array of 2 cartesian corner points forming the drawn rectangle (upper and lower)
+     * @return reprojected bbox object
+     */
+    public static reprojectToWGS84(points: any) {
+        let bbox = new Bbox();
+        bbox.crs = 'EPSG:4326';
+        var point1 = points[0].getPosition();
+        var point2 = points[1].getPosition();
+        
+        // reproject to WGS84 
+        var reprojectedPoint1 = Cesium.Ellipsoid.WGS84.cartesianToCartographic(point1);
+        var reprojectedPoint2 = Cesium.Ellipsoid.WGS84.cartesianToCartographic(point2);
+        // convert radians to degrees
+        if (reprojectedPoint1.longitude > reprojectedPoint2.longitude) {
+            bbox.eastBoundLongitude = reprojectedPoint1.longitude * 180/Math.PI;
+            bbox.westBoundLongitude = reprojectedPoint2.longitude * 180/Math.PI;
+        } else {
+            bbox.eastBoundLongitude = reprojectedPoint2.longitude * 180/Math.PI;
+            bbox.westBoundLongitude = reprojectedPoint1.longitude * 180/Math.PI;
+        }
+        if (reprojectedPoint1.latitude > reprojectedPoint2.latitude) {
+            bbox.northBoundLatitude = reprojectedPoint1.latitude * 180/Math.PI;
+            bbox.southBoundLatitude = reprojectedPoint2.latitude * 180/Math.PI;
+        } else {
+            bbox.northBoundLatitude = reprojectedPoint2.latitude * 180/Math.PI;
+            bbox.southBoundLatitude = reprojectedPoint1.latitude * 180/Math.PI;
+        }
+        return bbox;
+    }
 }

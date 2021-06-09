@@ -14,13 +14,13 @@ import * as olProj from 'ol/proj';
 import * as extent from 'ol/extent';
 import { Constants } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
-import { RenderStatusService } from '../openlayermap/renderstatus/render-status.service';
+import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 import { MinTenemStyleService } from '../style/wms/min-tenem-style.service';
 import { LayerStatusService } from '../../utility/layerstatus.service';
 
 
 /**
- * Use OlMapService to add layer to map. This service class adds WMS layer to the map
+ * Use Open Layers to add layer to map. This service class adds WMS layer to the map
  */
 @Injectable()
 export class OlWMSService {
