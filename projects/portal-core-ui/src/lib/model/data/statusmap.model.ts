@@ -58,7 +58,7 @@ export class StatusMapModel {
       this.resourceMap[onlineresource.url].total = 0;
     }
     if (this.total === 0) {
-      this.completePercentage = '0%'
+      this.completePercentage = '0%';
     } else {
       this.completePercentage = Math.floor(this.completed / this.total * 100) + '%';
     }

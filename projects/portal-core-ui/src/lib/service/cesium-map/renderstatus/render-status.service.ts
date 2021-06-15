@@ -1,7 +1,7 @@
 import {LayerModel} from '../../../model/data/layer.model';
 import {OnlineResourceModel} from '../../../model/data/onlineresource.model';
 import {StatusMapModel} from '../../../model/data/statusmap.model';
-import {Injectable} from '@angular/core';
+import {ApplicationRef, Injectable} from '@angular/core';
 import {BehaviorSubject} from 'rxjs';
 
 /**
@@ -12,7 +12,7 @@ export class RenderStatusService {
 
   private statusmaps;
 
-  constructor() {
+  constructor(private appRef: ApplicationRef) {
     this.statusmaps = {};
   }
 
@@ -65,6 +65,7 @@ export class RenderStatusService {
    */
   public updateComplete(layer: LayerModel, resource: OnlineResourceModel, error?: boolean) {
     (<StatusMapModel>this.statusmaps[layer.id]).updateComplete(resource, error);
+    this.appRef.tick();
   }
 
 
