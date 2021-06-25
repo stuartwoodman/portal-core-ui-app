@@ -134,4 +134,20 @@ export class StatusMapModel {
     this._statusMap.next(this);
   }
 
+  public getCompletePercentage(): string {
+    return this.completePercentage;
+  }
+
+  public getRenderComplete(): boolean {
+    return this.renderComplete;
+  }
+
+  public getRenderStarted(): boolean {
+    return this.renderStarted;
+  }
+
+  public getContainsError(): boolean {
+    return this.containsError;
+  }
+
 }
