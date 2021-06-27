@@ -55,6 +55,52 @@ export class QueryWMSService {
     return [undefined, undefined, undefined, undefined]
   }
 
+  public getFilter(lon: number, lat: number, zoomlevel: number): string {
+    const step = 2500 * zoomlevel; // meters
+    const ogcFilter = '<ogc:Filter  xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\"><ogc:Intersects><ogc:PropertyName>gsmlp:shape</ogc:PropertyName><gml:MultiPolygon srsName=\"urn:ogc:def:crs:EPSG::3857\">\
+      <gml:polygonMember><gml:Polygon srsName=\"EPSG:3857\"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">'
+       + (lon - step) + ',' + (lat - step) + ' '
+       + (lon - step) + ',' + (lat + step) + ' '
+       + (lon + step) + ',' + (lat + step) + ' '
+       + (lon + step) + ',' + (lat - step) + ' '
+       + (lon - step) + ',' + (lat - step)
+      + '</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></gml:polygonMember></gml:MultiPolygon></ogc:Intersects></ogc:Filter>';
+    return ogcFilter;
+  }
+  /**
+  * A get feature info request via proxy
+  * @param onlineresource the WMS online resource
+  * @param sldBody style layer descriptor
+  * @param pixel [x,y] pixel coordinates of clicked on point
+  * @param clickCoord [lat,long] map coordinates of clicked on point  
+  * @return Observable the observable from the http request
+   */
+   public wfsGetFeature(zoomlevel: number, onlineResource: OnlineResourceModel, sldBody: string, pixel: string[], clickCoord: any[]): Observable<any> {
+    let formdata = new HttpParams();
+    const lon = clickCoord[0];
+    const lat = clickCoord[1];
+
+    formdata = formdata.append('SERVICE', 'WFS');
+    formdata = formdata.append('request', 'GetFeature');
+    formdata = formdata.append('typeName', onlineResource.name);
+    formdata = formdata.append('outputFormat', 'GML3');
+    formdata = formdata.append('version', '1.0.0');
+    formdata = formdata.append('FILTER', this.getFilter(zoomlevel, lon, lat));
+    const serviceUrl = UtilitiesService.rmParamURL(onlineResource.url); //'https://gs.geoscience.nsw.gov.au/geoserver/ows';
+    return this.http.post(serviceUrl, formdata.toString(), {
+      headers: new HttpHeaders()
+        .set('Content-Type', 'application/x-www-form-urlencoded'),
+      responseType: 'text'
+    }).pipe(map(response => {
+      return response;
+    }), catchError(
+    (error: HttpResponse<any>) => {
+          return observableThrowError(error);
+        }
+      ), );
+
+
+  }
 
   /**
   * A get feature info request via proxy
@@ -80,20 +126,20 @@ export class QueryWMSService {
       }
       formdata = formdata.append('x', x.toString());
       formdata = formdata.append('y', y.toString());
-      formdata = formdata.append('BBOX', tileExtent);
       formdata = formdata.append('WIDTH', tileSize.toString());
       formdata = formdata.append('HEIGHT', tileSize.toString());
+      formdata = formdata.append('BBOX', tileExtent);
+
     } else {
-      // Uses the whole screen as the image in the WMS 'GetFeatureInfo' request 
-      const mapObj = this.csMapObject.getMap();
-      const bounds = mapObj.getView().calculateExtent();
-      const bbox = [bounds[2].toString(), bounds[3].toString(), bounds[0].toString(), bounds[1].toString()].toString();
-      const size = mapObj.getSize();
+      // Uses the whole screen as the image in the WMS 'GetFeatureInfo' request
+      const bounds = this.csMapObject.getMapViewBounds();
+      const bbox = [bounds[0].toString(), bounds[1].toString(), bounds[2].toString(), bounds[3].toString()].toString();
+      const size = this.csMapObject.getViewSize();
       formdata = formdata.append('x', pixel[0]);
       formdata = formdata.append('y', pixel[1]);
-      formdata = formdata.append('BBOX', bbox);
       formdata = formdata.append('WIDTH', size[0]);
       formdata = formdata.append('HEIGHT', size[1]);
+      formdata = formdata.append('BBOX', bbox);
     }
     formdata = formdata.append('version', onlineResource.version);
 
