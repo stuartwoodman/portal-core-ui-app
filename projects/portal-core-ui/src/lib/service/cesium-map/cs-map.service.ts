@@ -21,7 +21,7 @@ import { ResourceType } from '../../utility/constants.service';
 import { CsIrisService } from '../kml/cs-iris.service';
 import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, PickOptions, EventResult } from 'angular-cesium';
 import { ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle,
-   BingMapsImageryProvider, ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection, Cartographic } from 'cesium';
+   BingMapsImageryProvider, ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection, Cartographic, ImagerySplitDirection } from 'cesium';
 declare var Cesium: any;
 
 /**
@@ -38,12 +38,14 @@ export class CsMapService {
   // Cesium map
   private map;
 
-  constructor(private layerHandlerService: LayerHandlerService, private csWMSService: CsWMSService,
-              private csWFSService: CsWFSService, private csMapObject: CsMapObject, private manageStateService: ManageStateService,
-              private csCSWService: CsCSWService, private csWWWService: CsWWWService,
-              private csIrisService: CsIrisService, private mapsManagerService: MapsManagerService,
-              @Inject('env') private env, @Inject('conf') private conf)  {
+  // If the split map pane is visible or not
+  private splitMapShown = false;
 
+  constructor(private layerHandlerService: LayerHandlerService, private csWMSService: CsWMSService,
+    private csWFSService: CsWFSService, private csMapObject: CsMapObject, private manageStateService: ManageStateService,
+    private csCSWService: CsCSWService, private csWWWService: CsWWWService, 
+    private csIrisService: CsIrisService, private mapsManagerService: MapsManagerService,
+    @Inject('env') private env, @Inject('conf') private conf)  {
     this.csMapObject.registerClickHandler(this.mapClickHandler.bind(this));
     this.addLayerSubject = new Subject<LayerModel>();
 
@@ -312,6 +314,7 @@ export class CsMapService {
         itemLayer.hidden = false;
         itemLayer.layerMode = 'NA';
         itemLayer.name = cswRecord.name;
+        itemLayer.splitDirection = ImagerySplitDirection.NONE;
         try {
             this.addLayer(itemLayer, {});
         } catch (error) {
@@ -473,7 +476,6 @@ export class CsMapService {
   }
 
 
-
   /**
    * Create a list of base maps from the environment file
    */
@@ -485,9 +487,7 @@ export class CsMapService {
         baseMapLayers.push(
           new ProviderViewModel({
             name: layer.viewValue,
-            iconUrl: buildModuleUrl(
-              'Widgets/Images/ImageryProviders/openStreetMap.png'
-            ),
+            iconUrl: buildModuleUrl('assets/cesium/Widgets/Images/ImageryProviders/openStreetMap.png'),
             tooltip: layer.tooltip,
             creationFunction() {
               return new OpenStreetMapImageryProvider({
@@ -496,7 +496,8 @@ export class CsMapService {
             },
           })
         );
-      } else if (layer.layerType === 'Bing' && this.env.hasOwnProperty('bingMapsKey') && this.env.bingMapsKey.trim()) {
+      } else if (layer.layerType === 'Bing' && this.env.hasOwnProperty('bingMapsKey') &&
+                 this.env.bingMapsKey.trim() && this.env.bingMapsKey !== 'Bing_Maps_Key') {
         let bingMapsStyle = BingMapsStyle.AERIAL;
         let bingMapsIcon = '';
         switch (layer.value) {
@@ -517,7 +518,7 @@ export class CsMapService {
         baseMapLayers.push(
           new ProviderViewModel({
             name: layer.viewValue,
-            iconUrl: buildModuleUrl('Widgets/Images/ImageryProviders/' + bingMapsIcon),
+            iconUrl: buildModuleUrl('assets/cesium/Widgets/Images/ImageryProviders/' + bingMapsIcon),
             tooltip: layer.tooltip,
             creationFunction() {
               return new BingMapsImageryProvider({
@@ -564,7 +565,7 @@ export class CsMapService {
         baseMapLayers.push(
           new ProviderViewModel({
             name: layer.viewValue,
-            iconUrl: buildModuleUrl('Widgets/Images/ImageryProviders/' + esriIcon),
+            iconUrl: buildModuleUrl('assets/cesium/Widgets/Images/ImageryProviders/' + esriIcon),
             tooltip: layer.tooltip,
             creationFunction() {
               return new ArcGisMapServerImageryProvider({
@@ -577,11 +578,11 @@ export class CsMapService {
         baseMapLayers.push(
           new ProviderViewModel({
             name: layer.viewValue,
-            iconUrl: buildModuleUrl('Widgets/Images/ImageryProviders/naturalEarthII.png'),
+            iconUrl: buildModuleUrl('assets/cesium/Widgets/Images/ImageryProviders/naturalEarthII.png'),
             tooltip: layer.tooltip,
             creationFunction() {
               return new TileMapServiceImageryProvider({
-                url: buildModuleUrl('Assets/Textures/NaturalEarthII'),
+                url: buildModuleUrl('assets/cesium/Assets/Textures/NaturalEarthII'),
               });
             },
           })
@@ -589,6 +590,37 @@ export class CsMapService {
       }
     }
     return baseMapLayers;
+  }
+
+  /**
+   * Set the direction of the split pane that the specified layer is to appear in
+   * @param layer the layer to appear in the left, right or both split panes
+   * @param splitDirection the direction the layer is to appear in (ImageryLayerSplitDirection.[LEFT|RIGHT|NONE])
+   */
+  public setLayerSplitDirection(layer: LayerModel, splitDirection: ImagerySplitDirection) {
+    const viewer = this.map.getCesiumViewer();
+    for (const cesiumLayer of layer.csLayers) {
+      const layerIndex = viewer.imageryLayers.indexOf(cesiumLayer);
+      const imageryLayer = viewer.imageryLayers.get(layerIndex);
+      if (imageryLayer !== undefined) {
+        imageryLayer.splitDirection = splitDirection;
+      }
+    }
+  }
+
+  /**
+   * Is the map split shown?
+   */
+  public getSplitMapShown(): boolean {
+    return this.splitMapShown;
+  }
+
+  /**
+   * Set whether the map split is shown
+   * @param splitMapShown set the map split shown to this value
+   */
+  public setSplitMapShown(splitMapShown: boolean) {
+    this.splitMapShown = splitMapShown;
   }
 
 }

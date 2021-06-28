@@ -1,4 +1,6 @@
 import { CSWRecordModel } from './cswrecord.model';
+import { ImagerySplitDirection } from 'cesium';
+
 /**
  * A representation of a layer
  */
@@ -30,4 +32,6 @@ export class LayerModel {
   clickCSWRecordsIndex: number[];
   clickPixel: any;
   clickCoord: any;
+  // ImagerySplitDirection.[LEFT|RIGHT|NONE], NONE by default, made optional for compatibility
+  splitDirection?: ImagerySplitDirection;
 }
