@@ -106,7 +106,7 @@ export class CsMapService {
         return;
       }
       const clickCoord = new WebMercatorProjection().project(cartographic);
-      console.log('PIXEL:' + pixel.x + ',' + pixel.y + 'EPSG:4326:' + clickCoord + ' EPSG:3857:lat:' + lat + ' lon:' + lon);
+      console.log('PIXEL:' + pixel.x + ',' + pixel.y  + ' EPSG:3857:lat:' + lat + ' lon:' + lon + 'EPSG:4326:' + clickCoord);
       
       // Create a GeoJSON point
       const clickPoint = point([lon, lat]);
@@ -130,7 +130,7 @@ export class CsMapService {
           if (booleanPointInPolygon(clickPoint, poly)) {
             // Add to list of clicked layers
             layerModel.clickPixel = [pixel.x, pixel.y];
-            layerModel.clickCoord = [clickCoord.x, clickCoord.y];
+            layerModel.clickCoord = [lon, lat]; //[clickCoord.x, clickCoord.y];
             layerModel.clickCSWRecordsIndex.push(i);
           }
         }

@@ -56,16 +56,13 @@ export class QueryWMSService {
   }
 
   public getFilter(lon: number, lat: number, zoomlevel: number): string {
-    const step = 2500 * zoomlevel; // meters    
-    const ogcFilter = '<ogc:Filter  xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\"><ogc:Intersects><ogc:PropertyName>gsmlp:shape</ogc:PropertyName><gml:MultiPolygon srsName=\"urn:ogc:def:crs:EPSG::3857\">\
-      <gml:polygonMember><gml:Polygon srsName=\"EPSG:3857\"><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">'
-       + (lon - step) + ',' + (lat - step) + ' '
-       + (lon - step) + ',' + (lat + step) + ' '
-       + (lon + step) + ',' + (lat + step) + ' '
-       + (lon + step) + ',' + (lat - step) + ' '
-       + (lon - step) + ',' + (lat - step)
-      + '</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></gml:polygonMember></gml:MultiPolygon></ogc:Intersects></ogc:Filter>';
-    console.log('clickBbox:' + (lon - step) + ',' + (lat - step) + ' ' + (lon + step) + ',' + (lat + step));
+    const step = 0.05 * zoomlevel; // meters    
+
+    const ogcFilter = '<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gsmlp=\"http://xmlns.geosciml.org/geosciml-portrayal/4.0\" xmlns:gml=\"http://www.opengis.net/gml\"><ogc:And><ogc:BBOX><ogc:PropertyName>gsmlp:shape</ogc:PropertyName><gml:Box srsName=\"urn:x-ogc:def:crs:EPSG:4326\">' + 
+    '<gml:coord><gml:X>' + (lon - step) + '</gml:X><gml:Y>' + (lat - step) + '</gml:Y></gml:coord>' + 
+    '<gml:coord><gml:X>' + (lon + step) + '</gml:X><gml:Y>' + (lat + step) + '</gml:Y></gml:coord>' + 
+    '</gml:Box></ogc:BBOX><ogc:PropertyIsEqualTo><ogc:PropertyName>gsmlp:nvclCollection</ogc:PropertyName><ogc:Literal>true</ogc:Literal></ogc:PropertyIsEqualTo></ogc:And></ogc:Filter>';
+    console.log('clickBbox:' + (lon - step) + ',' + (lat - step) + ',' + (lon + step) + ',' + (lat + step));
     return ogcFilter;
   }
   /**
