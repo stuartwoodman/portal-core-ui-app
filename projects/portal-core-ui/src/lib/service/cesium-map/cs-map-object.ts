@@ -103,10 +103,34 @@ export class CsMapObject {
     const size = [viewer.canvas.width, viewer.canvas.height];
     return size;
   }
+  /**
+   * returns distance (EPSG4326 Degree) of one pixel in the current viewer
+   * epsg4326 1.0 degree to 111km roughly
+   */
+  public getDistPerPixel(): any {
+    const viewer = this.mapsManagerService.getMap().getCesiumViewer();
+    const width = viewer.canvas.width;
+    const height = viewer.canvas.height;
+    const posWS = viewer.camera.pickEllipsoid(new Cesium.Cartesian2(1, height), Cesium.Ellipsoid.WGS84);
+    const posEN = viewer.camera.pickEllipsoid(new Cesium.Cartesian2(width, 1 ), Cesium.Ellipsoid.WGS84);
+    let distPerPixel = 0.01; // 1.11km
+    if (posWS != null && posEN != null) {
+      const cartographicWS = viewer.scene.globe.ellipsoid.cartesianToCartographic(posWS);
+      const cartographicEN = viewer.scene.globe.ellipsoid.cartesianToCartographic(posEN);
+      const latDiff = Math.abs(Cesium.Math.toDegrees(cartographicWS.latitude) - Cesium.Math.toDegrees(cartographicEN.latitude)) ;
+      const lonDiff = Math.abs(Cesium.Math.toDegrees(cartographicWS.longitude) - Cesium.Math.toDegrees(cartographicEN.longitude)) ;
+      const latPerPixel = latDiff / height;
+      const lonPerPixel = lonDiff / width;
+      distPerPixel = (latPerPixel > lonPerPixel) ? latPerPixel : lonPerPixel;
+    }
+    return distPerPixel;
+  }
   public getMapViewBounds(): any {
     const viewer = this.mapsManagerService.getMap().getCesiumViewer();
-    const posWS = viewer.camera.pickEllipsoid(new Cesium.Cartesian2(1, viewer.canvas.height), Cesium.Ellipsoid.WGS84);
-    const posEN = viewer.camera.pickEllipsoid(new Cesium.Cartesian2(viewer.canvas.width, 1 ), Cesium.Ellipsoid.WGS84);
+    const width = viewer.canvas.width;
+    const height = viewer.canvas.height;
+    const posWS = viewer.camera.pickEllipsoid(new Cesium.Cartesian2(1, height), Cesium.Ellipsoid.WGS84);
+    const posEN = viewer.camera.pickEllipsoid(new Cesium.Cartesian2(width, 1 ), Cesium.Ellipsoid.WGS84);
 
     if (posWS != null && posEN != null) {
       const cartographicWS = viewer.scene.globe.ellipsoid.cartesianToCartographic(posWS);

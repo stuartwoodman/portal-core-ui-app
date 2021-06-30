@@ -55,8 +55,10 @@ export class QueryWMSService {
     return [undefined, undefined, undefined, undefined]
   }
 
-  public getFilter(lon: number, lat: number, zoomlevel: number): string {
-    const step = 0.05 * zoomlevel; // meters    
+  public getFilter(lon: number, lat: number): string {
+    const distPerPixel = this.csMapObject.getDistPerPixel();
+
+    const step = distPerPixel * 5; // 5pixel distance by degree.
 
     const ogcFilter = '<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gsmlp=\"http://xmlns.geosciml.org/geosciml-portrayal/4.0\" xmlns:gml=\"http://www.opengis.net/gml\"><ogc:And><ogc:BBOX><ogc:PropertyName>gsmlp:shape</ogc:PropertyName><gml:Box srsName=\"urn:x-ogc:def:crs:EPSG:4326\">' + 
     '<gml:coord><gml:X>' + (lon - step) + '</gml:X><gml:Y>' + (lat - step) + '</gml:Y></gml:coord>' + 
@@ -73,18 +75,15 @@ export class QueryWMSService {
   * @param clickCoord [lat,long] map coordinates of clicked on point  
   * @return Observable the observable from the http request
    */
-   public wfsGetFeature(zoomlevel: number, onlineResource: OnlineResourceModel, sldBody: string, pixel: string[], clickCoord: any[]): Observable<any> {
+   public wfsGetFeature(serviceUrl: string, typeName: string, lon: number, lat: number): Observable<any> {
     let formdata = new HttpParams();
-    const lon = clickCoord[0];
-    const lat = clickCoord[1];
-
     formdata = formdata.append('SERVICE', 'WFS');
     formdata = formdata.append('request', 'GetFeature');
-    formdata = formdata.append('typeName', onlineResource.name);
+    formdata = formdata.append('typeName', typeName);
     formdata = formdata.append('outputFormat', 'GML3');
+    // formdata = formdata.append('maxFeatures', '10');
     formdata = formdata.append('version', '1.0.0');
-    formdata = formdata.append('FILTER', this.getFilter(lon, lat, zoomlevel));
-    const serviceUrl = UtilitiesService.rmParamURL(onlineResource.url); //'https://gs.geoscience.nsw.gov.au/geoserver/ows';
+    formdata = formdata.append('FILTER', this.getFilter(lon, lat));
     return this.http.post(serviceUrl, formdata.toString(), {
       headers: new HttpHeaders()
         .set('Content-Type', 'application/x-www-form-urlencoded'),
