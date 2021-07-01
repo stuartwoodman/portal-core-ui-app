@@ -55,18 +55,18 @@ export class QueryWMSService {
     return [undefined, undefined, undefined, undefined]
   }
 
-  public getFilter(lon: number, lat: number): string {
+  public getFilter(lon: number, lat: number, extraFilter: string): string {
     const distPerPixel = this.csMapObject.getDistPerPixel();
-
-    const step = distPerPixel * 5; // 5pixel distance by degree.
+    const step = distPerPixel * 20; // 10pixel distance by degree = 10*1.1km.
 
     const ogcFilter = '<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gsmlp=\"http://xmlns.geosciml.org/geosciml-portrayal/4.0\" xmlns:gml=\"http://www.opengis.net/gml\"><ogc:And><ogc:BBOX><ogc:PropertyName>gsmlp:shape</ogc:PropertyName><gml:Box srsName=\"urn:x-ogc:def:crs:EPSG:4326\">' + 
     '<gml:coord><gml:X>' + (lon - step) + '</gml:X><gml:Y>' + (lat - step) + '</gml:Y></gml:coord>' + 
     '<gml:coord><gml:X>' + (lon + step) + '</gml:X><gml:Y>' + (lat + step) + '</gml:Y></gml:coord>' + 
-    '</gml:Box></ogc:BBOX><ogc:PropertyIsEqualTo><ogc:PropertyName>gsmlp:nvclCollection</ogc:PropertyName><ogc:Literal>true</ogc:Literal></ogc:PropertyIsEqualTo></ogc:And></ogc:Filter>';
+    '</gml:Box></ogc:BBOX>' + extraFilter + '</ogc:And></ogc:Filter>';
     console.log('clickBbox:' + (lon - step) + ',' + (lat - step) + ',' + (lon + step) + ',' + (lat + step));
     return ogcFilter;
   }
+
   /**
   * A get feature info request via proxy
   * @param onlineresource the WMS online resource
@@ -75,6 +75,7 @@ export class QueryWMSService {
   * @param clickCoord [lat,long] map coordinates of clicked on point  
   * @return Observable the observable from the http request
    */
+  /*
    public wfsGetFeature(serviceUrl: string, typeName: string, lon: number, lat: number): Observable<any> {
     let formdata = new HttpParams();
     formdata = formdata.append('SERVICE', 'WFS');
@@ -84,7 +85,7 @@ export class QueryWMSService {
     // formdata = formdata.append('maxFeatures', '10');
     formdata = formdata.append('version', '1.0.0');
     formdata = formdata.append('FILTER', this.getFilter(lon, lat));
-    return this.http.post(serviceUrl, formdata.toString(), {
+    return this.http.get(serviceUrl, formdata.toString(), {
       headers: new HttpHeaders()
         .set('Content-Type', 'application/x-www-form-urlencoded'),
       responseType: 'text'
@@ -97,8 +98,37 @@ export class QueryWMSService {
       ), );
 
 
-  }
+  }*/
+  public wfsGetFeature(onlineResource: OnlineResourceModel, lon: number, lat: number, extraFilter: string): Observable<any> {
+    let formdata = new HttpParams();
+    const serviceUrl = UtilitiesService.rmParamURL(onlineResource.url);
+    const typeName = onlineResource.name;
+    formdata = formdata.append('SERVICE', 'WFS');
+    formdata = formdata.append('request', 'GetFeature');
+    formdata = formdata.append('typeName', typeName);
+    formdata = formdata.append('outputFormat', 'GML3');
+    const version = '1.1.0';
+    // if ( version === '2.0.0' ) {
+    //   formdata = formdata.append('count', '10');
+    // } else
+    {
+      formdata = formdata.append('maxFeatures', '10');
+    }
+    formdata = formdata.append('version', version);
+    formdata = formdata.append('FILTER', this.getFilter(lon, lat, extraFilter));
+    return this.http.get(serviceUrl, {
+      params: formdata,
+      responseType: 'text'
+    }).pipe(map(response => {
+      return response;
+    }), catchError(
+    (error: HttpResponse<any>) => {
+          return observableThrowError(error);
+        }
+      ), );
 
+
+  }
   /**
   * A get feature info request via proxy
   * @param onlineresource the WMS online resource
