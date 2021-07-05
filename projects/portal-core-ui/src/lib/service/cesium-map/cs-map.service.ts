@@ -106,8 +106,6 @@ export class CsMapService {
         return;
       }
       const clickCoord = new WebMercatorProjection().project(cartographic);
-      console.log('PIXEL:' + pixel.x + ',' + pixel.y  + ' EPSG:3857:lat:' + lat + ' lon:' + lon + 'EPSG:4326:' + clickCoord);
-      
       // Create a GeoJSON point
       const clickPoint = point([lon, lat]);
       // Compile a list of clicked on layers

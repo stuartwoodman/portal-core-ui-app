@@ -63,7 +63,6 @@ export class QueryWMSService {
     '<gml:coord><gml:X>' + (lon - step) + '</gml:X><gml:Y>' + (lat - step) + '</gml:Y></gml:coord>' + 
     '<gml:coord><gml:X>' + (lon + step) + '</gml:X><gml:Y>' + (lat + step) + '</gml:Y></gml:coord>' + 
     '</gml:Box></ogc:BBOX>' + extraFilter + '</ogc:And></ogc:Filter>';
-    console.log('clickBbox:' + (lon - step) + ',' + (lat - step) + ',' + (lon + step) + ',' + (lat + step));
     return ogcFilter;
   }
 
