@@ -6,7 +6,7 @@ import olLayer from 'ol/layer/Layer';
 import olFeature from 'ol/Feature';
 import * as olProj from 'ol/proj';
 import {BehaviorSubject, Subject } from 'rxjs';
-import { point } from '@turf/helpers';
+import { Feature, point, Polygon } from '@turf/helpers';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import bboxPolygon from '@turf/bbox-polygon';
 import { LayerModel } from '../../model/data/layer.model';
@@ -21,7 +21,8 @@ import { ResourceType } from '../../utility/constants.service';
 import { CsIrisService } from '../kml/cs-iris.service';
 import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, PickOptions, EventResult } from 'angular-cesium';
 import { ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle,
-   BingMapsImageryProvider, ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, ImagerySplitDirection } from 'cesium';
+   BingMapsImageryProvider, ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection, Cartographic, ImagerySplitDirection } from 'cesium';
+declare var Cesium: any;
 
 /**
  * Wrapper class to provide all things related to the drawing of polygons and bounding boxes in CesiumJS
@@ -47,6 +48,7 @@ export class CsMapService {
     @Inject('env') private env, @Inject('conf') private conf)  {
     this.csMapObject.registerClickHandler(this.mapClickHandler.bind(this));
     this.addLayerSubject = new Subject<LayerModel>();
+
   }
 
   init() {
@@ -59,8 +61,14 @@ export class CsMapService {
     const clickEvent = mapEventManager.register(eventRegistration).subscribe((result) => {
       this.mapClickHandler(result);
     });
+    
   }
-
+  /** 
+   * Fetches Cesium 'Viewer'
+  */
+   public getViewer() {
+    return this.mapsManagerService.getMap().getCesiumViewer();
+  }
   /**
    * get a observable subject that triggers an event whenever a map is clicked on
    * @returns the observable subject that returns the list of map layers that was clicked on in the format {clickedFeatureList,
@@ -74,58 +82,102 @@ export class CsMapService {
     * Gets called when a map click event is recognised
     * @param pixel coordinates of clicked on pixel (units: pixels)
     */
-   public mapClickHandler(eventResult: EventResult) {
-      try {
-           const pixel = eventResult.movement.startPosition;
-           // Convert pixel coords to map coords
-           const clickCoord = []; // FIXME this.map.getCoordinateFromPixel(pixel);
-           const lonlat = olProj.transform(clickCoord, 'EPSG:3857', 'EPSG:4326');
-           const clickPoint = point(lonlat);
-
-           // Compile a list of clicked on layers
-           const activeLayers = [] // this.map.getLayers(); // FIXME
-           const clickedLayerList: olLayer[] = [];
-           const layerColl = this.map.getLayers(); // FIXME
-           const me = this;
-           layerColl.forEach(function(layer) {
-               for (const layerId in activeLayers) {
-                   for (const activeLayer of activeLayers[layerId]) {
-                       if (layer === activeLayer) {
-                           const layerModel = me.getLayerModel(layerId);
-                           if (!me.layerHandlerService.contains(layerModel, ResourceType.WMS)) {
-                             continue;
-                           }
-                           const bbox = activeLayer.onlineResource.geographicElements[0];
-                           const poly = bboxPolygon([bbox.westBoundLongitude, bbox.southBoundLatitude, bbox.eastBoundLongitude, bbox.northBoundLatitude]);
-                           if (booleanPointInPolygon(clickPoint, poly) && !clickedLayerList.includes(activeLayer)) {
-                             // Add to list of clicked layers
-                             clickedLayerList.push(activeLayer);
-                           }
-                       }
-                   }
-               }
-           }, me);
-
-           // Compile a list of clicked on features
-           const clickedFeatureList: olFeature[] = [];
-           /*const featureHit = this.map.forEachFeatureAtPixel(pixel, function(feature) {  // FIXME
-              // LJ: skip the olFeature
-              if (feature.get('bClipboardVector')) {
-                return;
-              }
-              clickedFeatureList.push(feature);
-           });*/
-
-           this.clickedLayerListBS.next({
-             clickedFeatureList: clickedFeatureList,
-             clickedLayerList: clickedLayerList,
-             pixel: pixel,
-             clickCoord: clickCoord
-           });
-      } catch (error) {
-        throw error;
+  public mapClickHandler(eventResult: EventResult) {
+    try {
+      const me = this;
+      // Filter out drag event
+      if (!eventResult.movement ||
+          Math.abs(eventResult.movement.startPosition.x - eventResult.movement.endPosition.x) > 2 ||
+          Math.abs(eventResult.movement.startPosition.y - eventResult.movement.endPosition.y) > 2) {
+        return;
       }
-   }
+      const pixel = eventResult.movement.startPosition;
+      if (!pixel || !pixel.x || !pixel.y) {
+        return;
+      }
+      const mousePosition = new Cartesian2(pixel.x, pixel.y);
+      const viewer = this.map.getCesiumViewer();
+      const ellipsoid = viewer.scene.globe.ellipsoid;
+      const cartesian = viewer.camera.pickEllipsoid(mousePosition, ellipsoid);
+      const cartographic = ellipsoid.cartesianToCartographic(cartesian);
+      const lon = Cesium.Math.toDegrees(cartographic.longitude);
+      const lat = Cesium.Math.toDegrees(cartographic.latitude);
+      if (!Number(lat) || !Number(lon)) {
+        return;
+      }
+      const clickCoord = new WebMercatorProjection().project(cartographic);
+      // Create a GeoJSON point
+      const clickPoint = point([lon, lat]);
+      // Compile a list of clicked on layers
+      const activeLayers = this.layerModelList; // this.csMapObject.getLayers(); // this.map.getLayers(); // FIXME
+      const clickedLayerList: LayerModel[] = [];
+      // const layerColl = this.map.getLayers(); // FIXME
+
+      // tslint:disable-next-line:forin
+      for (const layerId in activeLayers) {
+        const layerModel = activeLayers[layerId];
+
+        if (!me.layerHandlerService.contains(layerModel, ResourceType.WMS)) {
+          continue;
+        }
+        const cswRecords = layerModel.cswRecords;
+        layerModel.clickCSWRecordsIndex = [];
+        for (let i = 0; i < cswRecords.length; i++) {
+          const bbox = cswRecords[i].onlineResources[0].geographicElements[0];
+          const poly = bboxPolygon([bbox.westBoundLongitude, bbox.southBoundLatitude, bbox.eastBoundLongitude, bbox.northBoundLatitude]);
+          if (booleanPointInPolygon(clickPoint, poly)) {
+            // Add to list of clicked layers
+            layerModel.clickPixel = [pixel.x, pixel.y];
+            layerModel.clickCoord = [lon, lat]; //[clickCoord.x, clickCoord.y];
+            layerModel.clickCSWRecordsIndex.push(i);
+          }
+        }
+        if (layerModel.clickCSWRecordsIndex.length > 0) {
+          clickedLayerList.push(layerModel);
+        }
+      }
+
+      // tslint:disable-next-line:only-arrow-functions
+      /*             layerColl.forEach(function(layer) {
+                    for (const layerId in activeLayers) {
+                      const layerModel = activeLayers[layerId];
+                        if (layer === layerModel) {
+                          if (!me.layerHandlerService.contains(layerModel, ResourceType.WMS)) {
+                            continue;
+                          }
+                          const bbox = layerModel.onlineResource.geographicElements[0];
+                          const poly = bboxPolygon([bbox.westBoundLongitude, bbox.southBoundLatitude, bbox.eastBoundLongitude, bbox.northBoundLatitude]);
+                          if (booleanPointInPolygon(clickPoint, poly) && !clickedLayerList.includes(layerModel)) {
+                            // Add to list of clicked layers
+                            clickedLayerList.push(layerModel);
+                          }
+                        }
+                    }
+                  }, me); */
+
+      // Compile a list of clicked on features
+      const clickedFeatureList: olFeature[] = [];
+      /*
+      const featureHit = this.map.forEachFeatureAtPixel(pixel, function(feature) {  // FIXME
+         // LJ: skip the olFeature
+         if (feature.get('bClipboardVector')) {
+           return;
+         }
+         clickedFeatureList.push(feature);
+      }); */
+      if (clickedFeatureList.length || clickedLayerList.length) {
+        this.clickedLayerListBS.next({
+          clickedFeatureList,
+          clickedLayerList,
+          pixel,
+          clickCoord
+        });
+      }
+
+    } catch (error) {
+      throw error;
+    }
+  }
 
   /*
    * Return a list of CSWRecordModels present in active layers that intersect
@@ -137,7 +189,7 @@ export class CsMapService {
   public getCSWRecordsForExtent(extent: olExtent): CSWRecordModel[] {
     const intersectedCSWRecordList: CSWRecordModel[] = [];
     extent = olProj.transformExtent(extent, 'EPSG:3857', 'EPSG:4326');
-    const groupLayers = [] // this.map.getLayers(); // FIXME
+    const groupLayers = []; // this.map.getLayers(); // FIXME
     const mapLayerColl = []; // this.map.getLayers(); // FIXME
     const me = this;
     mapLayerColl.forEach(function(layer) {
@@ -167,7 +219,7 @@ export class CsMapService {
         }
      });
 
-     return intersectedCSWRecordList;
+    return intersectedCSWRecordList;
   }
 
   /**
@@ -179,7 +231,8 @@ export class CsMapService {
     if (!layer.csLayers) {
        layer.csLayers = [];
     }
-
+    this.csMapObject.removeLayerById(layer.id);
+    delete this.layerModelList[layer.id];
     // Add a CSW layer to map
     if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
       // Remove old existing layer
@@ -569,3 +622,4 @@ export class CsMapService {
   }
 
 }
+

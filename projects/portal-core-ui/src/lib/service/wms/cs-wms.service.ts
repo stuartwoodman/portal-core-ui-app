@@ -360,6 +360,7 @@ export class CsWMSService {
 
           // Perform add layer request
           layer.csLayers.push(this.addCesiumLayer(layer, wmsOnlineResource, params, longResp));
+          layer.sldBody = response;
         });
     }
   }

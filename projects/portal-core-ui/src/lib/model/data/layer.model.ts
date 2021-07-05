@@ -28,6 +28,10 @@ export class LayerModel {
   stackdriverFailingHosts: string[];
   ogcFilter: String;
   wfsUrls: String[];
+  sldBody: string;
+  clickCSWRecordsIndex: number[];
+  clickPixel: any;
+  clickCoord: any;
   // ImagerySplitDirection.[LEFT|RIGHT|NONE], NONE by default, made optional for compatibility
   splitDirection?: ImagerySplitDirection;
 }

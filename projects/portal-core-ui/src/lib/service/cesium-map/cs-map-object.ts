@@ -30,9 +30,11 @@ import { Subject , BehaviorSubject} from 'rxjs';
 //import * as G from 'ol-geocoder';
 import { getVectorContext } from 'ol/render';
 
-import { EditActions, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService, RectangleEditorObservable, RectanglesEditorService } from 'angular-cesium';
-import { Cartesian3, Color, ColorMaterialProperty, Ellipsoid } from 'cesium';
-
+import { EditActions, MapsManagerService, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService, RectangleEditorObservable, RectanglesEditorService } from 'angular-cesium';
+import { Cartesian2, Cartesian3, Cartographic, Color, ColorMaterialProperty, Ellipsoid, WebMercatorProjection } from 'cesium';
+import { LayerModel } from '../../model/data/layer.model';
+import { CsMapService } from './cs-map.service';
+declare var Cesium;
 
 /**
  * A wrapper around the openlayer object for use in the portal.
@@ -44,10 +46,11 @@ export class CsMapObject {
   private groupLayer: {};
   private clickHandlerList: ((p: any) => void )[] = [];
   private ignoreMapClick = false;
-  private polygonEditable$:PolygonEditorObservable;
+  private polygonEditable$: PolygonEditorObservable;
 
-  constructor(private renderStatusService: RenderStatusService, private rectangleEditor: RectanglesEditorService, 
-      private polygonsCesiumEditor: PolygonsEditorService, @Inject('env') private env) {
+  constructor(private renderStatusService: RenderStatusService, private rectangleEditor: RectanglesEditorService,
+              private polygonsCesiumEditor: PolygonsEditorService, private mapsManagerService: MapsManagerService,
+              @Inject('env') private env) {
 
     this.groupLayer = {};
     /*this.map = new olMap({
@@ -72,7 +75,15 @@ export class CsMapObject {
     });*/
 
   }
+  public processClick(p: number[]) {
+     if (this.ignoreMapClick) {
+       return;
+     }
 
+     for (const clickHandler of this.clickHandlerList) {
+       clickHandler(p);
+     }
+  }
   /**
    * Register a click handler callback function which is called when there is a click event
    * @param clickHandler callback function, input parameter is the pixel coords that were clicked on
@@ -87,7 +98,66 @@ export class CsMapObject {
   public getMap(): olMap {
     return this.map;
   }
+  public getViewSize(): any {
+    const viewer = this.mapsManagerService.getMap().getCesiumViewer();
+    const size = [viewer.canvas.width, viewer.canvas.height];
+    return size;
+  }
+  /**
+   * returns distance (EPSG4326 Degree) of one pixel in the current viewer
+   * epsg4326 1.0 degree to 111km roughly
+   */
+  public getDistPerPixel(): any {
+    const viewer = this.mapsManagerService.getMap().getCesiumViewer();
+    const width = viewer.canvas.width;
+    const height = viewer.canvas.height;
+    const posWS = viewer.camera.pickEllipsoid(new Cesium.Cartesian2(1, height), Cesium.Ellipsoid.WGS84);
+    const posEN = viewer.camera.pickEllipsoid(new Cesium.Cartesian2(width, 1 ), Cesium.Ellipsoid.WGS84);
+    let distPerPixel = 0.01; // 1.11km
+    if (posWS != null && posEN != null) {
+      const cartographicWS = viewer.scene.globe.ellipsoid.cartesianToCartographic(posWS);
+      const cartographicEN = viewer.scene.globe.ellipsoid.cartesianToCartographic(posEN);
+      const latDiff = Math.abs(Cesium.Math.toDegrees(cartographicWS.latitude) - Cesium.Math.toDegrees(cartographicEN.latitude)) ;
+      const lonDiff = Math.abs(Cesium.Math.toDegrees(cartographicWS.longitude) - Cesium.Math.toDegrees(cartographicEN.longitude)) ;
+      const latPerPixel = latDiff / height;
+      const lonPerPixel = lonDiff / width;
+      distPerPixel = (latPerPixel > lonPerPixel) ? latPerPixel : lonPerPixel;
+    }
+    return distPerPixel;
+  }
+  public getMapViewBounds(): any {
+    const viewer = this.mapsManagerService.getMap().getCesiumViewer();
+    const width = viewer.canvas.width;
+    const height = viewer.canvas.height;
+    const posWS = viewer.camera.pickEllipsoid(new Cesium.Cartesian2(1, height), Cesium.Ellipsoid.WGS84);
+    const posEN = viewer.camera.pickEllipsoid(new Cesium.Cartesian2(width, 1 ), Cesium.Ellipsoid.WGS84);
 
+    if (posWS != null && posEN != null) {
+      const cartographicWS = viewer.scene.globe.ellipsoid.cartesianToCartographic(posWS);
+      const cartographicEN = viewer.scene.globe.ellipsoid.cartesianToCartographic(posEN);
+      const wmp = new WebMercatorProjection();
+      const p1 = wmp.project(cartographicWS);
+      const p2 = wmp.project(cartographicEN);
+      const bounds = [ p1.x, p1.y, p2.x, p2.y];
+      return bounds;
+    } else {
+      return null;
+    }
+
+/*
+    const BBOXaustralia = [17305582, -1076656, 12515163, -5470582];
+    const viewer = this.mapsManagerService.getMap().getCesiumViewer();
+    const rect: any = viewer.camera.computeViewRectangle(viewer.scene.globe.ellipsoid);
+    if (!rect) {
+      return BBOXaustralia;
+    }
+    const wmp = new WebMercatorProjection();
+    const p1 = wmp.project(new Cartographic(rect.east, rect.north, 0));
+    const p2 = wmp.project(new Cartographic(rect.west, rect.south, 0));
+    const bounds = [ p1.x, p1.y, p2.x, p2.y];
+    return bounds;
+    */
+  }
   /**
    * Zoom the map in one level
    */
@@ -107,7 +177,7 @@ export class CsMapObject {
    * @param layer: the ol layer to add to map
    * @param id the layer id is used
    */
-  public addLayerById(layer: olLayer, id: string): void {
+  public addLayerById(layer: LayerModel, id: string): void {
     if (!this.groupLayer[id]) {
       this.groupLayer[id] = [];
     }
@@ -115,7 +185,7 @@ export class CsMapObject {
     if (layer.sldBody && layer.sldBody.indexOf('<ogc:Intersects>') >= 0)  {
       // RA: but retain the other filters
       const polygonFilter = UtilitiesService.getPolygonFilter(layer.sldBody);
-      layer.sldBody = layer.sldBody.replace(polygonFilter, "");
+      layer.sldBody = layer.sldBody.replace(polygonFilter, '');
     }
     this.groupLayer[id].push(layer);
 
