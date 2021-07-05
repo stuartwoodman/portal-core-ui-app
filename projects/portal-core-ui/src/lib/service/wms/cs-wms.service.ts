@@ -422,8 +422,7 @@ export class CsWMSService {
           // If there is a 'usepost' parameter in the URL, then 'POST' via proxy else uses standard 'GET'
           // TODO: Implement a Resource constructor parameter instead of 'usepost'
           (Resource as any)._Implementations.createImage = function (request, crossOrigin, deferred, flipY, preferImageBitmap) {
-            const url = request.url;
-            const jURL = new URL(url);
+            const jURL = new URL(request.url);
             // If there's no 'usepost' parameter then call the old 'createImage' method which uses 'GET'
             if (!jURL.searchParams.has('usepost')) {
               return oldCreateImage(request, crossOrigin, deferred, flipY, preferImageBitmap);
@@ -431,16 +430,16 @@ export class CsWMSService {
             // Initiate loading WMS tiles via POST & a proxy
             (Resource as any).supportsImageBitmapOptions()
               .then(function (supportsImageBitmap) {
-                var responseType = "blob";
-                let method = "POST";
-                var xhrDeferred = when.defer();
+                const responseType = "blob";
+                const method = "POST";
+                const xhrDeferred = when.defer();
                 // Assemble parameters into a form for 'POST' request
                 const postForm = new FormData();
                 postForm.append('service', 'WMS');
                 jURL.searchParams.forEach(function(val, key) {
-                  if (key == 'url') {
-                    postForm.append('url', val.split('?')[0]+'?service=WMS');
-                    let kvp = val.split('?')[1];
+                  if (key === 'url') {
+                    postForm.append('url', val.split('?')[0] + '?service=WMS');
+                    const kvp = val.split('?')[1];
                     if (kvp) {
                       me.paramSubst(kvp.split('=')[0], kvp.split('=')[1], postForm);
                     }
@@ -450,8 +449,8 @@ export class CsWMSService {
                 });
 
                 const newURL = jURL.origin + jURL.pathname;
-                // Initiate request 
-                var xhr = (Resource as any)._Implementations.loadWithXhr(
+                // Initiate request
+                const xhr = (Resource as any)._Implementations.loadWithXhr(
                   newURL,
                   responseType,
                   method,
@@ -472,18 +471,19 @@ export class CsWMSService {
                   .then(function (blob) {
                     if (!blob) {
                       deferred.reject(
-                        new Error(
-                          "Successfully retrieved " +
-                            url +
-                            " but it contained no content."
-                        )
+                        new Error("Successfully retrieved " + url + " but it contained no content.")
                       );
                       return;
                     }
+                    /*
+                    // Not working in Firefox due to bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1367251
+                    // TODO: Restore original code when issue is fixed
                     return (Resource as any).createImageBitmapFromBlob(blob, {
                       flipY: flipY,
                       premultiplyAlpha: false,
                     });
+                    */
+                    return createImageBitmap(blob);
                   })
                   .then(deferred.resolve);
               })
