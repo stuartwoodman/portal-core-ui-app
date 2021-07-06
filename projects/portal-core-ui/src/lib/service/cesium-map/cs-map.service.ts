@@ -365,10 +365,12 @@ export class CsMapService {
    * @param opacity the value of opacity between 0.0 and 1.0
    */
   public setLayerOpacity(layer: LayerModel, opacity: number) {
-    if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
-      this.csCSWService.setOpacity(layer, opacity);
-    } else {
-      this.csWMSService.setOpacity(layer, opacity);
+    if (this.layerExists(layer.id)) {
+      if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
+        this.csCSWService.setOpacity(layer, opacity);
+      } else {
+        this.csWMSService.setOpacity(layer, opacity);
+      }
     }
   }
 
