@@ -18,6 +18,7 @@ import { WebMapServiceImageryProvider, ImageryLayer, Resource } from 'cesium';
 import { LayerStatusService } from '../../utility/layerstatus.service';
 
 import * as when from 'when';
+
 /**
  * Use Cesium to add layer to map. This service class adds WMS layer to the map
  */
@@ -32,9 +33,7 @@ export class CsWMSService {
     private layerStatusService: LayerStatusService,
     @Inject('env') private env,
     @Inject('conf') private conf
-
-  ) { 
-  }
+  ) { }
 
 
   /**
@@ -467,27 +466,26 @@ export class CsWMSService {
                     xhr.abort();
                   };
                 }
-                return xhrDeferred.promise
-                  .then(function (blob) {
-                    if (!blob) {
-                      deferred.reject(
-                        new Error("Successfully retrieved " + url + " but it contained no content.")
-                      );
-                      return;
-                    }
-                    /*
-                    // Not working in Firefox due to bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1367251
-                    // TODO: Restore original code when issue is fixed
+                return xhrDeferred.promise.then(function (blob) {
+                  if (!blob) {
+                    deferred.reject(
+                      new Error("Successfully retrieved " + url + " but it contained no content.")
+                    );
+                    return;
+                  }
+                  const browserName = UtilitiesService.getBrowserName();
+                  if (browserName === 'Safari' || browserName === 'Firefox'){
+                    return createImageBitmap(blob);
+                  } else {
+                    // This was not working in Firefox/Safari due to bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1367251
+                    // TODO: Remove if condition and use just this if the createImageBitmap bug gets fixed
                     return (Resource as any).createImageBitmapFromBlob(blob, {
                       flipY: flipY,
                       premultiplyAlpha: false,
                     });
-                    */
-                    return createImageBitmap(blob);
-                  })
-                  .then(deferred.resolve);
-              })
-              .otherwise(deferred.reject);
+                  }
+                }).then(deferred.resolve);
+              }).otherwise(deferred.reject);
           };
           /* End of 'createImage' overwrite */
 
