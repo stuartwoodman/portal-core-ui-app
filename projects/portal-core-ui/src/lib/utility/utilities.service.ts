@@ -78,9 +78,6 @@ export class UtilitiesService {
       }
     }
 
-
-
-
     /**
      * Test if string s contains c
      * @method stringContains
@@ -151,8 +148,6 @@ export class UtilitiesService {
         return parameters;
     }
 
-
-
     /**
      * Simply append some parameters to a URL, taking care of the characters of the end of the URL
      * @method addUrlParameters
@@ -164,10 +159,6 @@ export class UtilitiesService {
         if (endChar !== '?' && endChar !== '&') { return url + '?' + paramStr; }
         return url + paramStr;
     }
-
-
-
-
 
     /**
      * Test if the object is a number
@@ -192,7 +183,6 @@ export class UtilitiesService {
         return a.hostname;
     }
 
-
     /**
      * Remove parameters from URL
      * e.g. 'https://abc.bca.org/api?id=whoami&name=blah' -> 'https://abc.bca.org/api'
@@ -206,7 +196,6 @@ export class UtilitiesService {
         return u.origin + u.pathname;
     }
 
-
     /**
      * Get base from URL
      * e.g. "https://abc.bca.org/blagg?id=56&ty=78" -> "https://abc.bca.org"
@@ -217,7 +206,6 @@ export class UtilitiesService {
         const splitUrl = url.split('://');
         return splitUrl[0] + '://' + splitUrl[1].slice(0, splitUrl[1].indexOf('/'));
     }
-
 
     /**
      * Based on the filter parameter, this is a utility to decide if we should skip this provider
@@ -266,17 +254,12 @@ export class UtilitiesService {
         return Object.keys(unique).length;
     }
 
-
-
     /**
      *
      *  Base64 encode / decode
      *  http://www.webtoolkit.info/
      *
      **/
-
-
-
     // public method for encoding
     public static encode_base64(input: string): string {
         let output = '';
@@ -541,4 +524,24 @@ export class UtilitiesService {
         }
         return bbox;
     }
+
+    /**
+     * Return the browser type.
+     */
+    public static getBrowserName(): string {
+        if ((navigator.userAgent.indexOf('Opera') || navigator.userAgent.indexOf('OPR')) !== -1 ) {
+            return 'Opera';
+        }else if (navigator.userAgent.indexOf('Chrome') !== -1 ){
+            return 'Chrome';
+        }else if (navigator.userAgent.indexOf('Safari') !== -1){
+            return 'Safari';
+        }else if (navigator.userAgent.indexOf('Firefox') !== -1 ) {
+             return 'Firefox';
+        } else if (navigator.userAgent.indexOf('MSIE') !== -1 ){
+          return 'IE';
+        } else {
+           return 'unknown';
+        }
+    }
+
 }
