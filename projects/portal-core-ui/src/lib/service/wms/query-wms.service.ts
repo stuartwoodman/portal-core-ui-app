@@ -55,11 +55,22 @@ export class QueryWMSService {
     return [undefined, undefined, undefined, undefined]
   }
 
-  public getFilter(lon: number, lat: number, extraFilter: string): string {
+  public getFilter(lon: number, lat: number, layerId: string, extraFilter: string): string {
     const distPerPixel = this.csMapObject.getDistPerPixel();
     const step = distPerPixel * 20; // 10pixel distance by degree = 10*1.1km.
+    let geom = 'gsmlp:shape';
+    switch (layerId) {
+      case 'remanent-anomalies':
+      case 'remanent-anomalies-EMAG':
+        geom = 'CentreLocation';
+        break;
+      case 'nvcl-v2-borehole':
+        geom = 'gsmlp:shape';
+        break;
+    }
 
-    const ogcFilter = '<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gsmlp=\"http://xmlns.geosciml.org/geosciml-portrayal/4.0\" xmlns:gml=\"http://www.opengis.net/gml\"><ogc:And><ogc:BBOX><ogc:PropertyName>gsmlp:shape</ogc:PropertyName><gml:Box srsName=\"urn:x-ogc:def:crs:EPSG:4326\">' + 
+    const ogcFilter = '<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gsmlp=\"http://xmlns.geosciml.org/geosciml-portrayal/4.0\" xmlns:gml=\"http://www.opengis.net/gml\">' +
+    '<ogc:And><ogc:BBOX><ogc:PropertyName>' + geom + '</ogc:PropertyName><gml:Box srsName=\"urn:x-ogc:def:crs:EPSG:4326\">' + 
     '<gml:coord><gml:X>' + (lon - step) + '</gml:X><gml:Y>' + (lat - step) + '</gml:Y></gml:coord>' + 
     '<gml:coord><gml:X>' + (lon + step) + '</gml:X><gml:Y>' + (lat + step) + '</gml:Y></gml:coord>' + 
     '</gml:Box></ogc:BBOX>' + extraFilter + '</ogc:And></ogc:Filter>';
@@ -69,36 +80,15 @@ export class QueryWMSService {
   /**
   * A get feature info request via proxy
   * @param onlineresource the WMS online resource
-  * @param sldBody style layer descriptor
-  * @param pixel [x,y] pixel coordinates of clicked on point
-  * @param clickCoord [lat,long] map coordinates of clicked on point  
+  * @param lon [lat,long] map coordinates of clicked on point  
+  * @param lat [lat,long] map coordinates of clicked on point  
+  * @param extraFilter 
+  * @param layerId layerId
   * @return Observable the observable from the http request
    */
-  /*
-   public wfsGetFeature(serviceUrl: string, typeName: string, lon: number, lat: number): Observable<any> {
-    let formdata = new HttpParams();
-    formdata = formdata.append('SERVICE', 'WFS');
-    formdata = formdata.append('request', 'GetFeature');
-    formdata = formdata.append('typeName', typeName);
-    formdata = formdata.append('outputFormat', 'GML3');
-    // formdata = formdata.append('maxFeatures', '10');
-    formdata = formdata.append('version', '1.0.0');
-    formdata = formdata.append('FILTER', this.getFilter(lon, lat));
-    return this.http.get(serviceUrl, formdata.toString(), {
-      headers: new HttpHeaders()
-        .set('Content-Type', 'application/x-www-form-urlencoded'),
-      responseType: 'text'
-    }).pipe(map(response => {
-      return response;
-    }), catchError(
-    (error: HttpResponse<any>) => {
-          return observableThrowError(error);
-        }
-      ), );
 
-
-  }*/
-  public wfsGetFeature(onlineResource: OnlineResourceModel, lon: number, lat: number, extraFilter: string): Observable<any> {
+  public wfsGetFeature(onlineResource: OnlineResourceModel, lon: number, lat: number,
+                       extraFilter: string, layerId: string): Observable<any> {
     let formdata = new HttpParams();
     const serviceUrl = UtilitiesService.rmParamURL(onlineResource.url);
     const typeName = onlineResource.name;
@@ -114,7 +104,7 @@ export class QueryWMSService {
       formdata = formdata.append('maxFeatures', '10');
     }
     formdata = formdata.append('version', version);
-    formdata = formdata.append('FILTER', this.getFilter(lon, lat, extraFilter));
+    formdata = formdata.append('FILTER', this.getFilter(lon, lat, layerId, extraFilter));
     return this.http.get(serviceUrl, {
       params: formdata,
       responseType: 'text'
@@ -126,47 +116,35 @@ export class QueryWMSService {
         }
       ), );
 
-
   }
   /**
   * A get feature info request via proxy
   * @param onlineresource the WMS online resource
   * @param sldBody style layer descriptor
-  * @param pixel [x,y] pixel coordinates of clicked on point
-  * @param clickCoord [lat,long] map coordinates of clicked on point  
+  * @param x  pixel coordinates of clicked on point
+  * @param y  pixel coordinates of clicked on point* 
+  * @param lon [lat,long] map coordinates of clicked on point  
+  * @param lat [lat,long] map coordinates of clicked on point  
+  * @param width tile width
+  * @param height tile height
+  * @param bbox tile bbox
   * @return Observable the observable from the http request
    */
-  public getFeatureInfo(onlineResource: OnlineResourceModel, sldBody: string, pixel: string[], clickCoord: any[]): Observable<any> {
+
+  public getFeatureInfo(onlineResource: OnlineResourceModel, sldBody: string, lon: number, lat: number,
+                        x: number, y: number, width: number, height: number, bbox: number[]): Observable<any> {
     let formdata = new HttpParams();
     formdata = formdata.append('serviceUrl', UtilitiesService.rmParamURL(onlineResource.url));
-    formdata = formdata.append('lat', clickCoord[1]);
-    formdata = formdata.append('lng', clickCoord[0]);
+    formdata = formdata.append('lng', lon.toString());
+    formdata = formdata.append('lat', lat.toString());
     formdata = formdata.append('QUERY_LAYERS', onlineResource.name);
+    formdata = formdata.append('feature_count', '10');
+    formdata = formdata.append('x', x.toString());
+    formdata = formdata.append('y', y.toString());
+    formdata = formdata.append('WIDTH', width.toString());
+    formdata = formdata.append('HEIGHT', height.toString());
+    formdata = formdata.append('BBOX', bbox.join(','));
 
-    // GSKY has an image WIDTH/HEIGHT size limit, so use the local WMS tile as the image
-    // in the WMS 'GetFeatureInfo' request 
-    if (UtilitiesService.isGSKY(onlineResource)) {
-      let [x, y, tileExtent, tileSize] = this.useLocalTiles(onlineResource.name, clickCoord);
-      if (!tileSize) {
-        return observableThrowError("Cannot locate layer");
-      }
-      formdata = formdata.append('x', x.toString());
-      formdata = formdata.append('y', y.toString());
-      formdata = formdata.append('WIDTH', tileSize.toString());
-      formdata = formdata.append('HEIGHT', tileSize.toString());
-      formdata = formdata.append('BBOX', tileExtent);
-
-    } else {
-      // Uses the whole screen as the image in the WMS 'GetFeatureInfo' request
-      const bounds = this.csMapObject.getMapViewBounds();
-      const bbox = [bounds[0].toString(), bounds[1].toString(), bounds[2].toString(), bounds[3].toString()].toString();
-      const size = this.csMapObject.getViewSize();
-      formdata = formdata.append('x', pixel[0]);
-      formdata = formdata.append('y', pixel[1]);
-      formdata = formdata.append('WIDTH', size[0]);
-      formdata = formdata.append('HEIGHT', size[1]);
-      formdata = formdata.append('BBOX', bbox);
-    }
     formdata = formdata.append('version', onlineResource.version);
 
     if (sldBody) {
@@ -196,10 +174,10 @@ export class QueryWMSService {
     if (onlineResource.description.indexOf('EMAG2 - Total Magnetic Intensity') >= 0) {
       formdata = formdata.set('INFO_FORMAT', 'text/xml');
     }
-    
+
     if (onlineResource.description.indexOf('Onshore Seismic Surveys') >= 0) {
       formdata = formdata.set('INFO_FORMAT', 'text/xml');
-    }  
+    }
 
     return this.http.post(this.env.portalBaseUrl + 'wmsMarkerPopup.do', formdata.toString(), {
       headers: new HttpHeaders()
@@ -215,4 +193,5 @@ export class QueryWMSService {
 
 
   }
+
 }

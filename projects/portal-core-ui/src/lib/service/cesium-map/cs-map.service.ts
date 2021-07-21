@@ -20,8 +20,8 @@ import { CsWWWService } from '../www/cs-www.service';
 import { ResourceType } from '../../utility/constants.service';
 import { CsIrisService } from '../kml/cs-iris.service';
 import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, PickOptions, EventResult } from 'angular-cesium';
-import { ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle,
-   BingMapsImageryProvider, ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection, Cartographic, ImagerySplitDirection } from 'cesium';
+import { ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle, BingMapsImageryProvider,
+  ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection,  ImagerySplitDirection} from 'cesium';
 declare var Cesium: any;
 
 /**
@@ -63,12 +63,14 @@ export class CsMapService {
     });
     
   }
+
   /** 
    * Fetches Cesium 'Viewer'
   */
    public getViewer() {
     return this.mapsManagerService.getMap().getCesiumViewer();
   }
+
   /**
    * get a observable subject that triggers an event whenever a map is clicked on
    * @returns the observable subject that returns the list of map layers that was clicked on in the format {clickedFeatureList,
@@ -100,18 +102,20 @@ export class CsMapService {
       const ellipsoid = viewer.scene.globe.ellipsoid;
       const cartesian = viewer.camera.pickEllipsoid(mousePosition, ellipsoid);
       const cartographic = ellipsoid.cartesianToCartographic(cartesian);
-      const lon = Cesium.Math.toDegrees(cartographic.longitude);
-      const lat = Cesium.Math.toDegrees(cartographic.latitude);
+      let lon = Cesium.Math.toDegrees(cartographic.longitude);
+      let lat = Cesium.Math.toDegrees(cartographic.latitude);
       if (!Number(lat) || !Number(lon)) {
         return;
       }
+
+      lon = Number.parseFloat(lon).toFixed(2);
+      lat = Number.parseFloat(lat).toFixed(2);
       const clickCoord = new WebMercatorProjection().project(cartographic);
       // Create a GeoJSON point
       const clickPoint = point([lon, lat]);
       // Compile a list of clicked on layers
-      const activeLayers = this.layerModelList; // this.csMapObject.getLayers(); // this.map.getLayers(); // FIXME
+      const activeLayers = this.layerModelList;
       const clickedLayerList: LayerModel[] = [];
-      // const layerColl = this.map.getLayers(); // FIXME
 
       // tslint:disable-next-line:forin
       for (const layerId in activeLayers) {
@@ -123,12 +127,16 @@ export class CsMapService {
         const cswRecords = layerModel.cswRecords;
         layerModel.clickCSWRecordsIndex = [];
         for (let i = 0; i < cswRecords.length; i++) {
+          if (!cswRecords[i].onlineResources[0]) {
+            console.log('error onlineResources:', cswRecords[i].onlineResources);
+            continue;
+          }
           const bbox = cswRecords[i].onlineResources[0].geographicElements[0];
           const poly = bboxPolygon([bbox.westBoundLongitude, bbox.southBoundLatitude, bbox.eastBoundLongitude, bbox.northBoundLatitude]);
           if (booleanPointInPolygon(clickPoint, poly)) {
             // Add to list of clicked layers
             layerModel.clickPixel = [pixel.x, pixel.y];
-            layerModel.clickCoord = [lon, lat]; //[clickCoord.x, clickCoord.y];
+            layerModel.clickCoord = [lon, lat];
             layerModel.clickCSWRecordsIndex.push(i);
           }
         }
