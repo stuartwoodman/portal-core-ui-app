@@ -61,13 +61,12 @@ export class CsMapService {
     const clickEvent = mapEventManager.register(eventRegistration).subscribe((result) => {
       this.mapClickHandler(result);
     });
-    
   }
 
-  /** 
+  /**
    * Fetches Cesium 'Viewer'
-  */
-   public getViewer() {
+   */
+  public getViewer() {
     return this.mapsManagerService.getMap().getCesiumViewer();
   }
 
@@ -108,8 +107,8 @@ export class CsMapService {
         return;
       }
 
-      lon = Number.parseFloat(lon).toFixed(2);
-      lat = Number.parseFloat(lat).toFixed(2);
+      lon = Number.parseFloat(lon).toFixed(5);
+      lat = Number.parseFloat(lat).toFixed(5);
       const clickCoord = new WebMercatorProjection().project(cartographic);
       // Create a GeoJSON point
       const clickPoint = point([lon, lat]);
@@ -121,7 +120,8 @@ export class CsMapService {
       for (const layerId in activeLayers) {
         const layerModel = activeLayers[layerId];
 
-        if (!me.layerHandlerService.contains(layerModel, ResourceType.WMS)) {
+        if (!me.layerHandlerService.contains(layerModel, ResourceType.WMS) &&
+            !me.layerHandlerService.contains(layerModel, ResourceType.WWW)) {
           continue;
         }
         const cswRecords = layerModel.cswRecords;
@@ -131,7 +131,16 @@ export class CsMapService {
             console.log('error onlineResources:', cswRecords[i].onlineResources);
             continue;
           }
-          const bbox = cswRecords[i].onlineResources[0].geographicElements[0];
+          let bbox = null;
+          if (cswRecords[i].onlineResources[0].hasOwnProperty('geographicElements') &&
+              cswRecords[i].onlineResources[0].geographicElements.length > 0) {
+            bbox = cswRecords[i].onlineResources[0].geographicElements[0];
+          } else if (cswRecords[i].hasOwnProperty('geographicElements') && cswRecords[i].geographicElements.length > 0) {
+            bbox = cswRecords[i].geographicElements[0];
+          }
+          if (bbox === null) {
+            continue;
+          }
           const poly = bboxPolygon([bbox.westBoundLongitude, bbox.southBoundLatitude, bbox.eastBoundLongitude, bbox.northBoundLatitude]);
           if (booleanPointInPolygon(clickPoint, poly)) {
             // Add to list of clicked layers
