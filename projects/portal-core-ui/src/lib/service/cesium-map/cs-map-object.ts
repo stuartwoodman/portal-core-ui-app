@@ -264,7 +264,7 @@ export class CsMapObject {
    * @param value the new source parameter value
    */
   public setLayerSourceParam(layerId: string, param: string, value: any) {
-  const activelayers = this.getLayerById(layerId);
+    const activelayers = this.getLayerById(layerId);
     if (activelayers) {
       activelayers.forEach(layer => {
         layer.getSource().updateParams({[param]: value});
@@ -307,24 +307,24 @@ export class CsMapObject {
       polylineProps: {
         material: () => new ColorMaterialProperty(Color.SKYBLUE.withAlpha(0.7)),
         width: 3,
-      },    
+      },
     });
-    
+
     this.polygonEditable$.subscribe((editUpdate: PolygonEditUpdate) => {
       if (editUpdate.editAction === EditActions.ADD_LAST_POINT) {
         const cartesian3 = this.polygonEditable$.getCurrentPoints()
           .map(p => p.getPosition());
-        
-        cartesian3.push(cartesian3[0])
+
+        cartesian3.push(cartesian3[0]);
         const coords = cartesian3
             .map(cart => Ellipsoid.WGS84.cartesianToCartographic(<Cartesian3>cart))
-              .map(latLon => [latLon.latitude * 180/Math.PI , latLon.longitude * 180/Math.PI]);
-        var coordString = coords.join(' ');               
+              .map(latLon => [latLon.latitude * 180 / Math.PI , latLon.longitude * 180 / Math.PI]);
+        var coordString = coords.join(' ');
         vector.set('polygonString', coordString);
         vectorBS.next(vector);
         this.polygonEditable$.disable();
        }
-    });    
+    });
     return vectorBS;
   }
 

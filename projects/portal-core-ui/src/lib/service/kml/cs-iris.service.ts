@@ -111,8 +111,8 @@ export class CsIrisService {
         style: Cesium.LabelStyle.FILL,
         pixelOffset: new Cesium.Cartesian2(9, -2),
         horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
-			  distanceDisplayCondition: new Cesium.DistanceDisplayCondition(1.0, entity.maxDist),
-			  disableDepthTestDistance: Number.POSITIVE_INFINITY
+        distanceDisplayCondition: new Cesium.DistanceDisplayCondition(1.0, entity.maxDist),
+        disableDepthTestDistance: Number.POSITIVE_INFINITY
       });
       // Style point in purple
       entity.point = new Cesium.PointGraphics({
@@ -120,14 +120,14 @@ export class CsIrisService {
         outlineColor: Cesium.Color.WHITE,
         outlineWidth: 2,
         pixelSize: 8,
-	      disableDepthTestDistance: Number.POSITIVE_INFINITY,
-			  distanceDisplayCondition: new Cesium.DistanceDisplayCondition(1.0, 8000000.0)
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        distanceDisplayCondition: new Cesium.DistanceDisplayCondition(1.0, 8000000.0)
       });
       // Don't display a billboard
       entity.billboard = null;
     }
   }
-  
+
   /**
    * Add the IRIS KML layer
    * @param layer the IRIS layer to add to the map
@@ -155,19 +155,19 @@ export class CsIrisService {
         };
         const stylefn = me.styleIrisEntity;
         // Create data source 
-        var source = new Cesium.KmlDataSource(options);
+        let source = new Cesium.KmlDataSource(options);
 
         // Load KML
-        let selectedLayer= this.irisLayers.find(l=> l.layerId== layer.id);
+        let selectedLayer = this.irisLayers.find(l => l.layerId === layer.id);
         source.load(dom).then(function(dataSource) {
           for (const entity of dataSource.entities.values) {
-            entity['color']=selectedLayer?selectedLayer.color:Cesium.Color.CRIMSON ;
-            entity['maxDist']=selectedLayer?selectedLayer.maxDist:8000000.0;
+            entity['color'] = selectedLayer ? selectedLayer.color : Cesium.Color.CRIMSON ;
+            entity['maxDist'] = selectedLayer ? selectedLayer.maxDist : 8000000.0;
             // Style each KML point
             stylefn(entity);
           }
           // Add all the KML points to map
-          const dataSrc = viewer.dataSources.add(dataSource).then(dataSrc => {
+          viewer.dataSources.add(dataSource).then(dataSrc => {
             layer.csLayers.push(dataSrc);
           });
         });
@@ -175,9 +175,9 @@ export class CsIrisService {
         // Tell UI that we have completed updating the map
         me.renderStatusService.updateComplete(layer, onlineResource);
       },
-        err => {
-          me.renderStatusService.updateComplete(layer, onlineResource, true);
-        });
+      err => {
+        me.renderStatusService.updateComplete(layer, onlineResource, true);
+      });
     }
   }
 

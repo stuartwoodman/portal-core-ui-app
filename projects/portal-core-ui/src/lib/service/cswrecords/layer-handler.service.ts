@@ -19,7 +19,6 @@ import { ImagerySplitDirection } from 'cesium';
 export class LayerHandlerService {
 
   private layerRecord;
-  private getCSWUrl;
 
   constructor(private http: HttpClient, @Inject('env') private env) {
     this.layerRecord = [];
@@ -104,15 +103,13 @@ export class LayerHandlerService {
     return false;
   }
 
-
   /**
    * Retrieve the CSW record associated with this layer
    * @param layer the layer to query for wms records
    * @return CSW record all the csw records
    */
   public getCSWRecord(layer: LayerModel): CSWRecordModel[] {
-    const cswRecords: CSWRecordModel[] = layer.cswRecords;
-    return cswRecords;
+    return layer.cswRecords;
   }
 
  /**
@@ -127,10 +124,9 @@ export class LayerHandlerService {
    * Search and retrieve only WCS records
    * @param layer the layer to query for wms records
    */
-  public getWCSResource (layer: LayerModel): OnlineResourceModel[] {
+  public getWCSResource(layer: LayerModel): OnlineResourceModel[] {
        return this.getOnlineResources(layer, ResourceType.WCS);
   }
-
 
   /**
    * Search and retrieve only wfs records
@@ -139,14 +135,14 @@ export class LayerHandlerService {
   public getWFSResource (layer: LayerModel): OnlineResourceModel[] {
     return this.getOnlineResources(layer, ResourceType.WFS);
   }
-  
+
   /**
-    * Extract resources based on the type. If type is not defined, return all the resource
-    * @method getOnlineResources
-    * @param layer - the layer we would like to extract onlineResource from
-    * @param resourceType - OPTIONAL a enum of the resource type. The ENUM constant is defined on app.js
-    * @return resources - an array of the resource. empty array if none is found
-    */
+   * Extract resources based on the type. If type is not defined, return all the resource
+   * @method getOnlineResources
+   * @param layer - the layer we would like to extract onlineResource from
+   * @param resourceType - OPTIONAL a enum of the resource type. The ENUM constant is defined on app.js
+   * @return resources - an array of the resource. empty array if none is found
+   */
   public getOnlineResources(layer: LayerModel, resourceType?: ResourceType): OnlineResourceModel[] {
     const cswRecords: CSWRecordModel[] = layer.cswRecords;
     const onlineResourceResult = [];
@@ -199,7 +195,5 @@ export class LayerHandlerService {
 
     return onlineResourceResult;
   }
-
-
 
 }

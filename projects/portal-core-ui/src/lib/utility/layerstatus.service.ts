@@ -11,12 +11,12 @@ import { OnlineResourceModel } from '../model/data/onlineresource.model';
 @Injectable()
 export class LayerStatusService {
   // synchronised layer id to failing hosts from getKnownLayers in the backend queried from stackdriver
-  private layerStatusMap;
+  private layerStatusMap: Map<string, string[]>;
   constructor(
     private http: HttpClient,
     @Inject('env') private env
   ) {
-    this.layerStatusMap = new Map();
+    this.layerStatusMap = new Map<string, string[]>();
     this.updateLayerStatus();
   }
 
@@ -31,7 +31,7 @@ export class LayerStatusService {
           const layerList = response['data'];
           layerList.forEach(function (item, i) {
             me.layerStatusMap.set(item.id, item.stackdriverFailingHosts);
-          });           
+          });
        });
     });
   }
@@ -64,14 +64,14 @@ export class LayerStatusService {
     }
     return false;
   }
-  
-    /**
+
+  /**
    * check if the cswRecord has a entry in the list of failing stackdriver record
    * @param layerId Layer id from CSW record
    * @param onlineResource OnlineResource model representing CSW record
    */
   public isEndpointFailing(layerId: string, onlineResource: OnlineResourceModel): boolean {
-    var stackdriverFailingHosts = this.layerStatusMap.get(layerId);    
+    const stackdriverFailingHosts = this.layerStatusMap.get(layerId);
     if (stackdriverFailingHosts && stackdriverFailingHosts.length > 0) {
       for (const stackdriverFailingHost of stackdriverFailingHosts) {
         if (onlineResource.url.indexOf(stackdriverFailingHost) > -1) {
