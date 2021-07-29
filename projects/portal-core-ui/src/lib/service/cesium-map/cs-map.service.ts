@@ -43,7 +43,7 @@ export class CsMapService {
 
   constructor(private layerHandlerService: LayerHandlerService, private csWMSService: CsWMSService,
     private csWFSService: CsWFSService, private csMapObject: CsMapObject, private manageStateService: ManageStateService,
-    private csCSWService: CsCSWService, private csWWWService: CsWWWService, 
+    private csCSWService: CsCSWService, private csWWWService: CsWWWService,
     private csIrisService: CsIrisService, private mapsManagerService: MapsManagerService,
     @Inject('env') private env, @Inject('conf') private conf)  {
     this.csMapObject.registerClickHandler(this.mapClickHandler.bind(this));

@@ -24,7 +24,9 @@ import * as when from 'when';
  */
 @Injectable()
 export class CsWMSService {
+
   private map: AcMapComponent;
+
   constructor(
     private layerHandlerService: LayerHandlerService,
     private http: HttpClient,
@@ -294,13 +296,13 @@ export class CsWMSService {
     this.renderStatusService.resetLayer(layer.id);
   }
 
-  /** 
+  /**
    * Set layer opacity
    * @method setOpacity
    * @param layer layer whose opacity is to be changed
    */
   public setOpacity(layer: LayerModel, opacity: number) {
-    for (let imgLayer of layer.csLayers) {
+    for (const imgLayer of layer.csLayers) {
       imgLayer.alpha = opacity;
     }
   }
@@ -336,7 +338,6 @@ export class CsWMSService {
       // Perform request for style data
       this.getSldBody(layer.proxyStyleUrl, usePost, wmsOnlineResource, collatedParam).subscribe(
         response => {
-          const me = this;
           const longResp = this.wmsUrlTooLong(response, layer);
           // Create parameters for add layer request
           const params = wmsOnlineResource.version.startsWith('1.3')
@@ -377,7 +378,7 @@ export class CsWMSService {
      * @method addCesiumLayer
      * @param layer the WMS layer to add to the map.
      * @param wmsOnlineResource details of WMS service
-     * @param usePost 
+     * @param usePost whether to use a POST request
      * @returns the new CesiumJS ImageryLayer object
      */
     private addCesiumLayer(layer, wmsOnlineResource, params, usePost: boolean): ImageryLayer {
@@ -537,8 +538,8 @@ class MyDefaultProxy {
   }
   getURL: (any) => any;
 }
-MyDefaultProxy.prototype.getURL = function (resource) {
-  var prefix = this.proxy.indexOf("?") === -1 ? "?" : "";
+MyDefaultProxy.prototype.getURL = function(resource) {
+  const prefix = this.proxy.indexOf('?') === -1 ? '?' : '';
   return this.proxy + prefix + resource;
 };
 

@@ -6,7 +6,6 @@ import {BehaviorSubject} from 'rxjs';
  * normal circumstances. Use RenderStatusService instead which provides a wrapper to get these updates
  */
 export class StatusMapModel {
-  private layerid: string;
   private total: number;
   private completed: number;
   private completePercentage: string;
@@ -17,8 +16,7 @@ export class StatusMapModel {
   private _statusMap = new BehaviorSubject<StatusMapModel>(this);
 
 
-  constructor(layerid: string) {
-    this.layerid = layerid;
+  constructor() {
     this.completed = 0;
     this.total = 0;
     this.resourceMap = {};
@@ -65,6 +63,7 @@ export class StatusMapModel {
     this.renderStarted = true;
     this._statusMap.next(this);
   }
+
    /**
    * Add resource to the counter and update its status
    * @param onlineresource  online resource that is being loaded now
@@ -109,8 +108,8 @@ export class StatusMapModel {
     }
     if (this.completed === this.total) {
       this.renderComplete = true;
-      this._statusMap.next(this);
     }
+    this._statusMap.next(this);
   }
 
   /**
