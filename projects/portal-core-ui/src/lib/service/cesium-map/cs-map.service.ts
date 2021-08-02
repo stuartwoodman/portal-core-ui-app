@@ -249,7 +249,6 @@ export class CsMapService {
        layer.csLayers = [];
     }
     this.csMapObject.removeLayerById(layer.id);
-    delete this.layerModelList[layer.id];
     // Add a CSW layer to map
     if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
       // Remove old existing layer
