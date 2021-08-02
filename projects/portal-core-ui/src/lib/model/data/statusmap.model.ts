@@ -65,9 +65,9 @@ export class StatusMapModel {
   }
 
    /**
-   * Add resource to the counter and update its status
-   * @param onlineresource  online resource that is being loaded now
-   */
+    * Add resource to the counter and update its status
+    * @param onlineresource  online resource that is being loaded now
+    */
   public skip(onlineresource: OnlineResourceModel) {
     if (!this.resourceMap[onlineresource.url]) {
       this.resourceMap[onlineresource.url] = {};
