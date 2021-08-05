@@ -27,6 +27,8 @@ export class CsWMSService {
 
   private map: AcMapComponent;
 
+  private tileLoadUnsubscribes: Map<string, any> = new Map<string, any>();
+
   constructor(
     private layerHandlerService: LayerHandlerService,
     private http: HttpClient,
@@ -287,6 +289,14 @@ export class CsWMSService {
    * @param layer the WMS layer to remove from the map.
    */
   public rmLayer(layer: LayerModel): void {
+    // Unsubscribe from tile load listeners
+    const wmsOnlineResources = this.layerHandlerService.getWMSResource(layer);
+    for (const wmsOnlineResource of wmsOnlineResources) {
+      if (this.tileLoadUnsubscribes[wmsOnlineResource.url]) {
+        this.tileLoadUnsubscribes[wmsOnlineResource.url]();
+        delete this.tileLoadUnsubscribes[wmsOnlineResource.url];
+      }
+    }
     this.map = this.mapsManagerService.getMap();
     const viewer = this.map.getCesiumViewer();
     for (const imgLayer of layer.csLayers) {
@@ -331,6 +341,11 @@ export class CsWMSService {
         this.renderStatusService.updateComplete(layer, wmsOnlineResource, true);
         continue;
       }
+      this.renderStatusService.register(layer, wmsOnlineResource);
+      this.renderStatusService.addResource(layer, wmsOnlineResource);
+    }
+
+    for (const wmsOnlineResource of wmsOnlineResources) {
       // Collate parameters for style request
       const collatedParam = UtilitiesService.collateParam(layer, wmsOnlineResource, param);
       // Set 'usePost' if style request parameters are too long
@@ -385,22 +400,16 @@ export class CsWMSService {
       const viewer = this.map.getCesiumViewer();
       const me = this;
       if (this.layerHandlerService.contains(layer, ResourceType.WMS)) {
-        this.renderStatusService.register(layer, wmsOnlineResource);
-
-        let tileLoadFlag = false;
         // WMS tile loading callback function, l = number of tiles left to load
         const tileLoading = (l: number) => {
           if (l === 0) {
               // When there are no more tiles to load it is complete
               this.renderStatusService.updateComplete(layer, wmsOnlineResource);
-          } else if (!tileLoadFlag) {
-              // Initiate resource loading with render status service
-              tileLoadFlag = true;
-              this.renderStatusService.addResource(layer, wmsOnlineResource);
           }
         };
         // Register tile loading callback function
-        viewer.scene.globe.tileLoadProgressEvent.addEventListener(tileLoading);
+        this.tileLoadUnsubscribes[wmsOnlineResource.url] = viewer.scene.globe.tileLoadProgressEvent.addEventListener(tileLoading);
+
         const url = UtilitiesService.rmParamURL(wmsOnlineResource.url);
         let wmsImagProv;
 
