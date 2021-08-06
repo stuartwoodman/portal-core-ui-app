@@ -614,6 +614,7 @@ export class CsMapService {
    * @param splitDirection the direction the layer is to appear in (ImageryLayerSplitDirection.[LEFT|RIGHT|NONE])
    */
   public setLayerSplitDirection(layer: LayerModel, splitDirection: ImagerySplitDirection) {
+    layer.splitDirection = splitDirection;
     const viewer = this.map.getCesiumViewer();
     for (const cesiumLayer of layer.csLayers) {
       const layerIndex = viewer.imageryLayers.indexOf(cesiumLayer);
