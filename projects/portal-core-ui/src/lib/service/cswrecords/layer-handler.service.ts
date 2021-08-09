@@ -116,7 +116,7 @@ export class LayerHandlerService {
    * Search and retrieve only wms records
    * @param layer the layer to query for wms records
    */
-  public getWMSResource (layer: LayerModel): OnlineResourceModel[] {
+  public getWMSResource(layer: LayerModel): OnlineResourceModel[] {
        return this.getOnlineResources(layer, ResourceType.WMS);
   }
 

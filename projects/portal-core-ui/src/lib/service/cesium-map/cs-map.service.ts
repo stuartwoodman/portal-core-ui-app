@@ -240,6 +240,32 @@ export class CsMapService {
   }
 
   /**
+   * Get a list of current map supported OnlineResource types.
+   * Excludes config CSW renderer list.
+   * @returns a list of supported OnlineResource types as strings
+   */
+  public getSupportedOnlineResourceTypes(): ResourceType[] {
+    return [ResourceType.WMS, ResourceType.IRIS];
+  }
+
+  /**
+   * Check if a layer is supported to be added to the map
+   * @param layer layer to be added to map
+   * @returns true if layer is supported, false otherwise
+   */
+  public isMapSupportedLayer(layer: LayerModel): boolean {
+    if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
+      return true;
+    }
+    for (const resourceType of this.getSupportedOnlineResourceTypes()) {
+      if (this.layerHandlerService.contains(layer, resourceType)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Add layer to the wms
    * @param layer the layer to add to the map
    */
@@ -275,11 +301,13 @@ export class CsMapService {
      } else if (this.layerHandlerService.contains(layer, ResourceType.WFS)) {
        // FIXME this.csWFSService.addLayer(layer, param);
        // FIXME this.layerModelList[layer.id] = layer;
+       // TODO: Add to getSupportedOnlineResourceTypes() when supported
 
      // Add a WWW layer to map
      } else if (this.layerHandlerService.contains(layer, ResourceType.WWW)) {
        // FIXME this.csWWWService.addLayer(layer, param);
        // FIXME this.layerModelList[layer.id] = layer;
+       // TODO: Add to getSupportedOnlineResourceTypes() when supported
 
      } else if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
       // Remove old existing layer
