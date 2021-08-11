@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import * as olProj from 'ol/proj';
 import { CsMapObject } from './cs-map-object';
-import olLayerVector from 'ol/layer/Vector';
+//import olLayerVector from 'ol/layer/Vector';
 import { GeometryType } from '../../utility/constants.service';
 
 /**
@@ -13,7 +13,7 @@ export class CsClipboardService {
   private polygonBBox: Polygon;
   public polygonsBS: BehaviorSubject<Polygon>;
 
-  public vectorOnMap: olLayerVector;
+  //public vectorOnMap: olLayerVector;
 
   private bShowClipboard: Boolean = false;
   public clipboardBS = new BehaviorSubject<Boolean>(this.bShowClipboard);
@@ -22,7 +22,7 @@ export class CsClipboardService {
   public filterLayersBS = new BehaviorSubject<Boolean>(this.bFilterLayers);
 
   constructor(private csMapObject: CsMapObject) {
-    this.vectorOnMap = null;
+    //this.vectorOnMap = null;
     this.polygonBBox = null;
     this.polygonsBS = new BehaviorSubject<Polygon>(this.polygonBBox);
     this.polygonsBS.next(this.polygonBBox);
@@ -71,6 +71,18 @@ export class CsClipboardService {
    */
   public drawPolygon() {
     this.csMapObject.drawPolygon().subscribe(
+      (coords) => {
+        const newPolygon = {
+          name: 'manual-' + Math.floor(Math.random() * 1000),
+          srs: 'EPSG:4326',
+          geometryType: GeometryType.POLYGON,
+          coordinates: this.getGeometry(coords)
+        };
+        this.polygonBBox = newPolygon;
+        this.polygonsBS.next(this.polygonBBox);
+    });
+    /*
+    this.csMapObject.drawPolygon().subscribe(
         (vector) => {
           const coords = vector.get('polygonString');
           if ( coords ) {
@@ -84,8 +96,11 @@ export class CsClipboardService {
             this.vectorOnMap = vector;
           }
       });
+      */
   }
+
   public renderPolygon() {
+    /*
     if (this.vectorOnMap) {
       this.csMapObject.removeVector(this.vectorOnMap);
     }
@@ -95,6 +110,7 @@ export class CsClipboardService {
           this.vectorOnMap = vector;
         });
     }
+    */
   }
 
   public addPolygon(newPolygon: Polygon) {
@@ -130,10 +146,12 @@ export class CsClipboardService {
     this.csMapObject.clearPolygon();
     this.polygonBBox = null;
     this.polygonsBS.next(this.polygonBBox);
+    /*
     if (this.vectorOnMap) {
       this.csMapObject.removeVector(this.vectorOnMap);
     }
     this.vectorOnMap = null;
+    */
   }
 }
 
@@ -143,5 +161,5 @@ export interface Polygon {
   geometryType: GeometryType;
   coordinates: string;
   raw?: string;
-  olvector?: olLayerVector;
+  //olvector?: olLayerVector;
 }

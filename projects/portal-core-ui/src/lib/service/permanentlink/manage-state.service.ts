@@ -68,10 +68,12 @@ export class ManageStateService {
    * return the current state
    * @return return the state in the format layerid:{filterCollection,optionalFilters,map{zoom, center}}
    */
+  /*
   public getState(): any {
     this.state.map = this.csMapObject.getCurrentMapState();
     return this.state;
   }
+  */
 
   /**
    * keep track of the link that have been generated.
@@ -92,11 +94,13 @@ export class ManageStateService {
   /**
    * resume the state of the map given the map state
    */
+  /*
   public resumeMapState(mapState) {
     if (mapState) {
       this.csMapObject.resumeMapState(mapState);
     }
   }
+  */
 
   /**
    * Return a uncompressed string given a compressed input

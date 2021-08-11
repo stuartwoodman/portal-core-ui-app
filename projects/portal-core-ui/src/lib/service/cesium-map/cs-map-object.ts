@@ -7,28 +7,28 @@ import olMap from 'ol/Map';
 //import olOSM from 'ol/source/OSM';
 //import olView from 'ol/View';
 import olLayer from 'ol/layer/Layer';
-import olSourceVector from 'ol/source/Vector';
-import olFormatGML2 from 'ol/format/GML2';
-import olLayerVector from 'ol/layer/Vector';
+//import olSourceVector from 'ol/source/Vector';
+//import olFormatGML2 from 'ol/format/GML2';
+//import olLayerVector from 'ol/layer/Vector';
 //import XYZ from 'ol/source/XYZ';
 //import TileLayer from 'ol/layer/Tile';
-import olGeomPolygon from 'ol/geom/Polygon';
-import { fromExtent } from 'ol/geom/Polygon';
+//import olGeomPolygon from 'ol/geom/Polygon';
+//import { fromExtent } from 'ol/geom/Polygon';
 //import BingMaps from 'ol/source/BingMaps';
-import olDraw, { createBox } from 'ol/interaction/Draw';
+//import olDraw, { createBox } from 'ol/interaction/Draw';
 //import olControl from 'ol/control';
-import olStyleStyle from 'ol/style/Style';
-import olStyleCircle from 'ol/style/Circle';
-import olStyleFill from 'ol/style/Fill';
-import olStyleStroke from 'ol/style/Stroke';
-import olGeomPoint from 'ol/geom/Point';
-import olFeature from 'ol/Feature';
-import * as olExtent from 'ol/extent';
-import * as olEasing from 'ol/easing';
-import {unByKey} from 'ol/Observable';
+//import olStyleStyle from 'ol/style/Style';
+//import olStyleCircle from 'ol/style/Circle';
+//import olStyleFill from 'ol/style/Fill';
+//import olStyleStroke from 'ol/style/Stroke';
+//import olGeomPoint from 'ol/geom/Point';
+//import olFeature from 'ol/Feature';
+//import * as olExtent from 'ol/extent';
+//import * as olEasing from 'ol/easing';
+//import {unByKey} from 'ol/Observable';
 import { Subject , BehaviorSubject} from 'rxjs';
 //import * as G from 'ol-geocoder';
-import { getVectorContext } from 'ol/render';
+//import { getVectorContext } from 'ol/render';
 
 import { EditActions, MapsManagerService, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService, RectangleEditorObservable, RectanglesEditorService } from 'angular-cesium';
 import { Cartesian2, Cartesian3, Cartographic, Color, ColorMaterialProperty, Ellipsoid, WebMercatorProjection } from 'cesium';
@@ -42,7 +42,7 @@ declare var Cesium;
 @Injectable()
 export class CsMapObject {
 
-  private map: olMap;
+  //private map: olMap;
   private groupLayer: {};
   private clickHandlerList: ((p: any) => void )[] = [];
   private ignoreMapClick = false;
@@ -95,9 +95,12 @@ export class CsMapObject {
   /**
    * returns an instance of the ol map
    */
+  /*
   public getMap(): olMap {
     return this.map;
   }
+  */
+
   public getViewSize(): any {
     const viewer = this.mapsManagerService.getMap().getCesiumViewer();
     const size = [viewer.canvas.width, viewer.canvas.height];
@@ -158,19 +161,24 @@ export class CsMapObject {
     return bounds;
     */
   }
+
   /**
    * Zoom the map in one level
    */
+  /*
   public zoomIn(): void {
     this.map.getView().setZoom(this.map.getView().getZoom() + 1);
   }
+  */
 
   /**
    * Zoom the map out one level
    */
+  /*
   public zoomOut(): void {
     this.map.getView().setZoom(this.map.getView().getZoom() - 1);
   }
+  */
 
   /**
    * Add an ol layer to the ol map. At the same time keep a reference map of the layers
@@ -189,9 +197,8 @@ export class CsMapObject {
     }
     this.groupLayer[id].push(layer);
 
-    this.map.addLayer(layer);
+    //this.map.addLayer(layer);
   }
-
 
   /**
    * Retrieve references to the layer by layer name.
@@ -204,7 +211,6 @@ export class CsMapObject {
     }
     return this.groupLayer[id];
   }
-
 
   /**
    * Get all active layers
@@ -221,9 +227,11 @@ export class CsMapObject {
   public removeLayerById(id: string) {
     const activelayers = this.getLayerById(id);
     if (activelayers) {
+      /*
       activelayers.forEach(layer => {
         this.map.removeLayer(layer);
       });
+      */
       delete this.groupLayer[id];
       this.renderStatusService.resetLayer(id);
     }
@@ -252,8 +260,8 @@ export class CsMapObject {
   public setLayerOpacity(layer, opacity: number) {
     if (this.getLayerById(layer.id) != null) {
       const layers: [olLayer] = this.getLayerById(layer);
-      for (const layer of layers) {
-        layer.setOpacity(opacity);
+      for (const l of layers) {
+        l.setOpacity(opacity);
       }
     }
   }
@@ -277,8 +285,11 @@ export class CsMapObject {
   * @returns a observable object that triggers an event when the user complete the drawing
   */
 
-  public drawPolygon(): BehaviorSubject<olLayerVector> {
+  //public drawPolygon(): BehaviorSubject<olLayerVector> {
+  public drawPolygon(): BehaviorSubject<string> {
     this.ignoreMapClick = true;
+
+    /*
     const source = new olSourceVector({ wrapX: false });
 
     const vector = new olLayerVector({
@@ -287,13 +298,14 @@ export class CsMapObject {
     const vectorBS = new BehaviorSubject<olLayerVector>(vector);
 
     //this.map.addLayer(vector);
+    */
 
     if (this.polygonEditable$) {
       this.clearPolygon();
     }
 
     // create accepts PolygonEditOptions object
-    this.polygonEditable$ = this.polygonsCesiumEditor.create({     
+    this.polygonEditable$ = this.polygonsCesiumEditor.create({
       pointProps: {
         color: Color.SKYBLUE .withAlpha(0.9),
         outlineColor: Color.BLACK.withAlpha(0.8),
@@ -310,6 +322,7 @@ export class CsMapObject {
       },
     });
 
+    let coordString = '';
     this.polygonEditable$.subscribe((editUpdate: PolygonEditUpdate) => {
       if (editUpdate.editAction === EditActions.ADD_LAST_POINT) {
         const cartesian3 = this.polygonEditable$.getCurrentPoints()
@@ -319,13 +332,17 @@ export class CsMapObject {
         const coords = cartesian3
             .map(cart => Ellipsoid.WGS84.cartesianToCartographic(<Cartesian3>cart))
               .map(latLon => [latLon.latitude * 180 / Math.PI , latLon.longitude * 180 / Math.PI]);
-        var coordString = coords.join(' ');
+        coordString = coords.join(' ');
+        /*
         vector.set('polygonString', coordString);
         vectorBS.next(vector);
+        */
         this.polygonEditable$.disable();
        }
     });
-    return vectorBS;
+    const coordsBS = new BehaviorSubject<string>(coordString);
+    return coordsBS;
+    //return vectorBS;
   }
 
   clearPolygon() {
@@ -335,6 +352,7 @@ export class CsMapObject {
     }
   }
 
+  /*
   public renderPolygon(polygon: any): BehaviorSubject<olLayerVector> {
     if (polygon.srs !== 'EPSG:3857') {
       return null;
@@ -377,6 +395,7 @@ export class CsMapObject {
     this.map.addLayer(vector);
     return vectorBS;
   }
+  */
 
  /**
  * Method for drawing a box on the map. e.g selecting a bounding box on the map
@@ -390,6 +409,7 @@ export class CsMapObject {
     * Method for drawing a dot on the map.
     * @returns the layer vector on which the dot is drawn on. This provides a handle for the dot to be deleted
     */
+   /*
   public drawDot(coord): olLayerVector {
     const source = new olSourceVector({wrapX: false});
     const vector = new olLayerVector({
@@ -459,20 +479,24 @@ export class CsMapObject {
 
     return vector;
   }
+  */
 
   /**
    * Return the extent of the entire map
    * @returns an olExtent object representing the bounds of the map
    */
+  /*
   public getMapExtent(): olExtent {
     return this.map.getView().calculateExtent(this.map.getSize());
   }
+  */
 
   /**
    * Display an extent for 3 seconds
    * @param extent the olExtent to display on the map
    * @param duration (Optional) the length of time in milliseconds to display the extent before it is removed. If not supplied the extent will not be removed.
    */
+  /*
   public displayExtent(extent: olExtent, duration?: number): void {
     const poly: olGeomPolygon = fromExtent(extent);
     const feature: olFeature = new olFeature(poly);
@@ -489,40 +513,49 @@ export class CsMapObject {
         }, duration);
     }
   }
+  */
 
   /**
    * Remove a vector from the map
    */
+  /*
   public removeVector(vector: olLayerVector) {
     this.map.removeLayer(vector);
   }
+  */
 
   /**
    * get the current state of the map in a object containing the zoom and center
    * @returns a object containing {zoom, center}
    */
+  /*
   public getCurrentMapState() {
     return {
       zoom: this.map.getView().getZoom(),
       center: this.map.getView().getCenter()
     };
   }
+  */
 
 
   /**
    * given the state of the map in a object, resume the map in the given state
    * @param the state of the map in the format {zoom, center}
    */
+  /*
   public resumeMapState(mapState) {
     this.map.getView().setZoom(mapState.zoom);
     this.map.getView().setCenter(mapState.center);
   }
+  */
 
   /**
    * Call updateSize on the map to handle scale changes
    */
+  /*
   public updateSize() {
     this.map.updateSize();
   }
+  */
 
 }

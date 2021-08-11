@@ -29,14 +29,14 @@ import { RenderStatusService } from '../cesium-map/renderstatus/render-status.se
 @Injectable()
 export class CsWFSService {
 
-  private map: olMap;
+  //private map: olMap;
 
   constructor(private layerHandlerService: LayerHandlerService,
                   private csMapObject: CsMapObject,
                   private http: HttpClient,
                   private gmlParserService: GMLParserService,
                   private renderStatusService: RenderStatusService, @Inject('env') private env) {
-    this.map = this.csMapObject.getMap();
+    //this.map = this.csMapObject.getMap();
   }
 
   /**

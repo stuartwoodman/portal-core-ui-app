@@ -16,12 +16,12 @@ export class QueryWMSService {
   constructor(private http: HttpClient, private csMapObject: CsMapObject, @Inject('env') private env) {
   }
 
-
   /**
    * Create WMS parameters using small local tiles
    * @param layerName name of layer
    * @param clickCoord clicked on map coordinates
    */
+  /*
   private useLocalTiles(layerName: string, clickCoord: number[]): [number, number, any, number] {
     const mapObj = this.csMapObject.getMap();
     const view = mapObj.getView();
@@ -54,6 +54,7 @@ export class QueryWMSService {
     }
     return [undefined, undefined, undefined, undefined]
   }
+  */
 
   public getFilter(lon: number, lat: number, layerId: string, extraFilter: string): string {
     const distPerPixel = this.csMapObject.getDistPerPixel();
@@ -190,8 +191,6 @@ export class QueryWMSService {
           return observableThrowError(error);
         }
       ), );
-
-
   }
 
 }
