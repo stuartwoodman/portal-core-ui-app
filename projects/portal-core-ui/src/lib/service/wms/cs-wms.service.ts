@@ -80,6 +80,11 @@ export class CsWMSService {
       STYLES: param && param.styles ? param.styles : '',
     };
 
+    // Add in time parameter, but only if required
+    if (param && param.time) {
+      params['time'] = param.time;
+    }
+
     if (sld_body) {
       /* ArcGIS and POST requests cannot read base64 encoded styles */
       if (!UtilitiesService.isArcGIS(onlineResource) && this.wmsUrlTooLong(sld_body, layer) && !usePost) {
@@ -121,6 +126,12 @@ export class CsWMSService {
       WIDTH: Constants.TILE_SIZE,
       HEIGHT: Constants.TILE_SIZE
     };
+
+    // Add in time parameter, but only if required
+    if (param && param.time) {
+      params['time'] = param.time;
+    }
+
     if (sld_body) {
       /* ArcGIS and POST requests cannot read base64 encoded styles */
       if (!UtilitiesService.isArcGIS(onlineResource) && this.wmsUrlTooLong(sld_body, layer) && !usePost) {
