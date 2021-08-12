@@ -14,7 +14,7 @@ import { UtilitiesService } from '../../utility/utilities.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 import { MinTenemStyleService } from '../style/wms/min-tenem-style.service';
 import { MapsManagerService, AcMapComponent } from 'angular-cesium';
-import { WebMapServiceImageryProvider, ImageryLayer, Resource } from 'cesium';
+import { WebMapServiceImageryProvider, ImageryLayer, Resource, Rectangle } from 'cesium';
 import { LayerStatusService } from '../../utility/layerstatus.service';
 
 import * as when from 'when';
@@ -358,23 +358,21 @@ export class CsWMSService {
           const params = wmsOnlineResource.version.startsWith('1.3')
             ? this.getWMS1_3_0param(layer, wmsOnlineResource, collatedParam, longResp, response)
             : this.getWMS1_1param(layer, wmsOnlineResource, collatedParam, longResp, response);
-          let defaultExtent;
+          let lonlatextent;
           if (wmsOnlineResource.geographicElements.length > 0) {
             const cswExtent = wmsOnlineResource.geographicElements[0];
-            let lonlatextent = extent.buffer([cswExtent.westBoundLongitude, cswExtent.southBoundLatitude, cswExtent.eastBoundLongitude,
+            lonlatextent = extent.buffer([cswExtent.westBoundLongitude, cswExtent.southBoundLatitude, cswExtent.eastBoundLongitude,
                                               cswExtent.northBoundLatitude], 2);
             lonlatextent = extent.getIntersection(lonlatextent, [-180, -90, 180, 90]);
-            defaultExtent = olProj.transformExtent(lonlatextent, 'EPSG:4326', Constants.MAP_PROJ);
           } else {
-            // FIXME: 'defaultExtent' is not the same format as above
-            const cameraService = this.map.getCameraService();
-            const camera = cameraService.getCamera();
-            defaultExtent = camera.computeViewRectangle();
+            // if extent isnt contained in the csw record then use global extent
+            lonlatextent = [-180, -90, 180, 90];
+            // the current view extent cannot be used as the bounds for the layer because the user could zoom out
+            // after adding the layer to the map.
           }
-          // TODO: Use 'defaultExtent'
 
           // Perform add layer request
-          layer.csLayers.push(this.addCesiumLayer(layer, wmsOnlineResource, params, longResp));
+          layer.csLayers.push(this.addCesiumLayer(layer, wmsOnlineResource, params, longResp,lonlatextent));
           layer.sldBody = response;
         });
     }
@@ -394,9 +392,10 @@ export class CsWMSService {
      * @param layer the WMS layer to add to the map.
      * @param wmsOnlineResource details of WMS service
      * @param usePost whether to use a POST request
+     * @param lonlatextent longitude latitude extent of the layer as an array [west,south,east,north]
      * @returns the new CesiumJS ImageryLayer object
      */
-    private addCesiumLayer(layer, wmsOnlineResource, params, usePost: boolean): ImageryLayer {
+    private addCesiumLayer(layer, wmsOnlineResource, params, usePost: boolean, lonlatextent): ImageryLayer {
       const viewer = this.map.getCesiumViewer();
       const me = this;
       if (this.layerHandlerService.contains(layer, ResourceType.WMS)) {
@@ -507,7 +506,8 @@ export class CsWMSService {
           wmsImagProv = new WebMapServiceImageryProvider({
             url: res,
             layers: wmsOnlineResource.name,
-            parameters: params
+            parameters: params,
+            rectangle: Rectangle.fromDegrees(lonlatextent[0], lonlatextent[1], lonlatextent[2], lonlatextent[3])
           });
         }
 
