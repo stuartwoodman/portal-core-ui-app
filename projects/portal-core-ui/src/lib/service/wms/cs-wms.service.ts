@@ -512,8 +512,7 @@ export class CsWMSService {
         }
 
         wmsImagProv.errorEvent.addEventListener(this.errorEvent);
-        const imgLayer = viewer.imageryLayers.addImageryProvider(wmsImagProv);
-        return imgLayer;
+        return viewer.imageryLayers.addImageryProvider(wmsImagProv);
       }
       return null;
     }

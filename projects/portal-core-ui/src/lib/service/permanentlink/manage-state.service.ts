@@ -65,12 +65,16 @@ export class ManageStateService {
   }
 
   /**
+   * TODO: Reimplement for Cesium
    * return the current state
    * @return return the state in the format layerid:{filterCollection,optionalFilters,map{zoom, center}}
    */
   public getState(): any {
+    /*
     this.state.map = this.csMapObject.getCurrentMapState();
     return this.state;
+    */
+   return null;
   }
 
   /**
@@ -90,12 +94,15 @@ export class ManageStateService {
   }
 
   /**
+   * TODO: Reimplement for Cesium
    * resume the state of the map given the map state
    */
   public resumeMapState(mapState) {
+    /*
     if (mapState) {
       this.csMapObject.resumeMapState(mapState);
     }
+    */
   }
 
   /**

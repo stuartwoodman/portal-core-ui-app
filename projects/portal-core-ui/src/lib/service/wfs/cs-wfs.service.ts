@@ -4,22 +4,13 @@ import {throwError as observableThrowError,  Observable } from 'rxjs';
 import {catchError, map} from 'rxjs/operators';
 
 import { Injectable, Inject } from '@angular/core';
-import {LayerModel} from '../../model/data/layer.model';
+import { LayerModel } from '../../model/data/layer.model';
 import { OnlineResourceModel } from '../../model/data/onlineresource.model';
 import { PrimitiveModel } from '../../model/data/primitive.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
 import { CsMapObject } from '../cesium-map/cs-map-object';
-import {HttpClient, HttpParams, HttpResponse} from '@angular/common/http';
-import olMap from 'ol/Map';
-import olPoint from 'ol/geom/Point';
-import * as olProj from 'ol/proj';
-import olFeature from 'ol/Feature';
-import olStyle from 'ol/style/Style';
-import olIcon from 'ol/style/Icon';
-import olLayerVector from 'ol/layer/Vector';
-import olSourceVector from 'ol/source/Vector';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { GMLParserService } from '../../utility/gmlparser.service';
-import { Constants, GeometryType } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 
@@ -29,14 +20,14 @@ import { RenderStatusService } from '../cesium-map/renderstatus/render-status.se
 @Injectable()
 export class CsWFSService {
 
-  private map: olMap;
+  //private map: olMap;
 
   constructor(private layerHandlerService: LayerHandlerService,
                   private csMapObject: CsMapObject,
                   private http: HttpClient,
                   private gmlParserService: GMLParserService,
                   private renderStatusService: RenderStatusService, @Inject('env') private env) {
-    this.map = this.csMapObject.getMap();
+    //this.map = this.csMapObject.getMap();
   }
 
   /**
@@ -72,14 +63,13 @@ export class CsWFSService {
     }
   }
 
-
-
   /**
    * Add geometry type point to the map
    * @param layer the layer where this point derived from
    * @param primitive the point primitive
    */
   public addPoint(layer: LayerModel, onlineResource: OnlineResourceModel, primitive: PrimitiveModel): void {
+    /*
      const geom = new olPoint(olProj.transform([primitive.coords.lng, primitive.coords.lat], 'EPSG:4326', 'EPSG:3857'));
        const feature = new olFeature(geom);
        feature.setStyle([
@@ -104,6 +94,7 @@ export class CsWFSService {
     // VT: we chose the first layer in the array based on the assumption that we only create a single vector
     // layer for each wfs layer. WMS may potentially contain more than 1 layer in the array. note the difference
     (<olLayerVector>this.csMapObject.getLayerById(layer.id)[0]).getSource().addFeature(feature);
+    */
   }
 
   public addLine(primitive: PrimitiveModel): void {
@@ -122,6 +113,7 @@ export class CsWFSService {
   public addLayer(layer: LayerModel, param?: any): void {
     const wfsOnlineResources = this.layerHandlerService.getWFSResource(layer);
 
+    /*
     // VT: create the vector on the map if it does not exist.
     if (!this.csMapObject.getLayerById(layer.id)) {
         const markerLayer = new olLayerVector({
@@ -164,7 +156,7 @@ export class CsWFSService {
         this.renderStatusService.updateComplete(layer, onlineResource, true);
       });
     }
+    */
   }
-
 
 }
