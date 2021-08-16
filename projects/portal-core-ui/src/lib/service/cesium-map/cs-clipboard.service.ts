@@ -12,16 +12,19 @@ export class CsClipboardService {
   private polygonBBox: Polygon;
   public polygonsBS: BehaviorSubject<Polygon>;
 
-  private bShowClipboard: Boolean = false;
-  public clipboardBS = new BehaviorSubject<Boolean>(this.bShowClipboard);
+  private bShowClipboard: boolean = false;
+  public clipboardBS = new BehaviorSubject<boolean>(this.bShowClipboard);
 
-  private bFilterLayers: Boolean = false;
-  public filterLayersBS = new BehaviorSubject<Boolean>(this.bFilterLayers);
+  private bFilterLayers: boolean = false;
+  public filterLayersBS = new BehaviorSubject<boolean>(this.bFilterLayers);
+
+  public isDrawingPolygonBS: BehaviorSubject<boolean>;
 
   constructor(private csMapObject: CsMapObject) {
     this.polygonBBox = null;
     this.polygonsBS = new BehaviorSubject<Polygon>(this.polygonBBox);
     this.polygonsBS.next(this.polygonBBox);
+    this.isDrawingPolygonBS = this.csMapObject.isDrawingPolygonBS;
   }
 
   public toggleClipboard(open?: boolean) {
@@ -40,43 +43,41 @@ export class CsClipboardService {
   }
 
   public toggleFilterLayers() {
-    this.bFilterLayers = !this.bFilterLayers ;
-    this.filterLayersBS.next(this.bFilterLayers );
+    this.bFilterLayers = !this.bFilterLayers;
+    this.filterLayersBS.next(this.bFilterLayers);
   }
 
-  public getGeometry(coords: String): any {
-    const geometry = 
-      '<gml:MultiPolygon srsName=\"urn:ogc:def:crs:EPSG::4326\">' +
-        '<gml:polygonMember>' +
-          '<gml:Polygon srsName=\"EPSG:4326\">' +
-            '<gml:outerBoundaryIs>' +
-              '<gml:LinearRing>' +
-                '<gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">' +
-                  coords +
-                '</gml:coordinates>' +
-              '</gml:LinearRing>' +
-            '</gml:outerBoundaryIs>' +
-          '</gml:Polygon>' +
-        '</gml:polygonMember>' +
-      '</gml:MultiPolygon>';
-    return geometry;
+  public getGeometry(coords: string): any {
+    return '<gml:MultiPolygon srsName=\"urn:ogc:def:crs:EPSG::4326\">' +
+            '<gml:polygonMember>' +
+              '<gml:Polygon srsName=\"EPSG:4326\">' +
+                '<gml:outerBoundaryIs>' +
+                  '<gml:LinearRing>' +
+                    '<gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">' +
+                      coords +
+                    '</gml:coordinates>' +
+                  '</gml:LinearRing>' +
+                '</gml:outerBoundaryIs>' +
+              '</gml:Polygon>' +
+            '</gml:polygonMember>' +
+          '</gml:MultiPolygon>';
   }
+
   /**
    * Method for drawing a polygon on the map.
    * @returns the polygon coordinates string BS on which the polygon is drawn on.
    */
   public drawPolygon() {
-    this.csMapObject.drawPolygon().subscribe(
-        (coords) => {
-          const newPolygon = {
-            name: 'manual-' + Math.floor(Math.random() * 1000),
-            srs: 'EPSG:4326',
-            geometryType: GeometryType.POLYGON,
-            coordinates: this.getGeometry(coords)
-          };
-          this.polygonBBox = newPolygon;
-          this.polygonsBS.next(this.polygonBBox);
-      });
+    this.csMapObject.drawPolygon().subscribe((coords) => {
+      const newPolygon = {
+        name: 'manual-' + Math.floor(Math.random() * 1000),
+        srs: 'EPSG:4326',
+        geometryType: GeometryType.POLYGON,
+        coordinates: this.getGeometry(coords)
+      };
+      this.polygonBBox = newPolygon;
+      this.polygonsBS.next(this.polygonBBox);
+    });
   }
 
   public addPolygon(newPolygon: Polygon) {
