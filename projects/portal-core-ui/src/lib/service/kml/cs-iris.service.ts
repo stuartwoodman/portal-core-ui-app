@@ -154,7 +154,7 @@ export class CsIrisService {
           canvas: viewer.scene.canvas
         };
         const stylefn = me.styleIrisEntity;
-        // Create data source 
+        // Create data source
         let source = new Cesium.KmlDataSource(options);
 
         // Load KML

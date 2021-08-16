@@ -7,7 +7,6 @@ import {HttpClient, HttpParams, HttpHeaders, HttpResponse} from '@angular/common
 import {OnlineResourceModel} from '../../model/data/onlineresource.model';
 import {CsMapObject} from '../cesium-map/cs-map-object';
 import {UtilitiesService} from '../../utility/utilities.service';
-import {Constants} from '../../utility/constants.service';
 
 
 @Injectable()
@@ -23,6 +22,7 @@ export class QueryWMSService {
    * @param clickCoord clicked on map coordinates
    */
   private useLocalTiles(layerName: string, clickCoord: number[]): [number, number, any, number] {
+    /*
     const mapObj = this.csMapObject.getMap();
     const view = mapObj.getView();
     const viewResolution = view.getResolution();
@@ -52,6 +52,7 @@ export class QueryWMSService {
         return [x, y, tileExtent, tileSize];
       }
     }
+    */
     return [undefined, undefined, undefined, undefined]
   }
 
