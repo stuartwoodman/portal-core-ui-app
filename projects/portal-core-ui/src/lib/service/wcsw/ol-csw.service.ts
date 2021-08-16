@@ -166,8 +166,6 @@ export class OlCSWService {
               this.addPolygon(layer, cswRecord, primitive);
               break;
           }
-
-
         }
       }
 

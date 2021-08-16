@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import * as olProj from 'ol/proj';
 import { CsMapObject } from './cs-map-object';
-import olLayerVector from 'ol/layer/Vector';
 import { GeometryType } from '../../utility/constants.service';
 
 /**
@@ -13,8 +12,6 @@ export class CsClipboardService {
   private polygonBBox: Polygon;
   public polygonsBS: BehaviorSubject<Polygon>;
 
-  public vectorOnMap: olLayerVector;
-
   private bShowClipboard: Boolean = false;
   public clipboardBS = new BehaviorSubject<Boolean>(this.bShowClipboard);
 
@@ -22,7 +19,6 @@ export class CsClipboardService {
   public filterLayersBS = new BehaviorSubject<Boolean>(this.bFilterLayers);
 
   constructor(private csMapObject: CsMapObject) {
-    this.vectorOnMap = null;
     this.polygonBBox = null;
     this.polygonsBS = new BehaviorSubject<Polygon>(this.polygonBBox);
     this.polygonsBS.next(this.polygonBBox);
@@ -71,30 +67,16 @@ export class CsClipboardService {
    */
   public drawPolygon() {
     this.csMapObject.drawPolygon().subscribe(
-        (vector) => {
-          const coords = vector.get('polygonString');
-          if ( coords ) {
-            const newPolygon = {name: 'manual-' + Math.floor(Math.random() * 1000), srs: 'EPSG:4326',
-                geometryType: GeometryType.POLYGON, coordinates: this.getGeometry(coords), olvector: vector};
-            this.polygonBBox = newPolygon;
-            this.polygonsBS.next(this.polygonBBox);
-            if (this.vectorOnMap) {
-              this.csMapObject.removeVector(this.vectorOnMap);
-            }
-            this.vectorOnMap = vector;
-          }
+        (coords) => {
+          const newPolygon = {
+            name: 'manual-' + Math.floor(Math.random() * 1000),
+            srs: 'EPSG:4326',
+            geometryType: GeometryType.POLYGON,
+            coordinates: this.getGeometry(coords)
+          };
+          this.polygonBBox = newPolygon;
+          this.polygonsBS.next(this.polygonBBox);
       });
-  }
-  public renderPolygon() {
-    if (this.vectorOnMap) {
-      this.csMapObject.removeVector(this.vectorOnMap);
-    }
-    if (this.polygonBBox) {
-      this.csMapObject.renderPolygon(this.polygonBBox).subscribe(
-        (vector) => {
-          this.vectorOnMap = vector;
-        });
-    }
   }
 
   public addPolygon(newPolygon: Polygon) {
@@ -106,6 +88,7 @@ export class CsClipboardService {
       const coords = [];
       // transform from 'EPSG:4326'to 'EPSG:3857' format
       for (let i = 0; i < coordsArray.length; i += 2) {
+        // TODO: Get rid of olProj.transform
         const point = olProj.transform([parseFloat(coordsArray[i]), parseFloat(coordsArray[i + 1])], newPolygon.srs , 'EPSG:3857');
         coords.push({'x': point[0], 'y': point[1]});
       }
@@ -118,8 +101,6 @@ export class CsClipboardService {
     this.polygonBBox = newPolygon;
     this.polygonsBS.next(this.polygonBBox);
     // show polygon on map
-    this.renderPolygon();
-
   }
 
   public removePolygon() {
@@ -130,10 +111,6 @@ export class CsClipboardService {
     this.csMapObject.clearPolygon();
     this.polygonBBox = null;
     this.polygonsBS.next(this.polygonBBox);
-    if (this.vectorOnMap) {
-      this.csMapObject.removeVector(this.vectorOnMap);
-    }
-    this.vectorOnMap = null;
   }
 }
 
@@ -143,5 +120,4 @@ export interface Polygon {
   geometryType: GeometryType;
   coordinates: string;
   raw?: string;
-  olvector?: olLayerVector;
 }
