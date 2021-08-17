@@ -79,7 +79,7 @@ export class CsClipboardService {
   public drawPolygon() {
     this.csMapObject.drawPolygon().subscribe((coords) => {
       const newPolygon = {
-        name: 'manual-' + Math.floor(Math.random() * 1000),
+        name: 'Polygon created',
         srs: 'EPSG:4326',
         geometryType: GeometryType.POLYGON,
         coordinates: this.getGeometry(coords)
@@ -89,6 +89,10 @@ export class CsClipboardService {
     });
   }
 
+  /**
+   * Add a polygon to the clipboard, usually from a layer
+   * @param newPolygon polygon object
+   */
   public addPolygon(newPolygon: Polygon) {
     if (this.polygonBBox !== null && this.polygonBBox.name === newPolygon.name) {
       return;
