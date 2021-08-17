@@ -42,8 +42,17 @@ export class CsClipboardService {
     }
   }
 
-  public toggleFilterLayers() {
-    this.bFilterLayers = !this.bFilterLayers;
+  /**
+   * Toggle the polygon filter layers. Can be set using optional parameter.
+   * 
+   * @param layersOn (optional) if supplied, set the filter layers to this value
+   */
+  public toggleFilterLayers(layersOn?: boolean) {
+    if (layersOn) {
+      this.bFilterLayers = layersOn;
+    } else {
+      this.bFilterLayers = !this.bFilterLayers;
+    }
     this.filterLayersBS.next(this.bFilterLayers);
   }
 
