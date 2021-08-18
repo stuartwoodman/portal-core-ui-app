@@ -51,8 +51,7 @@ export class CsMapService {
   init() {
     this.map = this.mapsManagerService.getMap();
     const eventRegistration: EventRegistrationInput = {
-      event: CesiumEvent.LEFT_CLICK, // Left mouse click
-      pick: PickOptions.PICK_ONE // If lots of things are picked a 'picker' will help you choose one
+      event: CesiumEvent.LEFT_CLICK
     };
     const mapEventManager = this.mapsManagerService.getMap().getMapEventsManager();
     const clickEvent = mapEventManager.register(eventRegistration).subscribe((result) => {

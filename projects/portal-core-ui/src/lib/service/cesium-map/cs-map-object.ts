@@ -2,7 +2,8 @@ import { RenderStatusService } from './renderstatus/render-status.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject} from 'rxjs';
-import { EditActions, MapsManagerService, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService, RectangleEditorObservable, RectanglesEditorService } from 'angular-cesium';
+import { EditActions, MapsManagerService, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService, RectangleEditorObservable,
+         RectanglesEditorService } from 'angular-cesium';
 import { Cartesian3, Color, ColorMaterialProperty, Ellipsoid, WebMercatorProjection } from 'cesium';
 import { LayerModel } from '../../model/data/layer.model';
 
@@ -18,6 +19,7 @@ export class CsMapObject {
   private clickHandlerList: ((p: any) => void )[] = [];
   private ignoreMapClick = false;
   private polygonEditable$: PolygonEditorObservable;
+  public isDrawingPolygonBS = new BehaviorSubject<boolean>(false);
 
   constructor(private renderStatusService: RenderStatusService, private rectangleEditor: RectanglesEditorService,
               private polygonsCesiumEditor: PolygonsEditorService, private mapsManagerService: MapsManagerService) {
@@ -45,8 +47,7 @@ export class CsMapObject {
 
   public getViewSize(): any {
     const viewer = this.mapsManagerService.getMap().getCesiumViewer();
-    const size = [viewer.canvas.width, viewer.canvas.height];
-    return size;
+    return [viewer.canvas.width, viewer.canvas.height];
   }
 
   /**
@@ -128,7 +129,8 @@ export class CsMapObject {
     if (this.polygonEditable$) {
       this.clearPolygon();
     }
-    
+    this.isDrawingPolygonBS.next(true);
+
     // create accepts PolygonEditOptions object
     this.polygonEditable$ = this.polygonsCesiumEditor.create({
       pointProps: {
@@ -138,7 +140,7 @@ export class CsMapObject {
         pixelSize: 13,
       },
       polygonProps: {
-        material:new ColorMaterialProperty(Color.LIGHTSKYBLUE.withAlpha(0.05)),
+        material: new ColorMaterialProperty(Color.LIGHTSKYBLUE.withAlpha(0.05)),
         fill: true,
       },
       polylineProps: {
@@ -153,20 +155,21 @@ export class CsMapObject {
       if (editUpdate.editAction === EditActions.ADD_LAST_POINT) {
         const cartesian3 = this.polygonEditable$.getCurrentPoints()
           .map(p => p.getPosition());
-
         cartesian3.push(cartesian3[0]);
         const coords = cartesian3
-            .map(cart => Ellipsoid.WGS84.cartesianToCartographic(<Cartesian3>cart))
+            .map(cart => Ellipsoid.WGS84.cartesianToCartographic(cart as Cartesian3))
               .map(latLon => [latLon.latitude * 180 / Math.PI , latLon.longitude * 180 / Math.PI]);
         coordString = coords.join(' ');
         polygonStringBS.next(coordString);
         this.polygonEditable$.disable();
+        this.isDrawingPolygonBS.next(false);
        }
     });
     return polygonStringBS;
   }
 
   clearPolygon() {
+    this.isDrawingPolygonBS.next(false);
     if (this.polygonEditable$) {
       this.polygonEditable$.dispose();
       this.polygonEditable$ = undefined;
