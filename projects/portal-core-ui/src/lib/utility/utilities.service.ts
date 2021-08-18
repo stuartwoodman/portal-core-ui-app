@@ -448,8 +448,9 @@ export class UtilitiesService {
           const capRec = layer.capabilityRecords[0];
           if (capRec.isWMS && capRec.layers.length > 0) {
               for (layer of capRec.layers) {
-                  if (layer.name == onlineResource.name && layer.timeExtent) {
-                      param['time'] = layer.timeExtent;
+                  if (layer.name == onlineResource.name && layer.timeExtent && layer.timeExtent.length > 0) {
+                      // NB: Only take the first value
+                      param['time'] = layer.timeExtent[0];
                       break;
                   }
               }

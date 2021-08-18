@@ -60,27 +60,27 @@ export class Constants {
     // Centre of Australia in EPSG:3857
     public static CENTRE_COORD: [number, number] = [14793316.706200, -2974317.644633];
 
-    public static paddlesList = [['http://maps.google.com/mapfiles/kml/paddle/blu-blank.png', 'blue'],
-    ['http://maps.google.com/mapfiles/kml/paddle/blu-square.png', 'blue'],
-    ['http://maps.google.com/mapfiles/kml/paddle/blu-circle.png', 'blue'],
-    ['http://maps.google.com/mapfiles/kml/paddle/blu-diamond.png', 'blue'],
-    ['http://maps.google.com/mapfiles/kml/paddle/grn-blank.png', 'green'],
-    ['http://maps.google.com/mapfiles/kml/paddle/grn-diamond.png', 'green'],
-    ['http://maps.google.com/mapfiles/kml/paddle/grn-circle.png', 'green'],
-    ['http://maps.google.com/mapfiles/kml/paddle/ltblu-blank.png', '#7faaef'],
-    ['http://maps.google.com/mapfiles/kml/paddle/ltblu-diamond.png', '#7faaef'],
-    ['http://maps.google.com/mapfiles/kml/paddle/pink-blank.png', '#e248c9'],
-    ['http://maps.google.com/mapfiles/kml/paddle/pink-square.png', '#e248c9'],
-    ['http://maps.google.com/mapfiles/kml/paddle/purple-square.png', '#813ddb'],
-    ['http://maps.google.com/mapfiles/kml/paddle/red-diamond.png', 'red'],
-    ['http://maps.google.com/mapfiles/kml/paddle/red-stars.png', 'red'],
-    ['http://maps.google.com/mapfiles/kml/paddle/wht-square.png', 'white'],
-    ['http://maps.google.com/mapfiles/kml/paddle/ylw-blank.png', 'yellow'],
-    ['http://maps.google.com/mapfiles/kml/paddle/ylw-diamond.png', 'yellow'],
-    ['http://maps.google.com/mapfiles/kml/paddle/ylw-circle.png', 'yellow'],
-    ['http://maps.google.com/mapfiles/kml/paddle/orange-blank.png', 'orange'],
-    ['http://maps.google.com/mapfiles/kml/paddle/purple-blank.png', 'purple'],
-    ['http://maps.google.com/mapfiles/kml/paddle/purple-circle.png', 'purple']];
+    public static paddlesList = [['https://maps.google.com/mapfiles/kml/paddle/blu-blank.png', 'blue'],
+    ['https://maps.google.com/mapfiles/kml/paddle/blu-square.png', 'blue'],
+    ['https://maps.google.com/mapfiles/kml/paddle/blu-circle.png', 'blue'],
+    ['https://maps.google.com/mapfiles/kml/paddle/blu-diamond.png', 'blue'],
+    ['https://maps.google.com/mapfiles/kml/paddle/grn-blank.png', 'green'],
+    ['https://maps.google.com/mapfiles/kml/paddle/grn-diamond.png', 'green'],
+    ['https://maps.google.com/mapfiles/kml/paddle/grn-circle.png', 'green'],
+    ['https://maps.google.com/mapfiles/kml/paddle/ltblu-blank.png', '#7faaef'],
+    ['https://maps.google.com/mapfiles/kml/paddle/ltblu-diamond.png', '#7faaef'],
+    ['https://maps.google.com/mapfiles/kml/paddle/pink-blank.png', '#e248c9'],
+    ['https://maps.google.com/mapfiles/kml/paddle/pink-square.png', '#e248c9'],
+    ['https://maps.google.com/mapfiles/kml/paddle/purple-square.png', '#813ddb'],
+    ['https://maps.google.com/mapfiles/kml/paddle/red-diamond.png', 'red'],
+    ['https://maps.google.com/mapfiles/kml/paddle/red-stars.png', 'red'],
+    ['https://maps.google.com/mapfiles/kml/paddle/wht-square.png', 'white'],
+    ['https://maps.google.com/mapfiles/kml/paddle/ylw-blank.png', 'yellow'],
+    ['https://maps.google.com/mapfiles/kml/paddle/ylw-diamond.png', 'yellow'],
+    ['https://maps.google.com/mapfiles/kml/paddle/ylw-circle.png', 'yellow'],
+    ['https://maps.google.com/mapfiles/kml/paddle/orange-blank.png', 'orange'],
+    ['https://maps.google.com/mapfiles/kml/paddle/purple-blank.png', 'purple'],
+    ['https://maps.google.com/mapfiles/kml/paddle/purple-circle.png', 'purple']];
 
     public static getRandomPaddle(): string {
       const random = Math.floor(Math.random() * Constants.paddlesList.length);

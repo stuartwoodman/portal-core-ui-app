@@ -33,9 +33,10 @@ export class DownloadWcsService {
    * @param inputCrs coordinate reference system of bounding box
    * @param downloadformat requests a download in a certain format
    * @param outputCrs coord reference system for the download
+   * @param timeRange range of times if applicable to layers
    * @return observable containing the download or error
    */
-  public download(layer: LayerModel, bbox: Bbox, inputCrs: string, downloadFormat: string, outputCrs: string): Observable<any> {
+  public download(layer: LayerModel, bbox: Bbox, inputCrs: string, downloadFormat: string, outputCrs: string, timePositions: string[]): Observable<any> {
     try {
       const ftpResources = this.layerHandlerService.getOnlineResources(layer, ResourceType.FTP);
       const ftpURL = (ftpResources.length > 0) ? ftpResources[0]['url'] : '';
@@ -80,10 +81,14 @@ export class DownloadWcsService {
       httpParams = httpParams.set('outputCrs', outputCrs);
       httpParams = httpParams.set('ftpURL', ftpURL);
 
+      if (timePositions && timePositions.length > 0) {
+        httpParams = httpParams.set('timePosition', timePositions.join());
+      }
+
       return this.http.get(this.env.portalBaseUrl + 'downloadWCSAsZip.do', {
         params: httpParams,
         responseType: 'blob'
-      }).pipe(timeoutWith(360000, observableThrowError(new Error('Request have timeout out after 5 minutes'))),
+      }).pipe(timeoutWith(360000, observableThrowError(new Error('The request has timed out after 5 minutes'))),
         map((response) => { // download file
           return response;
 	  }), catchError((error: HttpResponse<any>) => {
