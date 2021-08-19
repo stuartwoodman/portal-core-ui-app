@@ -319,8 +319,10 @@ export class CsWMSService {
     }
     this.map = this.mapsManagerService.getMap();
     const viewer = this.map.getCesiumViewer();
-    for (const imgLayer of layer.csLayers) {
-      viewer.imageryLayers.remove(imgLayer);
+    if (layer.csLayers) {
+      for (const imgLayer of layer.csLayers) {
+        viewer.imageryLayers.remove(imgLayer);
+      }
     }
     layer.csLayers = [];
     this.renderStatusService.resetLayer(layer.id);
