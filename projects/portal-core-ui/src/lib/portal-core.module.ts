@@ -13,6 +13,7 @@ import { CsMapService } from './service/cesium-map/cs-map.service';
 import { CsClipboardService } from './service/cesium-map/cs-clipboard.service';
 import { RenderStatusService } from './service/cesium-map/renderstatus/render-status.service';
 import { ManageStateService } from './service/permanentlink/manage-state.service';
+import { OlManageStateService } from './service/permanentlink/ol-manage-state.service';
 import { DownloadWfsService } from './service/wfs/download/download-wfs.service';
 import { OlWMSService } from './service/wms/ol-wms.service';
 import { CsWMSService } from './service/wms/cs-wms.service';
@@ -71,6 +72,7 @@ import { PolygonsEditorService } from 'angular-cesium';
     QueryWMSService,
     QueryWFSService,
     ManageStateService,
+    OlManageStateService,
     OlCSWService,
     LayerStatusService,
     CsCSWService,

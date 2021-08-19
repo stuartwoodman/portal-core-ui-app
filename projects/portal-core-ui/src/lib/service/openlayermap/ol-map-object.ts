@@ -1,3 +1,4 @@
+import {RenderStatusService} from '../cesium-map/renderstatus/render-status.service';
 import {Constants, GeometryType } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import {Injectable , Inject} from '@angular/core';
@@ -26,7 +27,7 @@ import * as olExtent from 'ol/extent';
 import * as olEasing from 'ol/easing';
 import {unByKey} from 'ol/Observable';
 import { Subject , BehaviorSubject} from 'rxjs';
-//import * as G from 'ol-geocoder';
+import * as G from 'ol-geocoder';
 import {getVectorContext} from 'ol/render';
 
 export interface BaseMapLayerOption {
@@ -50,13 +51,47 @@ export class OlMapObject {
   private baseLayers = [];
   private baseMapLayers = [{ value: 'OSM', viewValue: 'OpenStreetMap', layerType: 'OSM' }];
 
-  constructor() {
-    // Use a basic Open Street Map for the preview map
+  constructor(private renderStatusService: RenderStatusService, @Inject('env') private env) {
+    if (env !== null) {
+      this.baseMapLayers = env.baseMapLayers;
+    }
     for (let i = 0; i < this.baseMapLayers.length; ++i) {
-      this.baseLayers.push(new olTile({
-        visible: true,
-        source: new olOSM()
-      }));
+      if ( this.baseMapLayers[i].layerType === 'OSM') {
+        this.baseLayers.push(new olTile({
+          visible: true,
+          source: new olOSM()
+        }));
+      } else if ( this.baseMapLayers[i].layerType === 'Bing') {
+        this.baseLayers.push(new TileLayer({
+          visible: false,
+          preload: Infinity,
+          source: new BingMaps({
+            key: 'AgfoWboIfoy68Vu38c2RE83rEEuvWKjQWV37g7stRUAPcDiGALCEKHefrDyWn1zM',
+            imagerySet: this.baseMapLayers[i].value,
+            // use maxZoom 19 to see stretched tiles instead of the BingMaps
+            // "no photos at this zoom level" tiles
+             maxZoom: 19
+          })
+        }));
+      } else if (this.baseMapLayers[i].layerType === 'ESRI') {
+        this.baseLayers.push(new TileLayer({
+          visible: false,
+          preload: Infinity,
+          source: new XYZ({
+            attributions: 'Tiles © <a href="https://services.arcgisonline.com/ArcGIS/rest/services/' + this.baseMapLayers[i].value + '/MapServer">ArcGIS</a>',
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/' + this.baseMapLayers[i].value + '/MapServer/tile/{z}/{y}/{x}',
+            maxZoom: 18
+          })
+        }));
+      } else if (this.baseMapLayers[i].layerType === 'Google') {
+        this.baseLayers.push(new TileLayer({
+          visible: false,
+          preload: Infinity,
+          source: new XYZ({
+            url: 'http://mt1.google.com/vt/lyrs=' + this.baseMapLayers[i].value + '&x={x}&y={y}&z={z}'
+          })
+        }));
+      }
     }
     this.groupLayer = {};
     this.map = new olMap({
@@ -81,6 +116,45 @@ export class OlMapObject {
     });
 
   }
+
+  public addGeocoderToMap() {
+    // Added ol-geocoder controller into map.
+    const GC = new  G('nominatim', {
+      provider: 'bing',
+      key: 'AgfoWboIfoy68Vu38c2RE83rEEuvWKjQWV37g7stRUAPcDiGALCEKHefrDyWn1zM',
+      lang: 'en',
+      placeholder: 'search',
+      limit: 5,
+      autoComplete: true,
+      keepOpen: true
+    });
+    const geocoderSource = GC.getSource();
+    const me = this;
+    GC.on('addresschosen', function (evt) {
+      const coord = evt.coordinate;
+      if (coord) {
+        geocoderSource.clear();
+        geocoderSource.addFeature(evt.feature); // add only the last one
+        me.map.getView().setCenter(coord);
+        me.map.getView().setZoom(9);
+      }
+    });
+    this.map.addControl(GC);
+}
+
+public switchBaseMap(newstyle: string): void {
+    for (let i = 0; i < this.baseLayers.length; ++i) {
+      this.baseLayers[i].setVisible(this.baseMapLayers[i].value === newstyle);
+      if (this.baseMapLayers[i].value === 'World_Imagery' && newstyle === 'Reference/World_Boundaries_and_Places') {
+        this.baseLayers[i].setVisible(true);
+      }
+    }
+
+}
+
+public addControlToMap(control: olControl) {
+  this.map.addControl(control);
+}
 
   /**
    * Register a click handler callback function which is called when there is a click event

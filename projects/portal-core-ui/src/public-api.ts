@@ -22,6 +22,7 @@ export { OlMapService } from './lib/service/openlayermap/ol-map.service';
 export { CsMapObject } from './lib/service/cesium-map/cs-map-object';
 export { CsMapService } from './lib/service/cesium-map/cs-map.service';
 export { ManageStateService } from './lib/service/permanentlink/manage-state.service';
+export { OlManageStateService } from './lib/service/permanentlink/ol-manage-state.service';
 export { MinTenemStyleService } from './lib/service/style/wms/min-tenem-style.service';
 export { NotificationService } from './lib/service/toppanel/notification.service';
 export { DownloadWcsService } from './lib/service/wcs/download/download-wcs.service';
