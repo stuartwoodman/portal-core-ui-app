@@ -6,6 +6,7 @@ import { ImagerySplitDirection } from 'cesium';
  */
 export class LayerModel {
   cswRecords: CSWRecordModel[];
+  capabilityRecords: any;
   description: string;
   feature_count: number;
   group: string;

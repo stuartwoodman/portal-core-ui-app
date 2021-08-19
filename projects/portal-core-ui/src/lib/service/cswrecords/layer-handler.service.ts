@@ -9,7 +9,9 @@ import {HttpClient, HttpParams} from '@angular/common/http';
 import {LayerModel} from '../../model/data/layer.model';
 import {OnlineResourceModel} from '../../model/data/onlineresource.model';
 import {ResourceType} from '../../utility/constants.service';
+import { UtilitiesService } from '../../utility/utilities.service';
 import { ImagerySplitDirection } from 'cesium';
+
 
 /**
  * Service class to handle jobs relating to getting csw records from the server
@@ -19,10 +21,11 @@ import { ImagerySplitDirection } from 'cesium';
 export class LayerHandlerService {
 
   private layerRecord;
+  private layerCaps; // A layer's WMS getCapabilities record, indexed on layer name
 
   constructor(private http: HttpClient, @Inject('env') private env) {
     this.layerRecord = [];
-
+    this.layerCaps = {};
   }
 
   /**
@@ -34,7 +37,7 @@ export class LayerHandlerService {
     if (this.layerRecord.length > 0) {
         return observableOf(this.layerRecord);
     } else {
-      return this.http.get(this.env.portalBaseUrl + this.env.getCSWRecordUrl).pipe(
+      return this.http.get(this.env.portalBaseUrl + this.env.getCSWRecordEndP).pipe(
         map(response => {
             const cswRecord = response['data'];
             cswRecord.forEach(function(item, i, ar) {
@@ -53,20 +56,20 @@ export class LayerHandlerService {
   }
 
   /**
-   * Retrive the  csw record located at the wms  serviceurl endpoint.
+   * Retrieve the csw record located at the wms serviceurl endpoint.
    * @Return a layer with the retrieved cswrecord wraped in a layer model.
    */
   public getCustomLayerRecord(serviceUrl: string): Observable<any> {
     const me = this;
     const httpParams = new HttpParams().set('serviceUrl', serviceUrl);
 
-    return this.http.get(this.env.portalBaseUrl + this.env.getCustomLayers, {
+    return this.http.get(this.env.portalBaseUrl + this.env.getCustLayersEndP, {
       params: httpParams
     }).pipe(map(response => {
       if (response['success'] === false) {
         return null;
       }
-      const cswRecord = response['data'];
+      const cswRecord = response['data']['cswRecords'];
       const itemLayers = [];
       itemLayers['Results'] = [];
       cswRecord.forEach(function(item, i, ar) {
@@ -79,6 +82,7 @@ export class LayerHandlerService {
         itemLayer.layerMode = 'NA';
         itemLayer.name = item.name;
         itemLayer.splitDirection = ImagerySplitDirection.NONE;
+        itemLayer.capabilityRecords = response['data']['capabilityRecords'];
         itemLayers['Results'].push(itemLayer);
       });
       return itemLayers;

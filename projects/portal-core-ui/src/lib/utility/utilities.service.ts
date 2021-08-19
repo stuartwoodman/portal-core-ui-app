@@ -406,7 +406,6 @@ export class UtilitiesService {
     public static collateParam(layer, onlineResource, parameter) {
 
       let param = _.cloneDeep(parameter);
-
       if (!param) {
         param = {};
       }
@@ -442,6 +441,20 @@ export class UtilitiesService {
           param.optionalFilters.splice(i, 1);
           break;
         }
+      }
+
+      // Set up time extents, if supplied
+      if (layer.capabilityRecords && layer.capabilityRecords.length > 0) {
+          const capRec = layer.capabilityRecords[0];
+          if (capRec.isWMS && capRec.layers.length > 0) {
+              for (layer of capRec.layers) {
+                  if (layer.name == onlineResource.name && layer.timeExtent && layer.timeExtent.length > 0) {
+                      // NB: Only take the first value
+                      param['time'] = layer.timeExtent[0];
+                      break;
+                  }
+              }
+          }
       }
       return param;
     }
