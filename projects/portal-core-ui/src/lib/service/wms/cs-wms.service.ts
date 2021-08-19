@@ -18,6 +18,24 @@ import { WebMapServiceImageryProvider, ImageryLayer, Resource, Rectangle } from 
 import { LayerStatusService } from '../../utility/layerstatus.service';
 
 import * as when from 'when';
+import TileProviderError from 'cesium/Source/Core/TileProviderError';
+
+export class ErrorPayload {
+  constructor(
+     public cmWmsService: CsWMSService,
+     public layer: LayerModel) {}
+
+  /**
+ * Logs an error to console if WMS could not load on map
+ * @param evt event
+ */
+  public errorEvent(evt) {
+    console.error('ERROR! evt = ', evt);
+    const error : TileProviderError = evt;
+    const rss: RenderStatusService = this.cmWmsService.getRenderStatusService();
+    rss.getStatusBSubject(this.layer).value.setErrorMessage(error.error.message);
+  }  
+}
 
 /**
  * Use Cesium to add layer to map. This service class adds WMS layer to the map
@@ -39,7 +57,9 @@ export class CsWMSService {
     @Inject('conf') private conf
   ) { }
 
-
+  public getRenderStatusService(): RenderStatusService {
+    return this.renderStatusService;
+  }
   /**
    * A private helper used to check if the URL is too long
    */
@@ -310,8 +330,10 @@ export class CsWMSService {
     }
     this.map = this.mapsManagerService.getMap();
     const viewer = this.map.getCesiumViewer();
-    for (const imgLayer of layer.csLayers) {
-      viewer.imageryLayers.remove(imgLayer);
+    if (layer.csLayers) {
+      for (const imgLayer of layer.csLayers) {
+        viewer.imageryLayers.remove(imgLayer);
+      }
     }
     layer.csLayers = [];
     this.renderStatusService.resetLayer(layer.id);
@@ -388,14 +410,6 @@ export class CsWMSService {
         });
     }
   }
-
-    /**
-     * Logs an error to console if WMS could not load on map
-     * @param evt event
-     */
-    public errorEvent(evt) {
-      console.error('ERROR! evt = ', evt);
-    }
 
     /**
      * Calls CesiumJS to add WMS layer to the map
@@ -521,8 +535,9 @@ export class CsWMSService {
             rectangle: Rectangle.fromDegrees(lonlatextent[0], lonlatextent[1], lonlatextent[2], lonlatextent[3])
           });
         }
+        const errorPayload = new ErrorPayload( this, layer);
 
-        wmsImagProv.errorEvent.addEventListener(this.errorEvent);
+        wmsImagProv.errorEvent.addEventListener(errorPayload.errorEvent, errorPayload);
         return viewer.imageryLayers.addImageryProvider(wmsImagProv);
       }
       return null;
