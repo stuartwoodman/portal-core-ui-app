@@ -12,7 +12,7 @@ export class StatusMapModel {
   public resourceMap: Object;
   private renderComplete: boolean;
   private renderStarted: boolean;
-  private errorMessage: string;
+  private containsError: boolean;
   private _statusMap = new BehaviorSubject<StatusMapModel>(this);
 
 
@@ -22,7 +22,7 @@ export class StatusMapModel {
     this.resourceMap = {};
     this.renderComplete = false;
     this.renderStarted = false;
-    this.errorMessage = '';
+    this.containsError = false;
   }
 
   /**
@@ -76,10 +76,6 @@ export class StatusMapModel {
     this._statusMap.next(this);
   }
 
-  public setErrorMessage(errorMessage: string) {
-    this.errorMessage = errorMessage;
-  }
-
   /**
    * update the counter for each completed job
    * @param onlineresource  online resource that is being updated
@@ -101,12 +97,12 @@ export class StatusMapModel {
     } else {
       this.completePercentage = Math.floor(this.completed / this.total * 100) + '%';
     }
-    if(this.getContainsError()) {
-      this.resourceMap[onlineresource.url].status = this.errorMessage;
-    } else if (error) {
+    if (error) {
       this.resourceMap[onlineresource.url].status = 'Error';
-    } else {
-      if (this.resourceMap[onlineresource.url].total ===  this.resourceMap[onlineresource.url].completed) {
+      this.containsError = true;
+    }
+    if (this.resourceMap[onlineresource.url].total ===  this.resourceMap[onlineresource.url].completed) {
+      if (this.resourceMap[onlineresource.url].status !== 'Error') {
         this.resourceMap[onlineresource.url].status = 'Complete';
       }
     }
@@ -133,7 +129,7 @@ export class StatusMapModel {
     this.resourceMap = {};
     this.renderComplete = false;
     this.renderStarted = false;
-    this.errorMessage = '';
+    this.containsError = false;
     this._statusMap.next(this);
   }
 
@@ -150,9 +146,7 @@ export class StatusMapModel {
   }
 
   public getContainsError(): boolean {
-    if(this.errorMessage)
-      return true;
-    return false;
+    return this.containsError;
   }
 
 }
