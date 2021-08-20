@@ -376,9 +376,6 @@ export class CsWMSService {
       }
       this.renderStatusService.register(layer, wmsOnlineResource);
       this.renderStatusService.addResource(layer, wmsOnlineResource);
-    }
-
-    for (const wmsOnlineResource of wmsOnlineResources) {
       // Collate parameters for style request
       const collatedParam = UtilitiesService.collateParam(layer, wmsOnlineResource, param);
       // Set 'usePost' if style request parameters are too long
