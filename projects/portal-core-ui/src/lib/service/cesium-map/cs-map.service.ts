@@ -447,7 +447,30 @@ export class CsMapService {
    * @param extent An array of numbers representing an extent: [minx, miny, maxx, maxy]
    */
   public fitView(extent: [number, number, number, number]): void {
-      // FIXME this.map.getMap().getView().fit(extent);
+    const northWest = olProj.toLonLat([extent[0], extent[1]]);
+    const northEast = olProj.toLonLat([extent[2], extent[1]]);
+    const southEast = olProj.toLonLat([extent[2], extent[3]]);
+    const southWest = olProj.toLonLat([extent[0], extent[3]]);
+    const extentPoly = this.getViewer().entities.add({
+      polygon : {
+        hierarchy : Cesium.Cartesian3.fromDegreesArray([
+          northWest[0], northWest[1],
+          northEast[0], northEast[1],
+          southEast[0], southEast[1],
+          southWest[0], southWest[1]
+        ]),
+        height : 0,
+        material : new Cesium.Color(128, 128, 128, 0.25),
+        outline : true,
+        outlineColor : Cesium.Color.BLACK
+      }
+    });
+    // Leave the highlight for 2 seconds after zooming, then remove
+    this.getViewer().zoomTo(extentPoly).then(() => {
+      setTimeout(() => {
+        this.getViewer().entities.remove(extentPoly);
+      }, 2000);
+    });
   }
 
   /**
