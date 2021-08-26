@@ -513,6 +513,7 @@ export class CsWMSService {
                     return (Resource as any).createImageBitmapFromBlob(blob, {
                       flipY: flipY,
                       premultiplyAlpha: false,
+                      skipColorSpaceConversion: false
                     });
                   }
                 }).then(deferred.resolve);
