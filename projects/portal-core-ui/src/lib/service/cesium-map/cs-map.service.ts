@@ -16,7 +16,7 @@ import { CsWMSService } from '../wms/cs-wms.service';
 import { CsWWWService } from '../www/cs-www.service';
 import { ResourceType } from '../../utility/constants.service';
 import { CsIrisService } from '../kml/cs-iris.service';
-import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, PickOptions, EventResult } from 'angular-cesium';
+import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, EventResult } from 'angular-cesium';
 import { Entity, ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle, BingMapsImageryProvider,
   ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection,  ImagerySplitDirection } from 'cesium';
 declare var Cesium: any;
