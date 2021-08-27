@@ -1,4 +1,4 @@
-import { throwError as observableThrowError, Observable } from 'rxjs';
+import { throwError as observableThrowError, Observable, Subscription } from 'rxjs';
 
 import { catchError, map } from 'rxjs/operators';
 import { Injectable, Inject } from '@angular/core';
@@ -7,7 +7,6 @@ import { OnlineResourceModel } from '../../model/data/onlineresource.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 
-import * as olProj from 'ol/proj';
 import * as extent from 'ol/extent';
 import { Constants, ResourceType } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
@@ -26,15 +25,15 @@ export class ErrorPayload {
      public layer: LayerModel) {}
 
   /**
- * Logs an error to console if WMS could not load on map
- * @param evt event
- */
+   * Logs an error to console if WMS could not load on map
+   * @param evt event
+   */
   public errorEvent(evt) {
     console.error('ERROR! evt = ', evt);
     const error : TileProviderError = evt;
     const rss: RenderStatusService = this.cmWmsService.getRenderStatusService();
     rss.getStatusBSubject(this.layer).value.setErrorMessage(error.error.message);
-  }  
+  }
 }
 
 /**
@@ -46,6 +45,8 @@ export class CsWMSService {
   private map: AcMapComponent;
 
   private tileLoadUnsubscribes: Map<string, any> = new Map<string, any>();
+  // Keep track of any getSldBdy subscriptions that can continue to run and add layers after a layer is removed
+  private sldSubscriptions: Map<string, Subscription[]> = new Map<string, Subscription[]>();
 
   constructor(
     private layerHandlerService: LayerHandlerService,
@@ -320,6 +321,11 @@ export class CsWMSService {
    * @param layer the WMS layer to remove from the map.
    */
   public rmLayer(layer: LayerModel): void {
+    // Cease any getSldBody subscriptions that may still be adding layers to the map
+    for (const sub of this.sldSubscriptions[layer.id]) {
+      sub.unsubscribe();
+    }
+    this.sldSubscriptions[layer.id] = [];
     // Unsubscribe from tile load listeners
     const wmsOnlineResources = this.layerHandlerService.getWMSResource(layer);
     for (const wmsOnlineResource of wmsOnlineResources) {
@@ -357,6 +363,8 @@ export class CsWMSService {
    * @param param request parameters
    */
   public addLayer(layer: LayerModel, param?: any): void {
+    // Any running sldSubscriptions should have been stopped in rmLayer
+    this.sldSubscriptions[layer.id] = [];
     if (!param) {
       param = {};
     }
@@ -380,8 +388,8 @@ export class CsWMSService {
       const collatedParam = UtilitiesService.collateParam(layer, wmsOnlineResource, param);
       // Set 'usePost' if style request parameters are too long
       const usePost = this.wmsUrlTooLong(this.env.portalBaseUrl + layer.proxyStyleUrl + collatedParam.toString(), layer);
-      // Perform request for style data
-      this.getSldBody(layer.proxyStyleUrl, usePost, wmsOnlineResource, collatedParam).subscribe(
+      // Perform request for style data, store subscription so we can cancel if user removes layer
+      this.sldSubscriptions[layer.id].push(this.getSldBody(layer.proxyStyleUrl, usePost, wmsOnlineResource, collatedParam).subscribe(
         response => {
           const longResp = this.wmsUrlTooLong(response, layer);
           // Create parameters for add layer request
@@ -402,9 +410,9 @@ export class CsWMSService {
           }
 
           // Perform add layer request
-          layer.csLayers.push(this.addCesiumLayer(layer, wmsOnlineResource, params, longResp,lonlatextent));
+          layer.csLayers.push(this.addCesiumLayer(layer, wmsOnlineResource, params, longResp, lonlatextent));
           layer.sldBody = response;
-        });
+        }));
     }
   }
 
