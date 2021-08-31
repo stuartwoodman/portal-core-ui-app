@@ -57,7 +57,7 @@ export class LayerHandlerService {
 
   /**
    * Retrieve the csw record located at the wms serviceurl endpoint.
-   * @Return a layer with the retrieved cswrecord wraped in a layer model.
+   * @Return a layer with the retrieved cswrecord wrapped in a layer model.
    */
   public getCustomLayerRecord(serviceUrl: string): Observable<any> {
     const me = this;
@@ -69,22 +69,24 @@ export class LayerHandlerService {
       if (response['success'] === false) {
         return null;
       }
-      const cswRecord = response['data']['cswRecords'];
       const itemLayers = [];
-      itemLayers['Results'] = [];
-      cswRecord.forEach(function(item, i, ar) {
-        const itemLayer = new LayerModel();
-        itemLayer.cswRecords = [item];
-        itemLayer['expanded'] = false;
-        itemLayer.id = item.id;
-        itemLayer.description = item.description;
-        itemLayer.hidden = false;
-        itemLayer.layerMode = 'NA';
-        itemLayer.name = item.name;
-        itemLayer.splitDirection = ImagerySplitDirection.NONE;
-        itemLayer.capabilityRecords = response['data']['capabilityRecords'];
-        itemLayers['Results'].push(itemLayer);
-      });
+      const cswRecord = response['data']['cswRecords'];
+      if (cswRecord) {
+        itemLayers['Results'] = [];
+        cswRecord.forEach(function (item, i, ar) {
+            const itemLayer = new LayerModel();
+            itemLayer.cswRecords = [item];
+            itemLayer['expanded'] = false;
+            itemLayer.id = item.id;
+            itemLayer.description = item.description;
+            itemLayer.hidden = false;
+            itemLayer.layerMode = 'NA';
+            itemLayer.name = item.name;
+            itemLayer.splitDirection = ImagerySplitDirection.NONE;
+            itemLayer.capabilityRecords = response['data']['capabilityRecords'];
+            itemLayers['Results'].push(itemLayer);
+        });
+      }
       return itemLayers;
     }));
   }
