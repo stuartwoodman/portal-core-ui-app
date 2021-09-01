@@ -28,7 +28,6 @@ export class RenderStatusService {
       this.statusmaps[layer.id] = new StatusMapModel();
     }
     this.statusmaps[layer.id].updateTotal(resource);
-    this.appRef.tick();
   }
 
   /**
@@ -43,7 +42,6 @@ export class RenderStatusService {
       this.statusmaps[layer.id] = new StatusMapModel();
     }
     this.statusmaps[layer.id].register(resource);
-    this.appRef.tick();
   }
 
   /**
@@ -90,7 +88,6 @@ export class RenderStatusService {
     if (this.statusmaps[layerId] !== undefined) {
       this.statusmaps[layerId].resetStatus();
     }
-    this.appRef.tick();
   }
 
 }
