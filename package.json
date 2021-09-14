@@ -30,7 +30,8 @@
     "@types/jquery": "^3.5.1",
     "jquery": "^3.5.1",
     "ol": "^6.4.3",
-    "ol-geocoder": "^4.0.0"
+    "ol-geocoder": "^4.0.0",
+    "when": "~3.7.8"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~0.1102.14",
