@@ -42,6 +42,10 @@
           }
         }
       }
-    }},
-  "defaultProject": "portal-core-ui"
+    }
+  },
+  "defaultProject": "portal-core-ui",
+  "cli": {
+    "analytics": false
+  }
 }
