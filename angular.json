@@ -10,7 +10,7 @@
       "prefix": "auscope",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-ng-packagr:build",
+          "builder": "@angular-devkit/build-angular:ng-packagr",
           "options": {
             "tsConfig": "projects/portal-core-ui/tsconfig.lib.json",
             "project": "projects/portal-core-ui/ng-package.json"
@@ -42,6 +42,10 @@
           }
         }
       }
-    }},
-  "defaultProject": "portal-core-ui"
+    }
+  },
+  "defaultProject": "portal-core-ui",
+  "cli": {
+    "analytics": false
+  }
 }
