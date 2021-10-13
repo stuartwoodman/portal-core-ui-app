@@ -157,7 +157,10 @@ export class CsMapService {
           if (bbox === null) {
             continue;
           }
-          const poly = bboxPolygon([bbox.westBoundLongitude, bbox.southBoundLatitude, bbox.eastBoundLongitude, bbox.northBoundLatitude]);
+
+          // Expand the bbox slightly to make it easy to select features on the boundary
+          const margin = 0.05;
+          const poly = bboxPolygon([bbox.westBoundLongitude - margin, bbox.southBoundLatitude - margin, bbox.eastBoundLongitude + margin, bbox.northBoundLatitude + margin]);
           if (booleanPointInPolygon(clickPoint, poly)) {
             // Add to list of clicked layers
             layerModel.clickPixel = [pixel.x, pixel.y];

@@ -15,47 +15,6 @@ export class QueryWMSService {
   constructor(private http: HttpClient, private csMapObject: CsMapObject, @Inject('env') private env) {
   }
 
-
-  /**
-   * Create WMS parameters using small local tiles
-   * @param layerName name of layer
-   * @param clickCoord clicked on map coordinates
-   */
-  private useLocalTiles(layerName: string, clickCoord: number[]): [number, number, any, number] {
-    /*
-    const mapObj = this.csMapObject.getMap();
-    const view = mapObj.getView();
-    const viewResolution = view.getResolution();
-    const layers = this.csMapObject.getLayers();
-
-    // Look for our layer
-    for (const l in layers) {
-      if (layers[l][0].onlineResource.name === layerName) {
-        // Fetch image data source
-        const src =  layers[l][0].getSource();
-        let tileGrid = src.getTileGrid();
-        if (!tileGrid) {
-          const projectionObj = view.getProjection(Constants.MAP_PROJ);
-          tileGrid = src.getTileGridForProjection(projectionObj);
-        }
-        // Fetch tile coordinates i.e. [zoom level, x-th tile in the x-direction, y-th tile in the y-direction]
-        const tileCoord = tileGrid.getTileCoordForCoordAndResolution(clickCoord, viewResolution);
-        // Fetch tile resolution, e.g. a number proportional to the number of metres the tile covers on map 
-        const tileResolution: number = tileGrid.getResolution(tileCoord[0]);
-        // Fetch tile bounding box as map coordinate
-        const tileExtent = tileGrid.getTileCoordExtent(tileCoord);
-        // Fetch tile size in pixels
-        const tileSize: number = tileGrid.getTileSize(tileCoord[0]);
-        // Calculate x,y coords within the tile (in pixels)
-        const x = Math.floor((clickCoord[0] - tileExtent[0]) / tileResolution);
-        const y = Math.floor((tileExtent[3] - clickCoord[1]) / tileResolution);
-        return [x, y, tileExtent, tileSize];
-      }
-    }
-    */
-    return [undefined, undefined, undefined, undefined]
-  }
-
   public getFilter(lon: number, lat: number, layerId: string, extraFilter: string): string {
     const distPerPixel = this.csMapObject.getDistPerPixel();
     const step = distPerPixel * 20; // 10pixel distance by degree = 10*1.1km.
