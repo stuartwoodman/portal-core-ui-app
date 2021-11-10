@@ -495,7 +495,8 @@ export class UtilitiesService {
      * @param onlineResource online resource record for service
      */
     public static isGSKY(onlineResource: OnlineResourceModel) {
-        return (onlineResource.applicationProfile && onlineResource.applicationProfile.indexOf('GSKY') > -1);
+        return (onlineResource.applicationProfile && 
+            (onlineResource.url.toLowerCase().indexOf('gsky') > -1 || onlineResource.applicationProfile.toLowerCase().indexOf('gsky')) > -1);
     }
     
     /**
