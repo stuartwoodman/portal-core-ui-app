@@ -5,7 +5,7 @@ import { catchError, map, timeoutWith } from 'rxjs/operators';
 import { Bbox } from '../../../model/data/bbox.model';
 import { LayerModel } from '../../../model/data/layer.model';
 import { LayerHandlerService } from '../../cswrecords/layer-handler.service';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, Inject } from '@angular/core';
 import * as $ from 'jquery';
 
@@ -27,7 +27,7 @@ export class DownloadWfsService {
    * @param the layer to download
    * @param bbox the bounding box of the area to download
    */
-  public download(layer: LayerModel, bbox: Bbox): Observable<any> {
+  public download(layer: LayerModel, bbox: Bbox, polygonFilter: String): Observable<any> {
 
     try {
       const wfsResources = this.layerHandlerService.getWFSResource(layer);
@@ -48,9 +48,10 @@ export class DownloadWfsService {
         const filterParameters = {
           serviceUrl: wfsResources[i].url,
           typeName: wfsResources[i].name,
-          maxFeatures: 0,
+          maxFeatures: 10000,
           outputFormat: 'csv',
-          bbox: bbox ? JSON.stringify(bbox) : ''
+          bbox: bbox ? JSON.stringify(bbox) : '',
+          filter: polygonFilter
         };
 
         const serviceUrl = this.env.portalBaseUrl + downloadUrl + '?';
@@ -59,8 +60,8 @@ export class DownloadWfsService {
         httpParams = httpParams.append('serviceUrls', serviceUrl + $.param(filterParameters));
       }
 
-      return this.http.get(this.env.portalBaseUrl + 'downloadGMLAsZip.do', {
-        params: httpParams,
+      return this.http.post(this.env.portalBaseUrl + 'downloadGMLAsZip.do', httpParams.toString(), {
+        headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'), 
         responseType: 'blob'
       }).pipe(timeoutWith(360000, observableThrowError(new Error('Request have timeout out after 5 minutes'))),
         map((response) => { // download file
