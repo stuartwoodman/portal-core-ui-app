@@ -89,6 +89,29 @@ export class CsClipboardService {
     });
   }
 
+  public loadPolygonFromKML(file:File) {
+    if (file) {
+      var reader = new FileReader();
+      reader.onload = () => {
+          const kml = reader.result.toString();
+          var coords = kml.substring(
+            kml.indexOf("<coordinates>") + "<coordinates>".length, 
+            kml.lastIndexOf("</coordinates>")
+          );
+          console.log(coords);
+          const newPolygon = {
+            name: file.name,
+            srs: 'EPSG:4326',
+            geometryType: GeometryType.POLYGON,
+            coordinates: this.getGeometry(coords)
+          };
+          this.polygonBBox = newPolygon;
+          this.polygonsBS.next(this.polygonBBox);
+      };
+      reader.readAsText(file);
+    }
+
+  }
   /**
    * Add a polygon to the clipboard, usually from a layer
    * @param newPolygon polygon object
