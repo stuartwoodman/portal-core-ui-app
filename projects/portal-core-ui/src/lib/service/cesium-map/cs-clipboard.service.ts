@@ -3,6 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import * as olProj from 'ol/proj';
 import { CsMapObject } from './cs-map-object';
 import { GeometryType } from '../../utility/constants.service';
+import { isNumber } from '@turf/helpers';
 
 /**
  * A wrapper around the clipboard object for use in the portal.
@@ -71,7 +72,9 @@ export class CsClipboardService {
             '</gml:polygonMember>' +
           '</gml:MultiPolygon>';
   }
-
+  public renderPolygon(coordsArray:Number[]) {
+    this.csMapObject.renderPolygon(coordsArray);
+  }
   /**
    * Method for drawing a polygon on the map.
    * @returns the polygon coordinates string BS on which the polygon is drawn on.
@@ -94,17 +97,32 @@ export class CsClipboardService {
       var reader = new FileReader();
       reader.onload = () => {
           const kml = reader.result.toString();
-          var coords = kml.substring(
+          var coordsString = kml.substring(
             kml.indexOf("<coordinates>") + "<coordinates>".length, 
             kml.lastIndexOf("</coordinates>")
           );
-          console.log(coords);
+          const coordsEPSG4326LngLat = coordsString.trim().replace(/\r?\n|\r/g,' ');
+          const coordsList = coordsEPSG4326LngLat.split(' ');        
+          let coordsListLngLat = [];
+          let coordsListLatLng = [];
+          for (let i = 0; i<coordsList.length; i++) {
+            const coord = coordsList[i].split(',')
+            const lng = parseFloat(coord[0]).toFixed(2);
+            const lat = parseFloat(coord[1]).toFixed(2)
+            if (isNumber(lng) && isNumber(lat)) {
+              coordsListLngLat.push(lng);
+              coordsListLngLat.push(lat);
+              coordsListLatLng.push(lat.toString() + ',' + lng.toString())
+            }
+          } 
+          this.renderPolygon(coordsListLngLat); //need to be [lng lat lng lat]
+          const coordsEPSG4326LatLng = coordsListLatLng.join(' ');
           const newPolygon = {
             name: file.name,
             srs: 'EPSG:4326',
             geometryType: GeometryType.POLYGON,
-            coordinates: this.getGeometry(coords)
-          };
+            coordinates: this.getGeometry(coordsEPSG4326LatLng) //need to be 'lat,lng lat,lng...'
+          };  
           this.polygonBBox = newPolygon;
           this.polygonsBS.next(this.polygonBBox);
       };
