@@ -5,13 +5,26 @@ Shared portal UI components written in Angular 11. This project is a workspace f
 
 ### Install dependencies
 
-`npm install`
+```
+npm install
+```
+
 or
-`yarn install`
+
+```
+yarn install
+```
 
 ### Build the library
 
-`npm run build portal-core-ui`
+```
+npm run build portal-core-ui
+```
+
+Once the library has been built, automatic recompilation can be initiated with
+```
+ng build --watch
+```
 
 ### Create a link to the library
 
@@ -30,20 +43,26 @@ This creates a symbolic link for node_modules/portal-core-ui that links to the d
 
 If you get an obscure 'Unhandled Promise rejection' error you may have to add:
 
-`"preserveSymlinks": true`
+```
+"preserveSymlinks": true
+```
 
 to the 'projects'.$name.'architect'.'build'.'options' section in your 'angular.json' file in the project that uses the library.
 
 Don't forget to unlink when you're no longer interested in using the development version of the library:
 
-`npm unlink @auscope/portal-core-ui`
+```
+npm unlink @auscope/portal-core-ui
+```
 
 ### Adding a new Component (or Service, Model etc.)
 
 Add the component to the relevant directory under portal-core-ui/src/lib.
 Add the Component to the library export file ./portal-core-ui/public-api.ts, e.g:
 
-`export { MyComponent } from './lib/mycompdir/my.component';`
+```
+export { MyComponent } from './lib/mycompdir/my.component';
+```
 
 Note that project imports will need to be modified to remove the path components from the import, e.g:
 
@@ -51,7 +70,9 @@ Note that project imports will need to be modified to remove the path components
 
 Will become...
 
-`import { UtilitiesService } from '@auscope/portal-core-ui';`
+```
+import { UtilitiesService } from '@auscope/portal-core-ui';
+```
 
 With some modifications to the public-api.ts we can re-include the paths if necessary.
 
