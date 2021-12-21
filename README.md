@@ -5,13 +5,26 @@ Shared portal UI components written in Angular 11. This project is a workspace f
 
 ### Install dependencies
 
-`npm install`
+```
+npm install
+```
+
 or
-`yarn install`
+
+```
+yarn install
+```
 
 ### Build the library
 
-`npm run build portal-core-ui`
+```
+npm run build portal-core-ui
+```
+
+Once the library has been built, automatic recompilation can be initiated with
+```
+ng build --watch
+```
 
 ### Create a link to the library
 
