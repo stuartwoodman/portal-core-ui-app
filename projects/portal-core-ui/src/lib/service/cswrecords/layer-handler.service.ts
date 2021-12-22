@@ -1,16 +1,16 @@
 
-import {of as observableOf,  Observable } from 'rxjs';
+import {of as observableOf,  Observable, pipe } from 'rxjs';
 
 import {map} from 'rxjs/operators';
 import {CSWRecordModel} from '../../model/data/cswrecord.model';
 import {Injectable, Inject } from '@angular/core';
-import {HttpClient, HttpParams} from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 
 import {LayerModel} from '../../model/data/layer.model';
 import {OnlineResourceModel} from '../../model/data/onlineresource.model';
 import {ResourceType} from '../../utility/constants.service';
-import { UtilitiesService } from '../../utility/utilities.service';
 import { ImagerySplitDirection } from 'cesium';
+import { GetCapsService } from '../wms/get-caps.service';
 
 
 /**
@@ -21,15 +21,14 @@ import { ImagerySplitDirection } from 'cesium';
 export class LayerHandlerService {
 
   private layerRecord;
-  private layerCaps; // A layer's WMS getCapabilities record, indexed on layer name
 
-  constructor(private http: HttpClient, @Inject('env') private env) {
+  constructor(private http: HttpClient, private getCapsService: GetCapsService, @Inject('env') private env) {
     this.layerRecord = [];
-    this.layerCaps = {};
   }
 
   /**
    * Retrieve csw records from the service and organize them by group
+   * 
    * @returns a observable object that returns the list of csw record organized in groups
    */
   public getLayerRecord(): Observable<any> {
@@ -55,40 +54,40 @@ export class LayerHandlerService {
     }
   }
 
+  
+
   /**
-   * Retrieve the csw record located at the wms serviceurl endpoint.
-   * @Return a layer with the retrieved cswrecord wrapped in a layer model.
+   * Retrieve the CSW record located at the WMS serviceurl endpoint.
+   * 
+   * @param serviceUrl WMS URL of service
+   * @returns a layer with the retrieved cswrecord wrapped in a layer model.
    */
   public getCustomLayerRecord(serviceUrl: string): Observable<any> {
-    const me = this;
-    const httpParams = new HttpParams().set('serviceUrl', serviceUrl);
+    // Send out a 'GetCapabilities' request
+    const retVal = this.getCapsService.getCaps(serviceUrl).pipe(map((response: { data: { cswRecords: any, capabilityRecords: any }}) => {
 
-    return this.http.get(this.env.portalBaseUrl + this.env.getCustLayersEndP, {
-      params: httpParams
-    }).pipe(map(response => {
-      if (response['success'] === false) {
-        return null;
-      }
-      const itemLayers = [];
-      const cswRecord = response['data']['cswRecords'];
-      if (cswRecord) {
-        itemLayers['Results'] = [];
-        cswRecord.forEach(function (item, i, ar) {
-            const itemLayer = new LayerModel();
-            itemLayer.cswRecords = [item];
-            itemLayer['expanded'] = false;
-            itemLayer.id = item.id;
-            itemLayer.description = item.description;
-            itemLayer.hidden = false;
-            itemLayer.layerMode = 'NA';
-            itemLayer.name = item.name;
-            itemLayer.splitDirection = ImagerySplitDirection.NONE;
-            itemLayer.capabilityRecords = response['data']['capabilityRecords'];
-            itemLayers['Results'].push(itemLayer);
-        });
-      }
-      return itemLayers;
-    }));
+          // Create a list of LayerModels using the 'GetCapabilities' response
+          const itemLayers = [];
+          const cswRecord = response['data']['cswRecords'];
+          if (cswRecord) {
+            itemLayers['Results'] = [];
+            cswRecord.forEach(function (item, i, ar) {
+                const itemLayer = new LayerModel();
+                itemLayer.cswRecords = [item];
+                itemLayer['expanded'] = false;
+                itemLayer.id = item.id;
+                itemLayer.description = item.description;
+                itemLayer.hidden = false;
+                itemLayer.layerMode = 'NA';
+                itemLayer.name = item.name;
+                itemLayer.splitDirection = ImagerySplitDirection.NONE;
+                itemLayer.capabilityRecords = response['data']['capabilityRecords'];
+                itemLayers['Results'].push(itemLayer);
+            });
+          }
+          return itemLayers;
+        }));
+    return retVal;
   }
 
   /**
