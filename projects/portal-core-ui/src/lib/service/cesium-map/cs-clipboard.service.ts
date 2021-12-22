@@ -92,6 +92,11 @@ export class CsClipboardService {
     });
   }
 
+  /**
+   * Draw a polygon on map using a KML File
+   *
+   * @param file File object, contains KML polygon, assumes EPSG:4326
+   */ 
   public loadPolygonFromKML(file:File) {
     if (file) {
       var reader = new FileReader();
