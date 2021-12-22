@@ -119,6 +119,19 @@ export class CsMapObject {
       delete this.groupLayer[id];
       this.renderStatusService.resetLayer(id);
   }
+  /**
+   * Method for rendering a polygon shape (EPSG:4326 Lng lat format) on the map.
+   * @param coordsArray [139,-33 141,-33 142,-36 139,-36 139,-33 lng,lat] 
+   */
+  public renderPolygon( coordsArray: Number[]) {
+    if (this.polygonEditable$) {
+      this.clearPolygon();
+    }
+    this.polygonEditable$ = this.polygonsCesiumEditor.create();
+    const polygon = Cesium.Cartesian3.fromDegreesArray(coordsArray); // [-115.0, 37.0, -107.0, 33.0]);
+    this.polygonEditable$ = this.polygonsCesiumEditor.edit(polygon);
+    this.polygonEditable$.disable();
+  }
 
   /**
    * Method for drawing a polygon shape on the map. e.g selecting a polygon bounding box on the map
@@ -150,6 +163,7 @@ export class CsMapObject {
     });
 
     let coordString = '';
+
     const polygonStringBS = new BehaviorSubject<string>(coordString);
     this.polygonEditable$.subscribe((editUpdate: PolygonEditUpdate) => {
       if (editUpdate.editAction === EditActions.ADD_LAST_POINT) {
