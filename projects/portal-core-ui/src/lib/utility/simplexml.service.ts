@@ -10,6 +10,7 @@ declare var window: any;
 /**
  * Port over from old portal-core extjs for dealing with xml in wfs
  */
+
 // @dynamic
 @Injectable()
 export class SimpleXMLService {
@@ -22,9 +23,19 @@ export class SimpleXMLService {
   };
 
   // Public Static functions
-  public static evaluateXPathString(domNode: any, xPath: string): string {
-    const document = domNode.ownerDocument;
-    const xpathResult = this.evaluateXPath(document, domNode, xPath, Constants.XPATH_STRING_TYPE);
+
+  /**
+   * Searches and retrieves a string value
+   * 
+   * @method evaluateXPathString
+   * @param document Document interface
+   * @param domNode Node class, defines where to start looking
+   * @param xPath XPATH string, defines what to look for
+   * @param nsResolver [Optional] namespace resolver function
+   * @returns string value
+   */
+  public static evaluateXPathString(document: Document, domNode: Node, xPath: string, nsResolver?: (prefix: string) => string): string {
+    const xpathResult = this.evaluateXPath(document, domNode, xPath, Constants.XPATH_STRING_TYPE, nsResolver);
     return xpathResult.stringValue;
   }
 
@@ -35,20 +46,25 @@ export class SimpleXMLService {
    * backup in place
    *
    * @method evaluateXPath
-   * @param document - document
-   * @param domNode - domNode
-   * @param xPath - xPath
+   * @param document - Document interface
+   * @param domNode - Node class, defines where to start looking
+   * @param xPath - XPATH string, defines what to look for
    * @param resultType - https://developer.mozilla.org/en-US/docs/Web/API/Document/evaluate#Result_types
+   * @param nsResolver [Optional] namespace resolver function
    * @return dom - the dom result
    */
-  public static evaluateXPath(document: any, domNode: any, xPath: string, resultType: any): any {
+  public static evaluateXPath(document: Document, domNode: Node, xPath: string, resultType: any, nsResolver?: (prefix: string) => string): any {
     if (document.evaluate) {
       let result;
       try {
-        result = document.evaluate(xPath, domNode, document.createNSResolver(domNode), resultType, null);
+        if (typeof nsResolver === undefined) {
+            result = document.evaluate(xPath, domNode, document.createNSResolver(domNode), resultType, null);
+        } else {
+            result = document.evaluate(xPath, domNode, nsResolver, resultType, null);
+        }
         return result;
       } catch (e) {
-        // console.error("SimpleXMLService.evaluateXPath() Exception", e);
+        console.error("SimpleXMLService.evaluateXPath() Exception", e);
         // Return empty result
         switch (resultType) {
           case Constants.XPATH_STRING_TYPE:
@@ -104,39 +120,36 @@ export class SimpleXMLService {
     }
   }
 
-
   /**
    * Evaluates an XPath which will return an array of W3C DOM nodes
    *
    * @method evaluateXPathNodeArray
-   * @param domNode - domNode
-   * @param xPath - xPath
+   * @param domNode - Node class, defines where to start looking
+   * @param xPath - XPATH string, defines what to look for
+   * @param nsResolver [Optional] namespace resolver function
    * @return dom - the dom result
    */
-  public static evaluateXPathNodeArray(domNode: any, xPath: string): any {
-    const document = domNode.ownerDocument;
+  public static evaluateXPathNodeArray(document: Document, domNode: Node, xPath: string, nsResolver?: (prefix: string) => string): any {
     let xpathResult = null;
     try {
-      xpathResult = this.evaluateXPath(document, domNode, xPath, Constants.XPATH_UNORDERED_NODE_ITERATOR_TYPE);
+      xpathResult = this.evaluateXPath(document, domNode, xPath, XPathResult.UNORDERED_NODE_ITERATOR_TYPE, nsResolver);
     } catch (err) {
       return [];
     }
     const matchingNodes = [];
-
-    let matchingNode = xpathResult.iterateNext();
-    while (matchingNode) {
+    let matchingNode;
+    while (matchingNode = xpathResult.iterateNext()) {
       matchingNodes.push(matchingNode);
-      matchingNode = xpathResult.iterateNext();
     }
-
     return matchingNodes;
   }
 
   /**
    * Utility for retrieving a W3C DOM Node 'localName' attribute across browsers.
    * The localName is the node name without any namespace prefixes
+   * 
    * @method getNodeLocalName
-   * @param domNode - domNode
+   * @param domNode - Node class, defines where to start looking
    * @return String - local name of the node or empty string upon error
    */
   public static getNodeLocalName(domNode: any): string {
@@ -148,8 +161,9 @@ export class SimpleXMLService {
 
   /**
    * Returns the set of classes this node belongs to as an array of strings
+   * 
    * @method getClassList
-   * @param domNode - domNode
+   * @param domNode - Node class, defines where to start looking
    * @return dom - the dom result
    */
   public static getClassList(domNode: any): any {
@@ -166,8 +180,9 @@ export class SimpleXMLService {
   /**
    * Figure out if domNode is a leaf or not
    * (Leaves have no nodes from XML_NODE_ELEMENT)
+   * 
    * @method isLeafNode
-   * @param domNode - domNode
+   * @param domNode - Node class, defines where to start looking
    * @return boolean - is leaf or not
    */
   public static isLeafNode(domNode: any): boolean {
@@ -184,9 +199,9 @@ export class SimpleXMLService {
    * Filters an array of DOM Nodes according to the specified parameters
    * @method filterNodeArray
    * @param nodeArray An Array of DOM Nodes
-   * @param nodeType [Optional] An integer node type
-   * @param namespaceUri [Optional] String to compare against node namespaceURI
-   * @param nodeName [Optional] String to compare against the node localName
+   * @param nodeType An integer node type
+   * @param namespaceUri String to compare against node namespaceURI
+   * @param nodeName String to compare against the node localName
    * @return dom - return the result in a dom
    */
   public static filterNodeArray(nodeArray: any, nodeType: number, namespaceUri: string, nodeName: string): any {
@@ -197,24 +212,21 @@ export class SimpleXMLService {
       if (nodeType && node.nodeType !== nodeType) {
         continue;
       }
-
       if (namespaceUri && namespaceUri !== node.namespaceURI) {
         continue;
       }
-
       if (nodeName && nodeName !== this.getNodeLocalName(node)) {
         continue;
       }
-
       matchingNodes.push(node);
     }
-
     return matchingNodes;
   }
 
   /**
    * Gets all children of domNode as an Array that match the specified filter parameters
    * @method getMatchingChildNodes
+   * @param domNode - Node class, defines where to start looking
    * @param childNamespaceURI [Optional] The URI to lookup as a String
    * @param childNodeName [Optional] The node name to lookup as a String
    * @return dom - return the result in a dom
@@ -226,6 +238,7 @@ export class SimpleXMLService {
   /**
    * Gets all Attributes of domNode as an Array that match the specified filter parameters
    * @method getMatchingAttributes
+   * @param domNode - Node class, defines where to start looking
    * @param childNamespaceURI [Optional] The URI to lookup as a String
    * @param childNodeName [Optional] The node name to lookup as a String
    * @return dom - return the result in a dom or null upon error
@@ -241,8 +254,9 @@ export class SimpleXMLService {
 
   /**
    * Given a DOM node, return its text content (however the browser defines it)
+   * 
    * @method getNodeTextContent
-   * @param domNode - domNode
+   * @param domNode - Node class, defines where to start looking
    * @return string - text content
    */
   public static getNodeTextContent(domNode: any): string {
@@ -251,10 +265,12 @@ export class SimpleXMLService {
     }
     return '';
   }
+
   /**
    * Given a DOM node, return its text content (however the browser defines it)
+   * 
    * @method getNodeTextContent
-   * @param domNode - domNode
+   * @param domNode - Node class, defines where to start looking
    * @return string - text content
    */
   public static getNodeInnerHTML(domNode: any): string {
@@ -263,8 +279,10 @@ export class SimpleXMLService {
     }
     return '';
   }
+
   /**
    * Parse string to DOM
+   * 
    * @method parseStringToDOM
    * @param xmlString - xml string
    * @return dom - return the result in a dom
@@ -289,7 +307,12 @@ export class SimpleXMLService {
     return xmlDocument;
   }
 
-  // cleanup empty text nodes.
+  /**
+   * Cleanup empty text nodes.
+   * 
+   * @method removeEmptyNodes
+   * @param node - Node class, defines where to start cleaning
+   */
   public static removeEmptyNodes(node: Node) {
     if (node.nodeType === SimpleXMLService.XML_NODE.XML_NODE_TEXT && node.nodeName === '#text' && node.nodeValue.trim().length === 0) {
         node.parentNode.removeChild(node);
@@ -298,12 +321,16 @@ export class SimpleXMLService {
           this.removeEmptyNodes(node.childNodes.item(i));
         }
     }
-}
+  }
 
-
+  /**
+   * Parses XML document fetching feature information
+   * 
+   * @param rootNode XML document root node
+   * @param feature feature information
+   * @returns list of objects, property values are: 'key', 'layer', 'onlineResource', 'value', 'format'
+   */
   public static parseTreeCollection(rootNode: Document, feature: any): any[] {
-
-
     const docs: any[] = [];
     if (rootNode) {
       let features = null;
@@ -357,8 +384,6 @@ export class SimpleXMLService {
                 value: features[i],
                 format: 'XML'
               });
-              const displayStr = ' ';
-
             }
             return docs;
           }
@@ -371,10 +396,8 @@ export class SimpleXMLService {
         } else {
           features = featureMembers[0].childNodes;
         }
-
       }
-      for (let i = 0; features && i < features.length; i++) {
-        const featureNode = features[i];
+      for (let featureNode of features) {
         // VT: We will try get the name either via gml:id, gml:name or fid
         let name = featureNode.getAttribute('gml:id');
         if (UtilitiesService.isEmpty(name)) {
