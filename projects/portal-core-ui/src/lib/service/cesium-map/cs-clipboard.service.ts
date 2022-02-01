@@ -165,26 +165,39 @@ export class CsClipboardService {
     if (this.polygonBBox !== null && this.polygonBBox.name === newPolygon.name) {
       return;
     }
-    //LJ08
-    if (newPolygon.srs !== 'EPSG:3857') {
-      console.log("ERROR:addPolygon's layer are not EPSG3857");
-      return;
-    }
+
     const coordString = this.getCoordinates( newPolygon.coordinates);
     const coordsArray = coordString.split(' ');
     const coords4326ListLngLat = []; //for rendering
     const coords4326ListLatLng = []; //for polygon wms query
-    for (let i = 0; i < coordsArray.length; i ++) {
-      const lonLat = coordsArray[i].split(',');
-      // transform from 'EPSG:3857' to 'EPSG:4326' format 
-      const point4326 = olProj.transform([lonLat[0], lonLat[1]], newPolygon.srs , 'EPSG:4326');
-      const lng = parseFloat(point4326[0]).toFixed(2);
-      const lat = parseFloat(point4326[1]).toFixed(2)
-      if (isNumber(lng) && isNumber(lat)) { //some coord is Null
-        coords4326ListLngLat.push(lng);
-        coords4326ListLngLat.push(lat);
-        coords4326ListLatLng.push(lat.toString() + ',' + lng.toString());
+
+    if (newPolygon.srs === 'EPSG:3857') {
+      for (let i = 0; i < coordsArray.length; i ++) {
+        const lonLat = coordsArray[i].split(',');
+        // transform from 'EPSG:3857' to 'EPSG:4326' format 
+        const point4326 = olProj.transform([lonLat[0], lonLat[1]], newPolygon.srs , 'EPSG:4326');
+        const lng = parseFloat(point4326[0]).toFixed(2);
+        const lat = parseFloat(point4326[1]).toFixed(2)
+        if (isNumber(lng) && isNumber(lat)) { //some coord is Null
+          coords4326ListLngLat.push(lng);
+          coords4326ListLngLat.push(lat);
+          coords4326ListLatLng.push(lat.toString() + ',' + lng.toString());
+        }
       }
+    } else if(newPolygon.srs === 'EPSG:4326') {
+      for (let i = 0; i < coordsArray.length; i ++) {
+        const lonLat = coordsArray[i].split(',');
+        const lng = parseFloat(lonLat[0]).toFixed(2);
+        const lat = parseFloat(lonLat[1]).toFixed(2)
+        if (isNumber(lng) && isNumber(lat)) { //some coord is Null
+          coords4326ListLngLat.push(lng);
+          coords4326ListLngLat.push(lat);
+          coords4326ListLatLng.push(lat.toString() + ',' + lng.toString());
+        }
+      }
+    } else {
+      console.log("ERROR:addPolygon's layer are either EPSG3857 nor EPSG4326");
+      return;
     }
     // make newPolygon
     newPolygon.srs = 'EPSG:4326';
