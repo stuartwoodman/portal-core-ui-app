@@ -56,6 +56,11 @@ export class CsClipboardService {
     }
     this.filterLayersBS.next(this.bFilterLayers);
   }
+  /**
+   * Method for extract a polygon coords string from geometry.
+   * @param geometry string
+   * @returns the string of a polygon string.
+   */
   public getCoordinates(geometry: string): string {
     const tag = '<gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">';
     var coordsString = geometry.substring(
@@ -64,6 +69,11 @@ export class CsClipboardService {
     );
     return coordsString;
   }
+  /**
+   * Method for construct a polygon geometry.
+   * @param coords string
+   * @returns the string of a polygon geometry.
+   */
   public getGeometry(coords: string): any {
     return '<gml:MultiPolygon srsName=\"urn:ogc:def:crs:EPSG::4326\">' +
             '<gml:polygonMember>' +
@@ -79,6 +89,11 @@ export class CsClipboardService {
             '</gml:polygonMember>' +
           '</gml:MultiPolygon>';
   }
+  /**
+   * Method for rendering a polygon on cesium map.
+   * @param coordsArray array of coords
+   * @returns void.
+   */  
   public renderPolygon(coordsArray:Number[]) {
     this.csMapObject.renderPolygon(coordsArray);
   }
