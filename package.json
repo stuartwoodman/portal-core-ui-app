@@ -32,7 +32,8 @@
     "simplify-ts": "^1.0.2",
     "tslib": "^2.0.0",
     "when": "~3.7.8",
-    "zone.js": "~0.10.2"
+    "zone.js": "~0.10.2",
+    "ngx-device-detector": "~2.0.5"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~0.1102.14",
