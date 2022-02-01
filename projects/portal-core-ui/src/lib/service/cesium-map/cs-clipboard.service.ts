@@ -56,7 +56,14 @@ export class CsClipboardService {
     }
     this.filterLayersBS.next(this.bFilterLayers);
   }
-
+  public getCoordinates(geometry: string): string {
+    const tag = '<gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">';
+    var coordsString = geometry.substring(
+      geometry.indexOf(tag) + tag.length, 
+      geometry.lastIndexOf("</gml:coordinates>")
+    );
+    return coordsString;
+  }
   public getGeometry(coords: string): any {
     return '<gml:MultiPolygon srsName=\"urn:ogc:def:crs:EPSG::4326\">' +
             '<gml:polygonMember>' +
@@ -143,24 +150,36 @@ export class CsClipboardService {
     if (this.polygonBBox !== null && this.polygonBBox.name === newPolygon.name) {
       return;
     }
-    if (newPolygon.geometryType !== GeometryType.MULTIPOLYGON) {
-      const coordsArray = newPolygon.coordinates.split(' ');
-      const coords = [];
-      // transform from 'EPSG:4326'to 'EPSG:3857' format
-      for (let i = 0; i < coordsArray.length; i += 2) {
-        // TODO: Get rid of olProj.transform
-        const point = olProj.transform([parseFloat(coordsArray[i]), parseFloat(coordsArray[i + 1])], newPolygon.srs , 'EPSG:3857');
-        coords.push({'x': point[0], 'y': point[1]});
-      }
-      newPolygon.srs = 'EPSG:3857';
-      // make newPolygon
-      const newPolygonString = coords.join(' ');
-      newPolygon.coordinates = newPolygonString;
+    //LJ08
+    if (newPolygon.srs !== 'EPSG:3857') {
+      console.log("ERROR:addPolygon's layer are not EPSG3857");
+      return;
     }
+    const coordString = this.getCoordinates( newPolygon.coordinates);
+    const coordsArray = coordString.split(' ');
+    const coords4326ListLngLat = []; //for rendering
+    const coords4326ListLatLng = []; //for polygon wms query
+    for (let i = 0; i < coordsArray.length; i ++) {
+      const lonLat = coordsArray[i].split(',');
+      // transform from 'EPSG:3857' to 'EPSG:4326' format 
+      const point4326 = olProj.transform([lonLat[0], lonLat[1]], newPolygon.srs , 'EPSG:4326');
+      const lng = parseFloat(point4326[0]).toFixed(2);
+      const lat = parseFloat(point4326[1]).toFixed(2)
+      coords4326ListLngLat.push(lng);
+      coords4326ListLngLat.push(lat);
+      coords4326ListLatLng.push(lat.toString() + ',' + lng.toString());
+    }
+    // make newPolygon
+    newPolygon.srs = 'EPSG:4326';
+    newPolygon.geometryType = GeometryType.POLYGON;
+    const coordsEPSG4326LatLng = coords4326ListLatLng.join(' ');
+    newPolygon.coordinates = this.getGeometry(coordsEPSG4326LatLng) //need to be 'lat,lng lat,lng...';
+    console.log(newPolygon.coordinates);
     // save the newPolygon to polygonsBS
     this.polygonBBox = newPolygon;
     this.polygonsBS.next(this.polygonBBox);
     // show polygon on map
+    this.renderPolygon(coords4326ListLngLat);
   }
 
   public removePolygon() {
