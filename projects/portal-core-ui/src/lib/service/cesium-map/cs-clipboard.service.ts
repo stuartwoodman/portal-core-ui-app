@@ -180,16 +180,17 @@ export class CsClipboardService {
       const point4326 = olProj.transform([lonLat[0], lonLat[1]], newPolygon.srs , 'EPSG:4326');
       const lng = parseFloat(point4326[0]).toFixed(2);
       const lat = parseFloat(point4326[1]).toFixed(2)
-      coords4326ListLngLat.push(lng);
-      coords4326ListLngLat.push(lat);
-      coords4326ListLatLng.push(lat.toString() + ',' + lng.toString());
+      if (isNumber(lng) && isNumber(lat)) { //some coord is Null
+        coords4326ListLngLat.push(lng);
+        coords4326ListLngLat.push(lat);
+        coords4326ListLatLng.push(lat.toString() + ',' + lng.toString());
+      }
     }
     // make newPolygon
     newPolygon.srs = 'EPSG:4326';
     newPolygon.geometryType = GeometryType.POLYGON;
     const coordsEPSG4326LatLng = coords4326ListLatLng.join(' ');
     newPolygon.coordinates = this.getGeometry(coordsEPSG4326LatLng) //need to be 'lat,lng lat,lng...';
-    console.log(newPolygon.coordinates);
     // save the newPolygon to polygonsBS
     this.polygonBBox = newPolygon;
     this.polygonsBS.next(this.polygonBBox);
