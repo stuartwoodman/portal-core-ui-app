@@ -127,10 +127,11 @@ export class CsMapObject {
     if (this.polygonEditable$) {
       this.clearPolygon();
     }
-    this.polygonEditable$ = this.polygonsCesiumEditor.create();
     const polygon = Cesium.Cartesian3.fromDegreesArray(coordsArray); // [-115.0, 37.0, -107.0, 33.0]);
     this.polygonEditable$ = this.polygonsCesiumEditor.edit(polygon);
     this.polygonEditable$.disable();
+    this.isDrawingPolygonBS.next(false);
+
   }
 
   /**
@@ -143,7 +144,6 @@ export class CsMapObject {
       this.clearPolygon();
     }
     this.isDrawingPolygonBS.next(true);
-
     // create accepts PolygonEditOptions object
     this.polygonEditable$ = this.polygonsCesiumEditor.create({
       pointProps: {
