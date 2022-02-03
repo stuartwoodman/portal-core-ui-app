@@ -15,6 +15,7 @@ import { MinTenemStyleService } from '../style/wms/min-tenem-style.service';
 import { MapsManagerService, AcMapComponent } from 'angular-cesium';
 import { WebMapServiceImageryProvider, ImageryLayer, Resource, Rectangle } from 'cesium';
 import { LayerStatusService } from '../../utility/layerstatus.service';
+import { DeviceDetectorService } from 'ngx-device-detector';
 
 import * as when from 'when';
 import TileProviderError from 'cesium/Source/Core/TileProviderError';
@@ -54,6 +55,7 @@ export class CsWMSService {
     private renderStatusService: RenderStatusService,
     private mapsManagerService: MapsManagerService,
     private layerStatusService: LayerStatusService,
+    private deviceService: DeviceDetectorService,
     @Inject('env') private env,
     @Inject('conf') private conf
   ) { }
@@ -426,6 +428,7 @@ export class CsWMSService {
      * @returns the new CesiumJS ImageryLayer object
      */
     private addCesiumLayer(layer, wmsOnlineResource, params, usePost: boolean, lonlatextent): ImageryLayer {
+      const browserInfo = this.deviceService.getDeviceInfo();
       const viewer = this.map.getCesiumViewer();
       const me = this;
       if (this.layerHandlerService.contains(layer, ResourceType.WMS)) {
@@ -512,12 +515,11 @@ export class CsWMSService {
                     );
                     return;
                   }
-                  const browserName = UtilitiesService.getBrowserName();
-                  if (browserName === 'Safari' || browserName === 'Firefox'){
+                  // 'createImageBitmap' was not fully supported in older versions of Firefox (ESR & version <= 92.0) and Safari 
+                  // due to bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1367251
+                  if (browserInfo.browser === 'Safari' || (browserInfo.browser === 'Firefox' && parseFloat(browserInfo.browser_version) <= 92.0)) {
                     return createImageBitmap(blob);
                   } else {
-                    // This was not working in Firefox/Safari due to bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1367251
-                    // TODO: Remove if condition and use just this if the createImageBitmap bug gets fixed
                     return (Resource as any).createImageBitmapFromBlob(blob, {
                       flipY: flipY,
                       premultiplyAlpha: false,
