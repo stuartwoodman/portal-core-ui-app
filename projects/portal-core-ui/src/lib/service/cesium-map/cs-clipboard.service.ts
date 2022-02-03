@@ -4,6 +4,7 @@ import * as olProj from 'ol/proj';
 import { CsMapObject } from './cs-map-object';
 import { GeometryType } from '../../utility/constants.service';
 import { isNumber } from '@turf/helpers';
+import { SimplifyAP,  ISimplifyArrayPoint} from 'simplify-ts';
 
 /**
  * A wrapper around the clipboard object for use in the portal.
@@ -56,7 +57,24 @@ export class CsClipboardService {
     }
     this.filterLayersBS.next(this.bFilterLayers);
   }
-
+  /**
+   * Method for extract a polygon coords string from geometry.
+   * @param geometry string
+   * @returns the string of a polygon string.
+   */
+  public getCoordinates(geometry: string): string {
+    const tag = '<gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">';
+    var coordsString = geometry.substring(
+      geometry.indexOf(tag) + tag.length, 
+      geometry.lastIndexOf("</gml:coordinates>")
+    );
+    return coordsString;
+  }
+  /**
+   * Method for construct a polygon geometry.
+   * @param coords string
+   * @returns the string of a polygon geometry.
+   */
   public getGeometry(coords: string): any {
     return '<gml:MultiPolygon srsName=\"urn:ogc:def:crs:EPSG::4326\">' +
             '<gml:polygonMember>' +
@@ -72,6 +90,11 @@ export class CsClipboardService {
             '</gml:polygonMember>' +
           '</gml:MultiPolygon>';
   }
+  /**
+   * Method for rendering a polygon on cesium map.
+   * @param coordsArray array of coords
+   * @returns void.
+   */  
   public renderPolygon(coordsArray:Number[]) {
     this.csMapObject.renderPolygon(coordsArray);
   }
@@ -112,8 +135,8 @@ export class CsClipboardService {
           let coordsListLatLng = [];
           for (let i = 0; i<coordsList.length; i++) {
             const coord = coordsList[i].split(',')
-            const lng = parseFloat(coord[0]).toFixed(2);
-            const lat = parseFloat(coord[1]).toFixed(2)
+            const lng = parseFloat(coord[0]).toFixed(3);
+            const lat = parseFloat(coord[1]).toFixed(3)
             if (isNumber(lng) && isNumber(lat)) {
               coordsListLngLat.push(lng);
               coordsListLngLat.push(lat);
@@ -135,6 +158,7 @@ export class CsClipboardService {
     }
 
   }
+
   /**
    * Add a polygon to the clipboard, usually from a layer
    * @param newPolygon polygon object
@@ -143,24 +167,57 @@ export class CsClipboardService {
     if (this.polygonBBox !== null && this.polygonBBox.name === newPolygon.name) {
       return;
     }
-    if (newPolygon.geometryType !== GeometryType.MULTIPOLYGON) {
-      const coordsArray = newPolygon.coordinates.split(' ');
-      const coords = [];
-      // transform from 'EPSG:4326'to 'EPSG:3857' format
-      for (let i = 0; i < coordsArray.length; i += 2) {
-        // TODO: Get rid of olProj.transform
-        const point = olProj.transform([parseFloat(coordsArray[i]), parseFloat(coordsArray[i + 1])], newPolygon.srs , 'EPSG:3857');
-        coords.push({'x': point[0], 'y': point[1]});
+
+    const coordString = this.getCoordinates( newPolygon.coordinates);
+    const coordsArray = coordString.split(' ');
+    let coords4326ListLngLat = []; //for rendering
+    let coords4326ListLatLng = []; //for polygon wms query
+    let lng,lat;
+    if (newPolygon.srs === 'EPSG:3857') {
+      for (let i = 0; i < coordsArray.length; i ++) {
+        const lonLat = coordsArray[i].split(',');
+        // transform from 'EPSG:3857' to 'EPSG:4326' format 
+        [lng, lat] = olProj.transform([lonLat[0], lonLat[1]], newPolygon.srs , 'EPSG:4326');
+        if (isNumber(lng) && isNumber(lat)) { //some coord is Null
+          coords4326ListLngLat.push([lng,lat]);
+        }
       }
-      newPolygon.srs = 'EPSG:3857';
-      // make newPolygon
-      const newPolygonString = coords.join(' ');
-      newPolygon.coordinates = newPolygonString;
+    } else if(newPolygon.srs === 'EPSG:4326') {
+      for (let i = 0; i < coordsArray.length; i ++) {
+        const lonLat = coordsArray[i].split(',');
+        const lng = parseFloat(lonLat[0]);
+        const lat = parseFloat(lonLat[1]);
+        if (isNumber(lng) && isNumber(lat)) { //some coord is Null
+          coords4326ListLngLat.push([lng,lat]);
+        }
+      }
+    } else {
+      console.log("ERROR:addPolygon's layer are either EPSG3857 nor EPSG4326");
+      return;
     }
+
+    //Simplify process might reduce 90% points.
+    const tolerance: number = 0.05;
+    const highQuality: boolean = true;
+    const simplifiedCoords4326 = SimplifyAP(coords4326ListLngLat, tolerance, highQuality);
+    //
+    coords4326ListLngLat = [];
+    for (let i=0;i<simplifiedCoords4326.length;i++) {
+      coords4326ListLngLat.push(simplifiedCoords4326[i][0]);
+      coords4326ListLngLat.push(simplifiedCoords4326[i][1]);
+      coords4326ListLatLng.push(simplifiedCoords4326[i][1].toString() + ',' + simplifiedCoords4326[i][0].toString());
+    }
+
+    // make newPolygon
+    newPolygon.srs = 'EPSG:4326';
+    newPolygon.geometryType = GeometryType.POLYGON;
+    const coordsEPSG4326LatLng = coords4326ListLatLng.join(' ');
+    newPolygon.coordinates = this.getGeometry(coordsEPSG4326LatLng) //need to be 'lat,lng lat,lng...';
     // save the newPolygon to polygonsBS
     this.polygonBBox = newPolygon;
     this.polygonsBS.next(this.polygonBBox);
     // show polygon on map
+    this.renderPolygon(coords4326ListLngLat);
   }
 
   public removePolygon() {
