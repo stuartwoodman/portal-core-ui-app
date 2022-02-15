@@ -32,6 +32,6 @@
     "ngx-device-detector": "~2.0.5"
   },
   "dependencies": {
-    "tslib": "^2.0.0"
+    "tslib": "^2.3.1"
   }
 }
