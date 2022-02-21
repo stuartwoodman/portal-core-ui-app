@@ -1,0 +1,25 @@
+
+trigger:
+- master
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '16.x'
+  displayName: 'Install Node.js'
+- script: |
+    git config --global user.email 'azdo-ci@geoanalytics.group'
+    git config --global user.name 'AzDO Pipeline'
+    git checkout $(Build.SourceBranchName)
+  displayName: 'Setup Git'
+- script: |
+    npm version patch -m "Upgrade to version %s"
+  displayName: 'Bump package version'
+- script: |
+    npm install
+    npm install @angular/cli
+    ng build portal-core-ui --prod
+  displayName: 'npm install and build'
