@@ -19,7 +19,7 @@ steps:
     npm version patch -m "Upgrade to version %s"
   displayName: 'Bump package version'
 - script: |
-    npm install
     npm install -g @angular/cli
+    npm install
     ng build portal-core-ui --prod
   displayName: 'npm install and build'
