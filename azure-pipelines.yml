@@ -8,7 +8,7 @@ pool:
 steps:
 - task: NodeTool@0
   inputs:
-    versionSpec: '16.x'
+    versionSpec: '14.x'
   displayName: 'Install Node.js'
 - script: |
     git config --global user.email 'azdo-ci@geoanalytics.group'
@@ -19,7 +19,8 @@ steps:
     npm version patch -m "Upgrade to version %s"
   displayName: 'Bump package version'
 - script: |
-    npm install -g @angular/cli
+    npm install -g npm@7
+    npm install -g @angular/cli@11
     npm install
     ng build portal-core-ui --prod
   displayName: 'npm install and build'
