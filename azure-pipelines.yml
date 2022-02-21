@@ -20,6 +20,6 @@ steps:
   displayName: 'Bump package version'
 - script: |
     npm install
-    npm install @angular/cli
+    npm install -g @angular/cli
     ng build portal-core-ui --prod
   displayName: 'npm install and build'
