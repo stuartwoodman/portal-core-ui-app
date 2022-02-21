@@ -35,3 +35,8 @@ steps:
     git push origin $(Build.SourceBranchName)
     git push origin --tags
   displayName: 'Git Push back to repo'
+- task: Npm@1
+  inputs:
+    command: 'publish'
+    workingDir: 'dist/portal-core-ui'
+    publishEndpoint: 'npmjs-auscope-update'
