@@ -23,7 +23,9 @@ steps:
     git checkout $(Build.SourceBranchName)
   displayName: 'Setup Git'
 - script: |
-    npm version patch -m "[skip ci] Upgrade to version %s"
+    newversion = npm version patch -m "[skip ci] Upgrade to version %s"
+    cd /projects/portal-core-ui/
+    npm version $newversion
   displayName: 'Bump package version'
 - script: |
     npm install -g npm@7
