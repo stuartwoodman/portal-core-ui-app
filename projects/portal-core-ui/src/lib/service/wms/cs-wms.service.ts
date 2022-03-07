@@ -452,7 +452,8 @@ export class CsWMSService {
           wmsImagProv = new WebMapServiceImageryProvider({
             url: url,
             layers: wmsOnlineResource.name,
-            parameters: params
+            parameters: params,
+            rectangle: Rectangle.fromDegrees(lonlatextent[0], lonlatextent[1], lonlatextent[2], lonlatextent[3])
           });
         } else {
 
