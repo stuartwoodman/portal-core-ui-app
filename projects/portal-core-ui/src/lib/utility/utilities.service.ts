@@ -558,4 +558,48 @@ export class UtilitiesService {
         }
     }
 
-}
+
+    /**
+     * Convert String to  Int Vector 
+     */
+    public static stringToIntVector(strVal:string, seperator:string):number[]{
+        let retVal=[]
+        strVal.split(seperator).map(function(item) {
+            retVal.push(parseInt(item, 10));
+        });
+        return retVal;
+    }  
+
+    /**
+     * Convert String to float Vector 
+     */
+    public static stringToFloatVector(strVal:string, seperator:string):number[]{
+        let retVal=[]
+        strVal.split(seperator).map(function(item) {
+            retVal.push(parseFloat(item));
+        });
+        return retVal;
+    }
+
+    /**
+     * Sets parameter of URI query overriding existing value if set. The parameter name and value
+     * are expected to be unescaped and may contain non ASCII characters.
+     *
+     * @param uri
+     * @param key
+     * @param value
+     * @Return updated URL.
+     */
+    public static setUpdateParameter(uri: string, key: string, value: string):string {
+        var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
+        var separator = uri.indexOf('?') !== -1 ? "&" : "?";
+        if (uri.match(re)) {
+            return uri.replace(re, '$1' + key + "=" + value + '$2');
+        }
+        else {
+            return uri + separator + key + "=" + value;
+        }
+    }    
+}  
+
+

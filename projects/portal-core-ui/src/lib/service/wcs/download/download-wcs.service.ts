@@ -12,6 +12,9 @@ import { LayerHandlerService } from '../../cswrecords/layer-handler.service';
 
 
 import { UtilitiesService } from '../../../utility/utilities.service';
+import { GetCapsService } from '../../wms/get-caps.service';
+import { GetCoverageService } from '../get-coverage.service';
+import { GetCoverageServiceTest } from '../testCoverageService/get-coverage-service-test';
 
 
 /**
@@ -22,7 +25,8 @@ export class DownloadWcsService {
 
 
 
-  constructor(private layerHandlerService: LayerHandlerService, private http: HttpClient, @Inject('env') private env) {
+  constructor(private layerHandlerService: LayerHandlerService, private getCapsService: GetCapsService,
+    private getCoverageService: GetCoverageService,private getCoverageServiceTest: GetCoverageServiceTest,private http: HttpClient, @Inject('env') private env) {
 
   }
 
@@ -106,24 +110,13 @@ export class DownloadWcsService {
    *  @param coverageName name of coverage
    *  @return observable containing the describe coverage response or error
    */
-   public describeCoverage(serviceUrl: string, coverageName: string): Observable<any> {
-    let httpParams = new HttpParams();
-    httpParams = httpParams.append('serviceUrl', serviceUrl);
-    httpParams = httpParams.append('coverageName', coverageName);
-
-    return this.http.post(this.env.portalBaseUrl + 'describeCoverage.do', httpParams.toString(), {
-      headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'),
-      responseType: 'json'
-    }).pipe(map(response => {
+  public describeCoverage(serviceUrl: string, coverageName: string): Observable<any> {
+    const retVal = this.getCoverageService.getCoverage(serviceUrl,coverageName).pipe(map((response: { data: { cswRecords: any, capabilityRecords: any }}) => {
       if (response['success'] === true) {
         return response['data'][0];
       } else {
         return observableThrowError(response['msg']);
-      }
-    }), catchError(
-    (error: HttpResponse<any>) => {
-        return observableThrowError(error);
-      }
-      ), );
+      }}));
+    return retVal;
   }
 }
