@@ -13,6 +13,18 @@ export class GetCoverageService {
   constructor(private http: HttpClient) { }
 
   /**
+ * Test 
+ * @Return a single <CoverageOffering> element from a WCS DescribeCoverage response.
+ */
+  public testParser(CoverageDescriptionTest3: any): Observable<any> {
+    let response = of(CoverageDescriptionTest3);
+    return response.pipe(map(
+      (res) => {
+        let result = this.parseCoverageRes(res);
+        return result;
+      }));
+  }
+  /**
    * Retrieve the wcs record located at the WMS serviceurl endpoint 
    * Currently only supports v1.1.0
    * @param serviceUrl URL of the WCS
@@ -20,6 +32,7 @@ export class GetCoverageService {
    * @Return a single <CoverageOffering> element from a WCS DescribeCoverage response.
    */
   public getCoverage(serviceUrl: string, coverageName: string): Observable<any> {
+
     serviceUrl = UtilitiesService.setUpdateParameter(serviceUrl, 'request', "DescribeCoverage");
     serviceUrl = UtilitiesService.setUpdateParameter(serviceUrl, 'version', "1.0.0");
     serviceUrl = UtilitiesService.setUpdateParameter(serviceUrl, 'service', "WCS");
@@ -33,7 +46,7 @@ export class GetCoverageService {
     }
     return this.http.get(serviceUrl, { params: httpParams, responseType: "text" }).pipe(map(
       (response) => {
-        return this.parseCoverageRes(response);
+        return this.parseCoverageRes(response);;
       }));
   }
 
@@ -43,46 +56,55 @@ export class GetCoverageService {
    * @param response URL of the WCS
    * @Return a single <CoverageOffering> element from a WCS DescribeCoverage response.
    */
-  public parseCoverageRes(response) {
-    const rootNode = SimpleXMLService.parseStringToDOM(response);
-    let MAP_FORMATS = '/wcs:CoverageDescription/wcs:CoverageOffering';
-    const node = SimpleXMLService.evaluateXPathNodeArray(rootNode, rootNode, MAP_FORMATS, this.nsResolver)[0];
+  public parseCoverageRes(response: string) {
+    let rootNode;
+    let nodes: Node[];
+    let node: Node;
+    let MAP_FORMATS;
+    rootNode = SimpleXMLService.parseStringToDOM(response);
+    MAP_FORMATS = '/wcs:CoverageDescription/wcs:CoverageOffering';
+    nodes = SimpleXMLService.evaluateXPathNodeArray(rootNode, rootNode, MAP_FORMATS, this.nsResolver);
+    node = nodes[0];
+    if (!node) {
+      const retVal = { data: [], msg: "", success: false };
+      return retVal;
+    }
+    else {
+      const wcsRecElems = this.getWCSRecElems(rootNode, node, this.nsResolver);
+      const { supportedRequestCRSs, supportedResponseCRSs } = this.getSupportedReqRes(rootNode, node, this.nsResolver);
 
-    const wcsRecElems = this.getWCSRecElems(rootNode, node, this.nsResolver);
-    const { supportedRequestCRSs, supportedResponseCRSs } = this.getSupportedReqRes(rootNode, node, this.nsResolver);
+      MAP_FORMATS = 'wcs:supportedFormats/wcs:formats';
+      const supportedFormats = this.getNodeArray(rootNode, node, this.nsResolver, MAP_FORMATS);
 
-    MAP_FORMATS = 'wcs:supportedFormats/wcs:formats';
-    const supportedFormats = this.getNodeArray(rootNode, node, this.nsResolver, MAP_FORMATS);
+      MAP_FORMATS = 'wcs:supportedInterpolations/wcs:interpolationMethod';
+      const supportedInterpolations = this.getNodeArray(rootNode, node, this.nsResolver, MAP_FORMATS);
 
-    MAP_FORMATS = 'wcs:supportedInterpolations/wcs:interpolationMethod';
-    const supportedInterpolations = this.getNodeArray(rootNode, node, this.nsResolver, MAP_FORMATS);
+      MAP_FORMATS = 'wcs:supportedCRSs/wcs:nativeCRSs';
+      const nativeCRSs = this.getNodeArray(rootNode, node, this.nsResolver, MAP_FORMATS);
 
-    MAP_FORMATS = 'wcs:supportedCRSs/wcs:nativeCRSs';
-    const nativeCRSs = this.getNodeArray(rootNode, node, this.nsResolver, MAP_FORMATS);
+      MAP_FORMATS = 'wcs:domainSet/wcs:spatialDomain';
+      const spatialDomainNode = SimpleXMLService.evaluateXPathNodeArray(rootNode, node, MAP_FORMATS, this.nsResolver);
+      const spatialDomain = this.getSpatialDomain(rootNode, spatialDomainNode[0], this.nsResolver);
 
-    MAP_FORMATS = 'wcs:domainSet/wcs:spatialDomain';
-    const spatialDomainNode = SimpleXMLService.evaluateXPathNodeArray(rootNode, node, MAP_FORMATS, this.nsResolver);
-    const spatialDomain = this.getSpatialDomain(rootNode, spatialDomainNode[0], this.nsResolver);
+      const temporalDomain = this.getTemporalDomain(rootNode, node, this.nsResolver);
+      const rangeSet = this.getRangeSet(rootNode, node, this.nsResolver);
 
-    const temporalDomain = this.getTemporalDomain(rootNode, node, this.nsResolver);
-    const rangeSet = this.getRangeSet(rootNode, node, this.nsResolver);
-
-    const retVal = { data: [], msg: "", success: true };
-    retVal.data.push({
-      description: wcsRecElems["description"],
-      label: wcsRecElems["label"],
-      name: wcsRecElems["name"],
-      supportedRequestCRSs: supportedRequestCRSs,
-      supportedResponseCRSs: supportedResponseCRSs,
-      supportedFormats: supportedFormats,
-      supportedInterpolations: supportedInterpolations,
-      nativeCRSs: nativeCRSs,
-      spatialDomain: spatialDomain,
-      temporalDomain: temporalDomain,
-      rangeSet: rangeSet
-    });
-    return retVal;
-
+      const retVal = { data: [], msg: "", success: true };
+      retVal.data.push({
+        description: wcsRecElems["description"],
+        label: wcsRecElems["label"],
+        name: wcsRecElems["name"],
+        supportedRequestCRSs: supportedRequestCRSs,
+        supportedResponseCRSs: supportedResponseCRSs,
+        supportedFormats: supportedFormats,
+        supportedInterpolations: supportedInterpolations,
+        nativeCRSs: nativeCRSs,
+        spatialDomain: spatialDomain,
+        temporalDomain: temporalDomain,
+        rangeSet: rangeSet
+      });
+      return retVal;
+    }
   }
 
   /**
@@ -214,7 +236,8 @@ export class GetCoverageService {
       northBoundLatitude: null,
       timePositionStart: null,
       timePositionEnd: null,
-      srsName: null
+      srsName: null,
+      type: null
     };
 
     let MAP_FORMATS = 'gml:pos';
@@ -260,7 +283,8 @@ export class GetCoverageService {
       northBoundLatitude: northBoundLatitude,
       timePositionStart: timePositionStart,
       timePositionEnd: timePositionEnd,
-      srsName: srsName
+      srsName: srsName,
+      type: type
     };
     return retVal;
   }
@@ -336,9 +360,9 @@ export class GetCoverageService {
       tempNodeList.forEach(elem => {
         let name = SimpleXMLService.getNodeLocalName(elem);
         if (name == "timePosition") {
-          return this.simpleTimePosition(doc, elem, nsResolver)
+          temporalDomain.push(this.simpleTimePosition(elem, nsResolver));
         } else if (name == "timePeriod") {
-          return this.simpleTimePeriod(doc, elem, nsResolver)
+          temporalDomain.push(this.simpleTimePeriod(doc, elem, nsResolver));
         } else {
           console.log("Unable to parse " + SimpleXMLService.getNodeLocalName(node));
         }
@@ -350,13 +374,12 @@ export class GetCoverageService {
   /**
    * Create a simplified instance of the <gml:timePosition> element from a
    * WCS DescribeCoverage or GetCapabilities response * 
-   * @param doc Document interface of DescribeCoverage response
    * @param node Node class representing a part of the DescribeCoverage response
    * @param nsResolver namespace resolver function
    * @returns Get the timePosition
    */
 
-  private simpleTimePosition(doc: Document, node: Node, nsResolver: (prefix: string) => string) {
+  private simpleTimePosition(node: Node, nsResolver: (prefix: string) => string) {
     let timePosition = Date.parse(node.textContent)
     return {
       timePosition: timePosition,

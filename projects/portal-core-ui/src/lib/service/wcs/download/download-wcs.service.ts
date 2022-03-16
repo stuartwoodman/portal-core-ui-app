@@ -14,7 +14,6 @@ import { LayerHandlerService } from '../../cswrecords/layer-handler.service';
 import { UtilitiesService } from '../../../utility/utilities.service';
 import { GetCapsService } from '../../wms/get-caps.service';
 import { GetCoverageService } from '../get-coverage.service';
-import { GetCoverageServiceTest } from '../testCoverageService/get-coverage-service-test';
 
 
 /**
@@ -26,7 +25,7 @@ export class DownloadWcsService {
 
 
   constructor(private layerHandlerService: LayerHandlerService, private getCapsService: GetCapsService,
-    private getCoverageService: GetCoverageService,private getCoverageServiceTest: GetCoverageServiceTest,private http: HttpClient, @Inject('env') private env) {
+    private getCoverageService: GetCoverageService,private http: HttpClient, @Inject('env') private env) {
 
   }
 
@@ -119,4 +118,5 @@ export class DownloadWcsService {
       }}));
     return retVal;
   }
+
 }
