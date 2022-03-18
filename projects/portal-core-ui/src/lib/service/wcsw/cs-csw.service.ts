@@ -86,7 +86,9 @@ export class CsCSWService {
           showBackground : false,
           horizontalOrigin : HorizontalOrigin.LEFT,
           distanceDisplayCondition: new DistanceDisplayCondition(0.0, 7000000.0),
-          pixelOffset: new Cartesian2(5, 20)
+          // Randomize position to reduce chance of 2 labels overwriting each other
+          pixelOffset: new Cartesian2(5, 20 + Math.floor(Math.random()*10)*20)
+           
       }
     });
   }
