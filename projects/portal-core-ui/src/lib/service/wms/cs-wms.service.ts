@@ -31,7 +31,7 @@ export class ErrorPayload {
    */
   public errorEvent(evt) {
     console.error('ERROR! evt = ', evt);
-    const error : TileProviderError = evt;
+    const error: TileProviderError = evt;
     const rss: RenderStatusService = this.cmWmsService.getRenderStatusService();
     rss.getStatusBSubject(this.layer).value.setErrorMessage(error.error.message);
   }
@@ -182,7 +182,13 @@ export class CsWMSService {
     onlineResource: OnlineResourceModel,
     param?: any
   ): Observable<any> {
-
+    // Pass through any sld_bodys already set
+    if (param && param.sld_body && param.sld_body !== '') {
+      return new Observable(observer => {
+        observer.next(param.sld_body);
+        observer.complete();
+      });
+    }
     // For ArcGIS mineral tenements layer we can get SLD_BODY parameter locally
     if (UtilitiesService.isArcGIS(onlineResource) && onlineResource.name === 'MineralTenement') {
       return new Observable(observer => {
@@ -535,6 +541,7 @@ export class CsWMSService {
           // Create a resource which uses our custom proxy
           const res = new Resource({url: url, proxy: new MyDefaultProxy(me.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=')});
 
+
           // Force Resource to use 'POST' and our proxy
           params['usepost'] = true;
           wmsImagProv = new WebMapServiceImageryProvider({
@@ -576,7 +583,7 @@ export class CsWMSService {
 // so that the parameters are not uuencoded
 class MyDefaultProxy {
   proxy: string;
-  constructor(proxy) {
+    constructor(proxy) {
   this.proxy = proxy;
   }
   getURL: (any) => any;

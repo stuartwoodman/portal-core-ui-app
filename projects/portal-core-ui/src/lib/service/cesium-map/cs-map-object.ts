@@ -2,10 +2,12 @@ import { RenderStatusService } from './renderstatus/render-status.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject} from 'rxjs';
-import { EditActions, MapsManagerService, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService, RectangleEditorObservable,
-         RectanglesEditorService } from 'angular-cesium';
-import { Cartesian3, Color, ColorMaterialProperty, Ellipsoid, WebMercatorProjection } from 'cesium';
+import { EditActions, MapsManagerService, PolygonEditorObservable, PolygonEditUpdate,
+         PolygonsEditorService, RectangleEditorObservable, RectanglesEditorService } from 'angular-cesium';
+import { Cartesian2, Cartesian3, Color, ColorMaterialProperty, Ellipsoid, WebMercatorProjection } from 'cesium';
 import { LayerModel } from '../../model/data/layer.model';
+import ScreenSpaceEventHandler from 'cesium/Source/Core/ScreenSpaceEventHandler';
+import ScreenSpaceEventType from 'cesium/Source/Core/ScreenSpaceEventType';
 
 declare var Cesium;
 
@@ -23,7 +25,6 @@ export class CsMapObject {
 
   constructor(private renderStatusService: RenderStatusService, private rectangleEditor: RectanglesEditorService,
               private polygonsCesiumEditor: PolygonsEditorService, private mapsManagerService: MapsManagerService) {
-
     this.groupLayer = {};
   }
 
@@ -119,11 +120,12 @@ export class CsMapObject {
       delete this.groupLayer[id];
       this.renderStatusService.resetLayer(id);
   }
+
   /**
    * Method for rendering a polygon shape (EPSG:4326 Lng lat format) on the map.
-   * @param coordsArray [139,-33 141,-33 142,-36 139,-36 139,-33 lng,lat] 
+   * @param coordsArray [139,-33 141,-33 142,-36 139,-36 139,-33 lng,lat]
    */
-  public renderPolygon( coordsArray: Number[]) {
+  public renderPolygon(coordsArray: Number[]) {
     if (this.polygonEditable$) {
       this.clearPolygon();
     }
@@ -143,6 +145,8 @@ export class CsMapObject {
     if (this.polygonEditable$) {
       this.clearPolygon();
     }
+    const element = document.getElementsByTagName('canvas')[0];
+    element.style.cursor = 'crosshair';
     this.isDrawingPolygonBS.next(true);
     // create accepts PolygonEditOptions object
     this.polygonEditable$ = this.polygonsCesiumEditor.create({
@@ -167,6 +171,7 @@ export class CsMapObject {
     const polygonStringBS = new BehaviorSubject<string>(coordString);
     this.polygonEditable$.subscribe((editUpdate: PolygonEditUpdate) => {
       if (editUpdate.editAction === EditActions.ADD_LAST_POINT) {
+        element.style.cursor = 'default';
         const cartesian3 = this.polygonEditable$.getCurrentPoints()
           .map(p => p.getPosition());
         cartesian3.push(cartesian3[0]);
@@ -198,4 +203,55 @@ export class CsMapObject {
     return this.rectangleEditor.create();
   }
 
+  /**
+   * Are map clicks being ignored
+   * @returns True if map clicks being ingored
+   */
+  public getIgnoreMapClick(): boolean {
+    return this.ignoreMapClick;
+  }
+
+  /**
+   * Get lon/lat of mouse click
+   * @returns Point object representing lon/lat location of click
+   */
+  public getPointFromClick(): BehaviorSubject<Point> {
+    this.ignoreMapClick = true;
+    const element = document.getElementsByTagName('canvas')[0];
+    element.style.cursor = 'crosshair';
+    const handler = new ScreenSpaceEventHandler(this.mapsManagerService.getMap().getCesiumViewer().scene.canvas);
+    const pointBS = new BehaviorSubject<Point>(null);
+    handler.setInputAction(click => {
+      const pixel = click.position;
+      if (!pixel || !pixel.x || !pixel.y) {
+        this.ignoreMapClick = false;
+        return;
+      }
+      const mousePosition = new Cartesian2(pixel.x, pixel.y);
+      const viewer = this.mapsManagerService.getMap().getCesiumViewer();
+      const ellipsoid = viewer.scene.globe.ellipsoid;
+      const cartesian = viewer.camera.pickEllipsoid(mousePosition, ellipsoid);
+      const cartographic = ellipsoid.cartesianToCartographic(cartesian);
+      const lon = Cesium.Math.toDegrees(cartographic.longitude);
+      const lat = Cesium.Math.toDegrees(cartographic.latitude);
+      element.style.cursor = 'default';
+      handler.destroy();
+      const point: Point = {
+        longitude: lon,
+        latitude: lat
+      };
+      pointBS.next(point);
+      this.ignoreMapClick = false;
+    }, ScreenSpaceEventType.LEFT_CLICK);
+    return pointBS;
+  }
+
+}
+
+/**
+ * Point (lon/lat) interface
+ */
+export interface Point {
+  longitude: number;
+  latitude: number;
 }

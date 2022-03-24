@@ -26,8 +26,8 @@ export class MinTenemStyleService {
             'xmlns:gml': 'http://www.opengis.net/gml',
             'xmlns:xsi' : 'http://www.w3.org/2001/XMLSchema-instance',
             'xsi:schemaLocation': 'http://www.opengis.net/sld http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd'
-        }
-        const styledLayerDesc = (body: any) => ['sld:StyledLayerDescriptor', styledLayerAttrs, body]
+        };
+        const styledLayerDesc = (body: any) => ['sld:StyledLayerDescriptor', styledLayerAttrs, body];
         const namedLayer = (body: string) => ['sld:NamedLayer', null, body];
         const name = (nameStr: string) => ['sld:Name', null, nameStr];
         const userStyle = (body: string) => ['sld:UserStyle', null, body];
