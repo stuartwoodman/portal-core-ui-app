@@ -36,7 +36,7 @@ import { QueryWFSService} from './service/wfs/query-wfs.service';
 import { ImgLoadingDirective } from './uiutilities/imgloading.directive';
 import { StopPropagationDirective } from './utility/utilities.directives';
 import { SelectMapBoundingComponent } from './widget/selectmap.bounding';
-import { PolygonsEditorService } from 'angular-cesium';
+import { PolygonsEditorService } from '@auscope/angular-cesium';
 
 @NgModule({
   declarations: [

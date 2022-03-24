@@ -3,7 +3,7 @@ import { UtilitiesService } from '../../utility/utilities.service';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject} from 'rxjs';
 import { EditActions, MapsManagerService, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService, RectangleEditorObservable,
-         RectanglesEditorService } from 'angular-cesium';
+         RectanglesEditorService } from '@auscope/angular-cesium';
 import { Cartesian3, Color, ColorMaterialProperty, Ellipsoid, WebMercatorProjection } from 'cesium';
 import { LayerModel } from '../../model/data/layer.model';
 
