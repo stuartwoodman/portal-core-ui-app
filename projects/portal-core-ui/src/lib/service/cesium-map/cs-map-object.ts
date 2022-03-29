@@ -2,12 +2,10 @@ import { RenderStatusService } from './renderstatus/render-status.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject} from 'rxjs';
-import { EditActions, MapsManagerService, PolygonEditorObservable, PolygonEditUpdate,
-         PolygonsEditorService, RectangleEditorObservable, RectanglesEditorService } from 'angular-cesium';
-import { Cartesian2, Cartesian3, Color, ColorMaterialProperty, Ellipsoid, WebMercatorProjection } from 'cesium';
+import { EditActions, MapsManagerService, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService,
+         RectangleEditorObservable, RectanglesEditorService } from '@auscope/angular-cesium';
+import { Cartesian2, Cartesian3, Color, ColorMaterialProperty, Ellipsoid, ScreenSpaceEventHandler, ScreenSpaceEventType, WebMercatorProjection } from 'cesium';
 import { LayerModel } from '../../model/data/layer.model';
-import ScreenSpaceEventHandler from 'cesium/Source/Core/ScreenSpaceEventHandler';
-import ScreenSpaceEventType from 'cesium/Source/Core/ScreenSpaceEventType';
 
 declare var Cesium;
 

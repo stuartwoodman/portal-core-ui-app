@@ -5,7 +5,7 @@ import { OnlineResourceModel } from '../../model/data/onlineresource.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
 
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
-import { MapsManagerService, AcMapComponent } from 'angular-cesium';
+import { MapsManagerService, AcMapComponent } from '@auscope/angular-cesium';
 import { Rectangle, Color, ColorMaterialProperty, Cartesian3, Cartesian2, CallbackProperty, HorizontalOrigin, DistanceDisplayCondition, Entity } from 'cesium';
 
 // Alpha of the CSW bounding box rectangles

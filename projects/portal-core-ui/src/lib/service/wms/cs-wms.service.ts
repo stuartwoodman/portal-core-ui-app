@@ -12,7 +12,7 @@ import { Constants, ResourceType } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 import { MinTenemStyleService } from '../style/wms/min-tenem-style.service';
-import { MapsManagerService, AcMapComponent } from 'angular-cesium';
+import { MapsManagerService, AcMapComponent } from '@auscope/angular-cesium';
 import { WebMapServiceImageryProvider, ImageryLayer, Resource, Rectangle } from 'cesium';
 import { LayerStatusService } from '../../utility/layerstatus.service';
 import { DeviceDetectorService } from 'ngx-device-detector';

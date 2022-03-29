@@ -9,7 +9,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { LayerModel } from '../../../lib/model/data/layer.model';
 import { OnlineResourceModel } from '../../../lib/model/data/onlineresource.model';
 import { LayerHandlerService } from '../../service/cswrecords/layer-handler.service';
-import { MapsManagerService } from 'angular-cesium';
+import { MapsManagerService } from '@auscope/angular-cesium';
 import { ResourceType } from '../../../lib/utility/constants.service';
 import { RenderStatusService } from '../../service/cesium-map/renderstatus/render-status.service';
 
