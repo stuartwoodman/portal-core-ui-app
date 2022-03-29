@@ -1,6 +1,6 @@
-import { throwError as observableThrowError, timer } from 'rxjs';
+import { timer } from 'rxjs';
 import { Injectable, Inject } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { CSWRecordModel } from '../model/data/cswrecord.model';
 import { OnlineResourceModel } from '../model/data/onlineresource.model';
 

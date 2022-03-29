@@ -54,8 +54,6 @@ export class LayerHandlerService {
     }
   }
 
-  
-
   /**
    * Retrieve the CSW record located at the WMS serviceurl endpoint.
    * 
