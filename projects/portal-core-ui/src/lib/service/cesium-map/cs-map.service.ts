@@ -296,19 +296,8 @@ export class CsMapService {
       this.csWMSService.addLayer(layer, param);
       this.cacheLayerModelList(layer.id, layer);
 
-     // Add a WFS layer to map
-     } else if (this.layerHandlerService.contains(layer, ResourceType.WFS)) {
-       // FIXME this.csWFSService.addLayer(layer, param);
-       // FIXME this.layerModelList[layer.id] = layer;
-       // TODO: Add to getSupportedOnlineResourceTypes() when supported
-
-     // Add a WWW layer to map
-     } else if (this.layerHandlerService.contains(layer, ResourceType.WWW)) {
-       // FIXME this.csWWWService.addLayer(layer, param);
-       // FIXME this.layerModelList[layer.id] = layer;
-       // TODO: Add to getSupportedOnlineResourceTypes() when supported
-
-     } else if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
+    // IRIS layer
+    } else if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
       // Remove old existing layer
       if (this.layerExists(layer.id)) {
         this.csIrisService.rmLayer(layer);
@@ -317,6 +306,18 @@ export class CsMapService {
       // Add layer
       this.csIrisService.addLayer(layer, param);
       this.cacheLayerModelList(layer.id, layer);
+
+    // Add a WFS layer to map
+    } else if (this.layerHandlerService.contains(layer, ResourceType.WFS)) {
+      // FIXME this.csWFSService.addLayer(layer, param);
+      // FIXME this.layerModelList[layer.id] = layer;
+      // TODO: Add to getSupportedOnlineResourceTypes() when supported
+
+     // Add a WWW layer to map
+    } else if (this.layerHandlerService.contains(layer, ResourceType.WWW)) {
+      // FIXME this.csWWWService.addLayer(layer, param);
+      // FIXME this.layerModelList[layer.id] = layer;
+      // TODO: Add to getSupportedOnlineResourceTypes() when supported
 
     } else {
       throw new Error('No Suitable service found');
