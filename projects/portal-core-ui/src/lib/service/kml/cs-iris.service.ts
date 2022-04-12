@@ -121,10 +121,12 @@ export class CsIrisService {
         outlineWidth: 2,
         pixelSize: 8,
         disableDepthTestDistance: Number.POSITIVE_INFINITY,
-        distanceDisplayCondition: new Cesium.DistanceDisplayCondition(1.0, 8000000.0)
+        distanceDisplayCondition: new Cesium.DistanceDisplayCondition(1.0, 8000000.0),
+        heightReference : Cesium.HeightReference.RELATIVE_TO_GROUND  ,
+        scaleByDistance: new Cesium.NearFarScalar(1.5e2, 0.35, 1.5e7, 0.35),
       });
       // Don't display a billboard
-      entity.billboard = null;
+      // entity.billboard = null;
     }
   }
 
