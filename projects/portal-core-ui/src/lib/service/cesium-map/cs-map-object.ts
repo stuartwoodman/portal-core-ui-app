@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject} from 'rxjs';
 import { EditActions, MapsManagerService, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService,
          RectangleEditorObservable, RectanglesEditorService } from '@auscope/angular-cesium';
-import { Cartesian2, Cartesian3, Color, ColorMaterialProperty, Ellipsoid, ScreenSpaceEventHandler, ScreenSpaceEventType, WebMercatorProjection } from 'cesium';
+import { Rectangle, Camera, Cartesian2, Cartesian3, Color, ColorMaterialProperty, Ellipsoid, ScreenSpaceEventHandler, ScreenSpaceEventType, WebMercatorProjection } from 'cesium';
 import { LayerModel } from '../../model/data/layer.model';
 
 declare var Cesium;
@@ -26,11 +26,16 @@ export class CsMapObject {
     this.groupLayer = {};
   }
 
+  /**
+   * Process a map click event by calling click event handlers and passing in map click coordinates
+   * 
+   * @param p map click coordinates
+   * @returns 
+   */
   public processClick(p: number[]) {
      if (this.ignoreMapClick) {
        return;
      }
-
      for (const clickHandler of this.clickHandlerList) {
        clickHandler(p);
      }
@@ -44,13 +49,41 @@ export class CsMapObject {
     this.clickHandlerList.push(clickHandler);
   }
 
-  public getViewSize(): any {
+  /**
+   * Returns [width, height] of canvas in pixels
+   * 
+   * @returns [width, height] of canvas
+   */
+  public getViewSize(): [number, number] {
     const viewer = this.mapsManagerService.getMap().getCesiumViewer();
     return [viewer.canvas.width, viewer.canvas.height];
   }
 
   /**
-   * returns distance (EPSG4326 Degree) of one pixel in the current viewer
+   * Get the current state of the map in an object containing the camera state and scene mode
+   * 
+   * @returns a object containing {viewRectangle}
+   */
+   public getCurrentMapState(): { viewRectangle: Rectangle } {
+     const camera: Camera = this.mapsManagerService.getMap().getCameraService().getCamera();
+     return {
+       viewRectangle: camera.computeViewRectangle()
+     };
+  }
+
+
+  /**
+   * Given the state of the map in an object, resume the map in the given state
+   * 
+   * @param mapState The state of the map in the format {viewRectangle}
+   */
+   public resumeMapState(mapState: { viewRectangle: Rectangle }) {
+     const camera: Camera = this.mapsManagerService.getMap().getCameraService().getCamera();
+     camera.setView({destination: mapState.viewRectangle})
+   }
+
+  /**
+   * Returns distance (EPSG4326 Degree) of one pixel in the current viewer
    * epsg4326 1.0 degree to 111km roughly
    */
   public getDistPerPixel(): any {
@@ -72,6 +105,11 @@ export class CsMapObject {
     return distPerPixel;
   }
 
+  /**
+   * A bounding box of the view area in 3d Cartesian map coordinates
+   * 
+   * @returns [ minX, minY, maxX, maxY ] 
+   */
   public getMapViewBounds(): any {
     const viewer = this.mapsManagerService.getMap().getCesiumViewer();
     const width = viewer.canvas.width;
@@ -93,8 +131,8 @@ export class CsMapObject {
   }
 
   /**
-   * Add an ol layer to the ol map. At the same time keep a reference map of the layers
-   * @param layer: the ol layer to add to map
+   * Add an layer to the map. At the same time keep a reference map of the layers
+   * @param layer: the layer to add to map
    * @param id the layer id is used
    */
   public addLayerById(layer: LayerModel, id: string): void {
