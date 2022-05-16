@@ -35,6 +35,7 @@ export { CsWMSService } from './lib/service/wms/cs-wms.service';
 export { QueryWMSService } from './lib/service/wms/query-wms.service';
 export { CsWWWService } from './lib/service/www/cs-www.service';
 export { CsIrisService } from './lib/service/kml/cs-iris.service';
+export { DownloadIrisService } from './lib/service/kml/download-iris.service';
 
 export { ImgLoadingDirective } from './lib/uiutilities/imgloading.directive';
 export { KeysPipe, TrustResourceHtmlPipe, TrustResourceUrlPipe, QuerierFeatureSearchPipe } from './lib/uiutilities/pipes';
