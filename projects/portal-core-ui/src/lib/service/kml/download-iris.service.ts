@@ -4,6 +4,7 @@ import { Bbox } from '../../model/data/bbox.model';
 import { LayerModel } from '../../model/data/layer.model';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, Inject } from '@angular/core';
+import { min } from 'rxjs/operators';
 
 /**
  * Service to download IRIS data
@@ -90,10 +91,10 @@ export class DownloadIrisService {
                 querystring.append('end', endDate);
             }
             if (bbox) {
-                querystring.append('maxlatitude', bbox.northBoundLatitude.toString());
-                querystring.append('minlatitude', bbox.southBoundLatitude.toString());
-                querystring.append('maxlongitude', bbox.westBoundLongitude.toString());
-                querystring.append('minlongitude', bbox.eastBoundLongitude.toString());
+                querystring.append('maxlatitude', Math.max(bbox.southBoundLatitude, bbox.northBoundLatitude).toString());
+                querystring.append('minlatitude', Math.min(bbox.southBoundLatitude, bbox.northBoundLatitude).toString());
+                querystring.append('maxlongitude', Math.max(bbox.westBoundLongitude, bbox.eastBoundLongitude).toString());
+                querystring.append('minlongitude', Math.min(bbox.westBoundLongitude, bbox.eastBoundLongitude).toString());
             }
             url = url + decodeURIComponent(querystring.toString());
             let httpParams = new HttpParams();
