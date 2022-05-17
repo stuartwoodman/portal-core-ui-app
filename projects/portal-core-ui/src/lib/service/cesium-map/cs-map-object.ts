@@ -4,10 +4,13 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject} from 'rxjs';
 import { EditActions, MapsManagerService, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService,
          RectangleEditorObservable, RectanglesEditorService } from '@auscope/angular-cesium';
-import { Rectangle, Camera, Cartesian2, Cartesian3, Color, ColorMaterialProperty, Ellipsoid, ScreenSpaceEventHandler, ScreenSpaceEventType, WebMercatorProjection } from 'cesium';
+import { Camera, Cartesian2, Cartesian3, Color, ColorMaterialProperty, Ellipsoid, ScreenSpaceEventHandler, ScreenSpaceEventType, WebMercatorProjection } from 'cesium';
 import { LayerModel } from '../../model/data/layer.model';
 
 declare var Cesium;
+
+// Used to store the position and orientation of the camera
+type MapState = {camera: {position: Cartesian3, direction: Cartesian3, up: Cartesian3 }};
 
 /**
  * A wrapper around the openlayer object for use in the portal.
@@ -62,24 +65,30 @@ export class CsMapObject {
   /**
    * Get the current state of the map in an object containing the camera state and scene mode
    * 
-   * @returns a object containing {viewRectangle}
+   * @returns a MapState object
    */
-   public getCurrentMapState(): { viewRectangle: Rectangle } {
+   public getCurrentMapState(): MapState {
      const camera: Camera = this.mapsManagerService.getMap().getCameraService().getCamera();
-     return {
-       viewRectangle: camera.computeViewRectangle()
+     const mapState = {
+      camera: { position: camera.position.clone(),
+                direction: camera.direction.clone(),
+                up: camera.up.clone()
+              }
      };
-  }
+     return mapState;
+    }
 
 
   /**
    * Given the state of the map in an object, resume the map in the given state
    * 
-   * @param mapState The state of the map in the format {viewRectangle}
+   * @param mapState The state of the map in the MapState format
    */
-   public resumeMapState(mapState: { viewRectangle: Rectangle }) {
+   public resumeMapState(mapState: MapState) {
      const camera: Camera = this.mapsManagerService.getMap().getCameraService().getCamera();
-     camera.setView({destination: mapState.viewRectangle})
+     camera.up = mapState.camera.up;
+     camera.position = mapState.camera.position;
+     camera.direction = mapState.camera.direction;
    }
 
   /**

@@ -13,7 +13,6 @@ import { Observable } from 'rxjs';
  * keeping track of the layers and its filter that have been added to the map
  * This also includes getting the current state of the map
  */
-// @dynamic
 @Injectable()
 export class ManageStateService {
 
