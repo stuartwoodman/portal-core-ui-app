@@ -4,13 +4,12 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject} from 'rxjs';
 import { EditActions, MapsManagerService, PolygonEditorObservable, PolygonEditUpdate, PolygonsEditorService,
          RectangleEditorObservable, RectanglesEditorService } from '@auscope/angular-cesium';
-import { Camera, Cartesian2, Cartesian3, Color, ColorMaterialProperty, Ellipsoid, ScreenSpaceEventHandler, ScreenSpaceEventType, WebMercatorProjection } from 'cesium';
+import { Camera, Cartesian2, Cartesian3, Color, ColorMaterialProperty, Ellipsoid, SceneMode, ScreenSpaceEventHandler,
+         ScreenSpaceEventType, WebMercatorProjection } from 'cesium';
 import { LayerModel } from '../../model/data/layer.model';
+import { MapState } from '../../model/data/mapstate';
 
 declare var Cesium;
-
-// Used to store the position and orientation of the camera
-type MapState = {camera: {position: Cartesian3, direction: Cartesian3, up: Cartesian3 }};
 
 /**
  * A wrapper around the openlayer object for use in the portal.
@@ -69,11 +68,13 @@ export class CsMapObject {
    */
    public getCurrentMapState(): MapState {
      const camera: Camera = this.mapsManagerService.getMap().getCameraService().getCamera();
-     const mapState = {
+     const sceneMode: SceneMode = this.mapsManagerService.getMap().getCesiumViewer().scene.mode;
+     const mapState: MapState = {
       camera: { position: camera.position.clone(),
                 direction: camera.direction.clone(),
                 up: camera.up.clone()
-              }
+              },
+      scene: { mode: sceneMode }
      };
      return mapState;
     }
@@ -85,6 +86,7 @@ export class CsMapObject {
    * @param mapState The state of the map in the MapState format
    */
    public resumeMapState(mapState: MapState) {
+     this.mapsManagerService.getMap().getCesiumViewer().scene.mode = mapState.scene.mode;
      const camera: Camera = this.mapsManagerService.getMap().getCameraService().getCamera();
      camera.up = mapState.camera.up;
      camera.position = mapState.camera.position;

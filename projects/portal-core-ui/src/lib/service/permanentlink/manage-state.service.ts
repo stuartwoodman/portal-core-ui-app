@@ -1,24 +1,46 @@
-import { CsMapObject } from '../cesium-map/cs-map-object';
-import {Injectable, Inject} from '@angular/core';
+import { Injectable, Inject} from '@angular/core';
 import { v4 as uuidv4 } from 'uuid';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { throwError as observableThrowError, of } from 'rxjs';
-import {map, catchError } from 'rxjs/operators';
-
+import { throwError as observableThrowError, of, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
+import { CsMapObject } from '../cesium-map/cs-map-object';
+import { MapState } from '../../model/data/mapstate';
 
 /**
  * A service class to assist maintaining the current state of the portal including
  * keeping track of the layers and its filter that have been added to the map
  * This also includes getting the current state of the map
  */
-@Injectable()
+@Injectable(
+  { providedIn: 'root' } // singleton service
+) 
 export class ManageStateService {
 
   private state: any = {};
+  private prevState: any = {};
+  private permLinkMode: boolean = false; // Is true if a permanent link has been employed
 
   constructor(private csMapObject: CsMapObject, private http: HttpClient, @Inject('env') private env) {
+  }
+
+  /**
+   * Is the map currently displaying a permanent link?
+   * 
+   * @returns permanent link mode
+   */
+  public isPermLinkMode() {
+    return this.permLinkMode;
+  }
+
+  /**
+   * Set the permanent link mode
+   * 
+   * @param mode permanent link mode
+   */
+  public setPermLinkMode(mode: boolean) {
+    this.permLinkMode = mode;
   }
 
   /**
@@ -36,6 +58,7 @@ export class ManageStateService {
       filterCollection: filterCollection,
       optionalFilters: optionalFilters
     };
+    this.permLinkMode = false;
   }
 
   /**
@@ -60,22 +83,25 @@ export class ManageStateService {
    */
   public removeLayer(layerid: string) {
     delete this.state[layerid];
+    this.permLinkMode = false;
   }
 
   /**
    * Return the current state
-   * @return return the state in the format layerid:{filterCollection,optionalFilters,map{zoom, center}}
+   * @return return the state as a MapState object
    */
-  public getState(): any {
+  public getState(): MapState {
     this.state.map = this.csMapObject.getCurrentMapState();
     return this.state;
   }
 
   /**
    * Resume the state of the map given the map state
+   * Used to employ permanent link state
    * @param mapState map state object
    */
-  public resumeMapState(mapState) {
+  public resumeMapState(mapState: MapState) {
+    this.permLinkMode = true;
     if (mapState) {
       this.csMapObject.resumeMapState(mapState);
     }
@@ -117,16 +143,22 @@ export class ManageStateService {
     if (id === undefined) {
       return of({});
     }
+    // If we have already stored this state locally then return it
+    if (id in this.prevState) {
+      return of(this.prevState[id]);
+    }
+    // Call the backend API to get state
     let httpParams = new HttpParams();
     httpParams = httpParams.append('id', id);
     return this.http.get(this.env.portalBaseUrl + 'fetchUIState.do', {
       params: httpParams
     }).pipe(map(response => {
       if (response['success'] === true) {
-        return JSON.parse(response['data']);
+        this.prevState[id] = JSON.parse(response['data']);
+        return this.prevState[id];
       }
       // If not successful, return empty object
-      return of({});
+      return {};
     }), catchError(
       (error: HttpResponse<any>) => {
         return observableThrowError(error);
