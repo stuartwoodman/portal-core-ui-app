@@ -23,7 +23,7 @@ export class LayerHandlerService {
   private layerRecord;
 
   constructor(private http: HttpClient, private getCapsService: GetCapsService, @Inject('env') private env) {
-    this.layerRecord = [];
+    this.layerRecord = {};
   }
 
   /**
@@ -33,7 +33,7 @@ export class LayerHandlerService {
    */
   public getLayerRecord(): Observable<any> {
     const me = this;
-    if (this.layerRecord.length > 0) {
+    if (Object.keys(this.layerRecord).length > 0) {
         return observableOf(this.layerRecord);
     } else {
       return this.http.get(this.env.portalBaseUrl + this.env.getCSWRecordEndP).pipe(
