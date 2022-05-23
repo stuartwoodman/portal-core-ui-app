@@ -9,10 +9,8 @@ import {BehaviorSubject,  Subject } from 'rxjs';
 import { point } from '@turf/helpers';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import bboxPolygon from '@turf/bbox-polygon';
-import { BBox } from '@turf/helpers';
 import { LayerModel } from '../../model/data/layer.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
-import { OlManageStateService } from '../permanentlink/ol-manage-state.service';
 import { OlCSWService } from '../wcsw/ol-csw.service';
 import { OlWFSService } from '../wfs/ol-wfs.service';
 import { OlMapObject } from './ol-map-object';
@@ -33,7 +31,7 @@ export class OlMapService {
    private clickedLayerListBS = new BehaviorSubject<any>({});
 
    constructor(private layerHandlerService: LayerHandlerService, private olWMSService: OlWMSService,
-     private olWFSService: OlWFSService, private olMapObject: OlMapObject, private manageStateService: OlManageStateService, @Inject('conf') private conf,
+      private olWFSService: OlWFSService, private olMapObject: OlMapObject, @Inject('conf') private conf,
       private olCSWService: OlCSWService, private olWWWService: OlWWWService) {
 
      this.olMapObject.registerClickHandler(this.mapClickHandler.bind(this));
@@ -214,7 +212,6 @@ export class OlMapService {
    * @param layer the layer to remove from the map
    */
   public removeLayer(layer: LayerModel): void {
-      this.manageStateService.removeLayer(layer.id);
       this.olMapObject.removeLayerById(layer.id);
       delete this.layerModelList[layer.id];
   }
