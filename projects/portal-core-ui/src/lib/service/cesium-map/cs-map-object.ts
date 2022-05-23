@@ -88,9 +88,9 @@ export class CsMapObject {
    public resumeMapState(mapState: MapState) {
      this.mapsManagerService.getMap().getCesiumViewer().scene.mode = mapState.scene.mode;
      const camera: Camera = this.mapsManagerService.getMap().getCameraService().getCamera();
-     camera.up = mapState.camera.up;
-     camera.position = mapState.camera.position;
-     camera.direction = mapState.camera.direction;
+     camera.up = mapState.camera.up.clone();
+     camera.position = mapState.camera.position.clone();
+     camera.direction = mapState.camera.direction.clone();
    }
 
   /**
