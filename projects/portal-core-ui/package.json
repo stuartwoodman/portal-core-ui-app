@@ -17,7 +17,7 @@
     "@angular/platform-browser-dynamic": "^13.3.2",
     "@angular/router": "^13.3.2",
     "@auscope/angular-cesium": "^1.0.0",
-    "cesium": "^1.75.0",
+    "cesium": "~1.75.0",
     "rxjs": "~6.5.5",
     "zone.js": "~0.11.5",
     "@thi.ng/hiccup": "^3.5.8",
