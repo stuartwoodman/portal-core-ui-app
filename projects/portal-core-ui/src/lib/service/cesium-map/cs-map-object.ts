@@ -7,7 +7,7 @@ import { EditActions, MapsManagerService, PolygonEditorObservable, PolygonEditUp
 import { Camera, Cartesian2, Cartesian3, Color, ColorMaterialProperty, Ellipsoid, SceneMode, ScreenSpaceEventHandler,
          ScreenSpaceEventType, WebMercatorProjection } from 'cesium';
 import { LayerModel } from '../../model/data/layer.model';
-import { MapState } from '../../model/data/mapstate';
+import { MapState } from '../../model/data/mapstate.model';
 
 declare var Cesium;
 
@@ -83,14 +83,15 @@ export class CsMapObject {
   /**
    * Given the state of the map in an object, resume the map in the given state
    * 
-   * @param mapState The state of the map in the MapState format
+   * @param mapState The state of the map in simple JSON
    */
-   public resumeMapState(mapState: MapState) {
+   public resumeMapState(mapState: any) {
      this.mapsManagerService.getMap().getCesiumViewer().scene.mode = mapState.scene.mode;
      const camera: Camera = this.mapsManagerService.getMap().getCameraService().getCamera();
-     camera.up = mapState.camera.up.clone();
-     camera.position = mapState.camera.position.clone();
-     camera.direction = mapState.camera.direction.clone();
+     // Convert simple JSON map state to Cartesian3
+     camera.up = new Cartesian3(mapState.camera.up.x, mapState.camera.up.y, mapState.camera.up.z);
+     camera.position = new Cartesian3(mapState.camera.position.x, mapState.camera.position.y, mapState.camera.position.z);
+     camera.direction = new Cartesian3(mapState.camera.direction.x, mapState.camera.direction.y, mapState.camera.direction.z);
    }
 
   /**

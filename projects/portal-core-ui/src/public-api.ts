@@ -50,6 +50,7 @@ export { GetCapsService } from './lib/service/wms/get-caps.service';
 
 export { RickshawService } from './lib/widget/chart/rickshaw/rickshaw.service';
 export { SelectMapBoundingComponent } from './lib/widget/selectmap.bounding';
+export { MapState } from './lib/model/data/mapstate.model';
 /*
 export {   } from './lib/model/data/bbox.model';
 export {   } from './lib/model/data/cswrecord.model';

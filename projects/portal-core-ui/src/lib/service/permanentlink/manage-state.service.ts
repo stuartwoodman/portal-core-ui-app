@@ -6,7 +6,7 @@ import { map, catchError } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
 import { CsMapObject } from '../cesium-map/cs-map-object';
-import { MapState } from '../../model/data/mapstate';
+import { MapState } from '../../model/data/mapstate.model';
 
 /**
  * A service class to assist maintaining the current state of the portal including
