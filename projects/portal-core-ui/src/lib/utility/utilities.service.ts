@@ -442,8 +442,8 @@ export class UtilitiesService {
         }
       }
 
-      // Set up time extents, if supplied
-      if (layer.capabilityRecords && layer.capabilityRecords.length > 0) {
+      // Set up time extents, if supplied and not already present
+      if (!param.time && layer.capabilityRecords && layer.capabilityRecords.length > 0) {
           const capRec = layer.capabilityRecords[0];
           if (capRec.isWMS && capRec.layers.length > 0) {
               for (layer of capRec.layers) {
