@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, Inject} from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {SimpleXMLService} from '../../utility/simplexml.service';
 import {Observable} from 'rxjs';
@@ -9,7 +9,7 @@ import {map} from 'rxjs/operators';
 })
 export class GetCapsService {
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, @Inject('env') private env) { }
 
   /**
    * Namespace resolver for version 1.3 'GetCapabilities' document
@@ -245,7 +245,7 @@ export class GetCapsService {
     if (serviceUrl.indexOf("http") != 0) {
       serviceUrl = "http://" + serviceUrl;
     }
-    return this.http.get(serviceUrl, {params: httpParams, responseType: "text"}).pipe(map(
+    return this.http.get(this.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=' + serviceUrl, {params: httpParams, responseType: "text"}).pipe(map(
       (response) => {
           const rootNode = SimpleXMLService.parseStringToDOM(response);
           const numLayers = this.getNumLayers(rootNode, this.nsResolver);
