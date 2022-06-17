@@ -13,13 +13,13 @@ import { CsMapService } from './service/cesium-map/cs-map.service';
 import { CsClipboardService } from './service/cesium-map/cs-clipboard.service';
 import { RenderStatusService } from './service/cesium-map/renderstatus/render-status.service';
 import { ManageStateService } from './service/permanentlink/manage-state.service';
-import { OlManageStateService } from './service/permanentlink/ol-manage-state.service';
 import { DownloadWfsService } from './service/wfs/download/download-wfs.service';
 import { OlWMSService } from './service/wms/ol-wms.service';
 import { CsWMSService } from './service/wms/cs-wms.service';
 import { OlWFSService } from './service/wfs/ol-wfs.service';
 import { CsWFSService } from './service/wfs/cs-wfs.service';
 import { CsIrisService } from './service/kml/cs-iris.service';
+import { DownloadIrisService } from './service/kml/download-iris.service';
 import { GMLParserService } from './utility/gmlparser.service';
 import { LayerStatusService } from './utility/layerstatus.service';
 import { LegendService } from './service/wms/legend.service';
@@ -63,6 +63,7 @@ import { PolygonsEditorService } from '@auscope/angular-cesium';
     CsWWWService,
     DownloadWfsService,
     DownloadWcsService,
+    DownloadIrisService,
     GMLParserService,
     RenderStatusService,
     FilterPanelService,
@@ -72,7 +73,6 @@ import { PolygonsEditorService } from '@auscope/angular-cesium';
     QueryWMSService,
     QueryWFSService,
     ManageStateService,
-    OlManageStateService,
     OlCSWService,
     LayerStatusService,
     CsCSWService,

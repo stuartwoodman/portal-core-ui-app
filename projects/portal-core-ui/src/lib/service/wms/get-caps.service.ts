@@ -209,6 +209,20 @@ export class GetCapsService {
     return null;
   }
 
+    /**
+   * Function used to detect Access Constraints
+   * 
+   * @param doc Document interface of GetCapabilities response
+   * @param nsResolver namespace resolver function
+   * @returns AccessConstraints string
+   */
+     private findAccessConstraints(doc: Document, nsResolver: (prefix: string) => string): string[] {
+      const mapFormats = "string(/xsi:WMS_Capabilities/xsi:Service/xsi:AccessConstraints)";
+      const accessConstraints = [];
+      accessConstraints.push( SimpleXMLService.evaluateXPathString(doc, doc, mapFormats, nsResolver));
+      return accessConstraints;  
+    }
+
   /**
    * Retrieve the csw record located at the WMS serviceurl endpoint.
    * Currently only supports v1.3.0
@@ -244,6 +258,7 @@ export class GetCapsService {
           const mapFormats = this.getMapFormats(rootNode, rootNode, this.nsResolver);
           const layerSRS = this.getLayerSRS(rootNode, rootNode, this.nsResolver);
           const applicationProfile = this.findApplicationProfile(rootNode, this.nsResolver);
+          const accessConstraints = this.findAccessConstraints(rootNode, this.nsResolver);
 
           let retVal = { data: { cswRecords: [], capabilityRecords: [], invalidLayerCount: 0 }, msg: "", success: true};
           
@@ -273,7 +288,6 @@ export class GetCapsService {
               datasetURIs: [],
               constraints: [],
               useLimitConstraints: [],
-              accessConstraints: [],
               childRecords: [],
               date: "",
               minScale: null,
@@ -293,7 +307,9 @@ export class GetCapsService {
                 layers: [],
                 layerSRS: layerSRS,
                 mapFormats: mapFormats,
-                applicationProfile: applicationProfile
+                applicationProfile: applicationProfile,
+                accessConstraints:accessConstraints
+
               }];
             }
 
@@ -309,7 +325,7 @@ export class GetCapsService {
             });
 
           } // end 'layerNum' loop
-
+          
           return retVal;                  
     }));
   }

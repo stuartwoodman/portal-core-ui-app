@@ -1,6 +1,6 @@
 {
   "name": "@auscope/portal-core-ui",
-  "version": "1.0.25",
+  "version": "1.0.32",
   "license": "(LGPL OR Apache-2.0)",
   "repository": {
     "type": "git",
@@ -8,16 +8,16 @@
   },
   "homepage": "https://github.com/AuScope/portal-core-ui-app",
   "peerDependencies": {
-    "@angular/animations": "^13.3.2",
-    "@angular/common": "^13.3.2",
-    "@angular/compiler": "^13.3.2",
-    "@angular/core": "^13.3.2",
-    "@angular/forms": "^13.3.2",
-    "@angular/platform-browser": "^13.3.2",
-    "@angular/platform-browser-dynamic": "^13.3.2",
-    "@angular/router": "^13.3.2",
-    "@auscope/angular-cesium": "^1.0.0",
-    "cesium": "^1.75.0",
+    "@angular/animations": "~13.3.2",
+    "@angular/common": "~13.3.2",
+    "@angular/compiler": "~13.3.2",
+    "@angular/core": "~13.3.2",
+    "@angular/forms": "~13.3.2",
+    "@angular/platform-browser": "~13.3.2",
+    "@angular/platform-browser-dynamic": "~13.3.2",
+    "@angular/router": "~13.3.2",
+    "@auscope/angular-cesium": "^13.0.0",
+    "cesium": "~1.75.0",
     "rxjs": "~6.5.5",
     "zone.js": "~0.11.5",
     "@thi.ng/hiccup": "^3.5.8",
@@ -29,7 +29,8 @@
     "ol": "6.4.3",
     "ol-geocoder": "^4.0.0",
     "when": "~3.7.8",
-    "ngx-device-detector": "~3.0.0"
+    "ngx-device-detector": "~3.0.0",
+    "uuid": "^8.3.2"
   },
   "dependencies": {
     "tslib": "^2.3.1"

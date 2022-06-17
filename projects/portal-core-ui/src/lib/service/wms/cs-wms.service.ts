@@ -568,9 +568,7 @@ export class CsWMSService {
      * @param postForm a FormData object to add key,val pairs to
      */
     private paramSubst(key: string, val: string, postForm: FormData) {
-      if (key === 'layers') {
-        postForm.append('layer', val);
-      } else if (key === 'sld_body') {
+      if (key === 'sld_body') {
         postForm.append('sldBody', val);
       } else if (key !== 'usepost') {
         postForm.append(key, val);

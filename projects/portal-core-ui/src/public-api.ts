@@ -22,7 +22,6 @@ export { OlMapService } from './lib/service/openlayermap/ol-map.service';
 export { CsMapObject } from './lib/service/cesium-map/cs-map-object';
 export { CsMapService } from './lib/service/cesium-map/cs-map.service';
 export { ManageStateService } from './lib/service/permanentlink/manage-state.service';
-export { OlManageStateService } from './lib/service/permanentlink/ol-manage-state.service';
 export { MinTenemStyleService } from './lib/service/style/wms/min-tenem-style.service';
 export { NotificationService } from './lib/service/toppanel/notification.service';
 export { DownloadWcsService } from './lib/service/wcs/download/download-wcs.service';
@@ -35,6 +34,7 @@ export { CsWMSService } from './lib/service/wms/cs-wms.service';
 export { QueryWMSService } from './lib/service/wms/query-wms.service';
 export { CsWWWService } from './lib/service/www/cs-www.service';
 export { CsIrisService } from './lib/service/kml/cs-iris.service';
+export { DownloadIrisService } from './lib/service/kml/download-iris.service';
 
 export { ImgLoadingDirective } from './lib/uiutilities/imgloading.directive';
 export { KeysPipe, TrustResourceHtmlPipe, TrustResourceUrlPipe, QuerierFeatureSearchPipe } from './lib/uiutilities/pipes';
@@ -51,6 +51,7 @@ export { GetCapsService } from './lib/service/wms/get-caps.service';
 
 export { RickshawService } from './lib/widget/chart/rickshaw/rickshaw.service';
 export { SelectMapBoundingComponent } from './lib/widget/selectmap.bounding';
+export { MapState } from './lib/model/data/mapstate.model';
 /*
 export {   } from './lib/model/data/bbox.model';
 export {   } from './lib/model/data/cswrecord.model';

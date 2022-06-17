@@ -1,7 +1,7 @@
 
-import {throwError as observableThrowError,  Observable } from 'rxjs';
+import { throwError as observableThrowError, Observable } from 'rxjs';
 
-import {catchError, map} from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 import { CSWRecordModel } from '../../../lib/model/data/cswrecord.model';
 import { Injectable, Inject } from '@angular/core';
@@ -25,49 +25,130 @@ export class CsIrisService {
 
   public irisLayers: {
     layerId: string;
-    maxDist:number;
-    color: any; }[]=[
-     {layerId:'seismology-in-schools-site', maxDist:8000000.0, color:Cesium.Color.PURPLE } ,
-     {layerId:'seismology-skippy', maxDist:8000000.0, color:Cesium.Color.AQUAMARINE} ,
-     {layerId:'seismology-kimba97', maxDist:3000000.0, color:Cesium.Color.BROWN} ,
-     {layerId:'seismology-kimba98', maxDist:3000000.0, color:Cesium.Color.CADETBLUE} ,
-     {layerId:'seismology-wacraton', maxDist:3000000.0, color:Cesium.Color.CHARTREUSE} ,
-     {layerId:'seismology-seal', maxDist:1500000.0, color:Cesium.Color.CORAL} ,
-     {layerId:'seismology-seal2', maxDist:1500000.0, color:Cesium.Color.CORNFLOWERBLUE} ,
-     {layerId:'seismology-seal3', maxDist:1500000.0, color:Cesium.Color.DARKCYAN} ,
-     {layerId:'seismology-capral', maxDist:3000000.0, color:Cesium.Color.DARKMAGENTA} ,
-     {layerId:'seismology-soc', maxDist:3000000.0, color:Cesium.Color.DARKORANGE} ,
-     {layerId:'seismology-gawler', maxDist:1500000.0, color:Cesium.Color.DARKORCHID } ,
-     {layerId:'seismology-bilby', maxDist:3000000.0, color:Cesium.Color.THISTLE } ,
-     {layerId:'seismology-curnamona', maxDist:1500000.0, color:Cesium.Color.DARKSALMON } ,
-     {layerId:'seismology-minq', maxDist:3000000.0, color:Cesium.Color.DARKSEAGREEN} ,
-     {layerId:'seismology-eal1', maxDist:1500000.0, color:Cesium.Color.DEEPPINK} ,
-     {layerId:'seismology-eal2', maxDist:1500000.0, color: Cesium.Color.DIMGRAY} ,
-     {layerId:'seismology-eal3', maxDist:1500000.0, color:Cesium.Color.GOLDENROD} ,
-     {layerId:'seismology-bass', maxDist:3000000.0, color:Cesium.Color.GREENYELLOW} ,
-     {layerId:'seismology-sqeal', maxDist:1500000.0, color:Cesium.Color.HOTPINK} ,
-     {layerId:'seismology-aq3', maxDist:1500000.0, color: Cesium.Color.LIGHTBLUE} ,
-     {layerId:'seismology-aqt', maxDist:1500000.0, color:Cesium.Color.BURLYWOOD } ,
-     {layerId:'seismology-banda', maxDist:3000000.0, color:Cesium.Color.MEDIUMPURPLE} ,
-     {layerId:'seismology-asr', maxDist:8000000.0, color:Cesium.Color.BLUE } ,
-     {layerId:'seismology-marla-line', maxDist:3000000.0, color:Cesium.Color.ORCHID} ,];
-  
+    maxDist: number;
+    color: any;
+  }[] = [
+      { layerId: 'seismology-in-schools-site', maxDist: 8000000.0, color: Cesium.Color.PURPLE },
+      { layerId: 'seismology-skippy', maxDist: 8000000.0, color: Cesium.Color.AQUAMARINE },
+      { layerId: 'seismology-kimba97', maxDist: 3000000.0, color: Cesium.Color.BROWN },
+      { layerId: 'seismology-kimba98', maxDist: 3000000.0, color: Cesium.Color.CADETBLUE },
+      { layerId: 'seismology-wacraton', maxDist: 3000000.0, color: Cesium.Color.CHARTREUSE },
+      { layerId: 'seismology-seal', maxDist: 1500000.0, color: Cesium.Color.CORAL },
+      { layerId: 'seismology-seal2', maxDist: 1500000.0, color: Cesium.Color.CORNFLOWERBLUE },
+      { layerId: 'seismology-seal3', maxDist: 1500000.0, color: Cesium.Color.DARKCYAN },
+      { layerId: 'seismology-capral', maxDist: 3000000.0, color: Cesium.Color.DARKMAGENTA },
+      { layerId: 'seismology-soc', maxDist: 3000000.0, color: Cesium.Color.DARKORANGE },
+      { layerId: 'seismology-gawler', maxDist: 1500000.0, color: Cesium.Color.DARKORCHID },
+      { layerId: 'seismology-bilby', maxDist: 3000000.0, color: Cesium.Color.THISTLE },
+      { layerId: 'seismology-curnamona', maxDist: 1500000.0, color: Cesium.Color.DARKSALMON },
+      { layerId: 'seismology-minq', maxDist: 3000000.0, color: Cesium.Color.DARKSEAGREEN },
+      { layerId: 'seismology-eal1', maxDist: 1500000.0, color: Cesium.Color.DEEPPINK },
+      { layerId: 'seismology-eal2', maxDist: 1500000.0, color: Cesium.Color.DIMGRAY },
+      { layerId: 'seismology-eal3', maxDist: 1500000.0, color: Cesium.Color.GOLDENROD },
+      { layerId: 'seismology-bass', maxDist: 3000000.0, color: Cesium.Color.GREENYELLOW },
+      { layerId: 'seismology-sqeal', maxDist: 1500000.0, color: Cesium.Color.HOTPINK },
+      { layerId: 'seismology-aq3', maxDist: 1500000.0, color: Cesium.Color.LIGHTBLUE },
+      { layerId: 'seismology-aqt', maxDist: 1500000.0, color: Cesium.Color.BURLYWOOD },
+      { layerId: 'seismology-banda', maxDist: 3000000.0, color: Cesium.Color.MEDIUMPURPLE },
+      { layerId: 'seismology-asr', maxDist: 8000000.0, color: Cesium.Color.BLUE },
+      { layerId: 'seismology-marla-line', maxDist: 3000000.0, color: Cesium.Color.ORCHID },];
+
 
   constructor(private layerHandlerService: LayerHandlerService,
-              private http: HttpClient,
-              private renderStatusService: RenderStatusService,
-              private mapsManagerService: MapsManagerService,
-              @Inject('env') private env) {
+    private http: HttpClient,
+    private renderStatusService: RenderStatusService,
+    private mapsManagerService: MapsManagerService,
+    @Inject('env') private env) {
+  }
+
+  /**
+   * Retrieves station details including the channel information from the IRIS service
+   * 
+   * @param layer the IRIS layer for the getfeature request to be made
+   * @return Observable the observable from the http request
+   */
+  public getIrisStationFeature(layer: LayerModel): Observable<any> {
+    try {
+      const retVal = { data: [], msg: "", success: true };
+      return this.getKMLFeature(layer).pipe(map(
+        (response) => {
+          const parser = new DOMParser();
+          let stationLst = [];
+          let minStartDate = null;
+          let maxStartDate = null;
+          const dom = parser.parseFromString(response, "application/xml");
+          let placemarks = dom.querySelectorAll("Placemark");
+          // for each station
+          placemarks.forEach(placemark => {
+            let channelLst = [];
+            let extendedData = placemark.querySelector("ExtendedData").querySelectorAll("Data");
+            let stationCode: string;
+            let stratDate: string | number | Date;
+            extendedData.forEach(data => {
+              let att = data.getAttribute('name');
+              if (att == 'Code') {
+                stationCode = data.querySelector("value").textContent;
+              }
+              if (att == 'StartDate') {
+                stratDate = data.querySelector("value").textContent;
+              }
+            })
+            channelLst = this.parseChannelInfo(placemark);
+
+            let station = {
+              name: placemark.querySelector("name").textContent,
+              description: placemark.querySelector("description").textContent,
+              code: stationCode,
+              stratDate: stratDate ? new Date(stratDate).toISOString().slice(0, 10) : null,
+              channelLst: channelLst
+            };
+            stationLst.push(station);
+            minStartDate = !minStartDate || minStartDate > stratDate ? station.stratDate : minStartDate;
+            maxStartDate = !maxStartDate || maxStartDate < stratDate ? station.stratDate : maxStartDate;
+          });
+          retVal.data.push({
+            stationLst: stationLst,
+            mintDate: minStartDate,
+            maxDate: maxStartDate
+          });
+          return retVal;
+        }));
+    } catch (e) {
+      console.error("Retrieves stations error:", e);
+      return observableThrowError(e);
+    }
+  }
+
+  /**
+ * Parse to extract channel information
+ * 
+ * @param placemark Element representing the station part of the response
+ * @return List of channels  
+ */
+  private parseChannelInfo(placemark: Element) {
+    let channelLst = [];
+    //extract channel information
+    let channels = placemark.querySelector("Channels")
+    let channelItems=channels?channels.querySelectorAll("Channel"):[];
+    //for each channel
+    channelItems.forEach(channel => {
+      channelLst.push({
+        code: channel.getAttribute('Code'),
+        azimuth: channel.querySelector("Azimuth").textContent,
+        dip: channel.querySelector("Dip").textContent,
+        sampleRate: channel.querySelector("SampleRate").textContent
+      });
+    })
+    return channelLst;
   }
 
   /**
    * Retrieves KML features from the IRIS service via proxy/conversion service
    * 
    * @param layer the IRIS layer for the getfeature request to be made
-   * @param onlineresource the IRIS online resource
    * @return Observable the observable from the http request
    */
-  public getKMLFeature(layer: LayerModel, onlineResource: OnlineResourceModel): Observable<any> {
+  public getKMLFeature(layer: LayerModel): Observable<any> {
 
     const irisResources = this.layerHandlerService.getOnlineResources(layer, ResourceType.IRIS);
     const irisResource = irisResources[0];
@@ -92,7 +173,7 @@ export class CsIrisService {
         (error: HttpResponse<any>) => {
           return observableThrowError(error);
         }
-      ), );
+      ));
     };
   }
 
@@ -122,7 +203,7 @@ export class CsIrisService {
         pixelSize: 8,
         disableDepthTestDistance: Number.POSITIVE_INFINITY,
         distanceDisplayCondition: new Cesium.DistanceDisplayCondition(1.0, 8000000.0),
-        heightReference : Cesium.HeightReference.RELATIVE_TO_GROUND  ,
+        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
         scaleByDistance: new Cesium.NearFarScalar(1.5e2, 0.35, 1.5e7, 0.35),
       });
       // Don't display a billboard
@@ -145,7 +226,7 @@ export class CsIrisService {
       this.renderStatusService.addResource(layer, onlineResource);
 
       // Get KML from the proxy/conversion service
-      this.getKMLFeature(layer, onlineResource).subscribe(response => {
+      this.getKMLFeature(layer).subscribe(response => {
         const parser = new DOMParser();
         const dom = parser.parseFromString(response, "application/xml");
 
@@ -161,9 +242,9 @@ export class CsIrisService {
 
         // Load KML
         let selectedLayer = this.irisLayers.find(l => l.layerId === layer.id);
-        source.load(dom).then(function(dataSource) {
+        source.load(dom).then(function (dataSource) {
           for (const entity of dataSource.entities.values) {
-            entity['color'] = selectedLayer ? selectedLayer.color : Cesium.Color.CRIMSON ;
+            entity['color'] = selectedLayer ? selectedLayer.color : Cesium.Color.CRIMSON;
             entity['maxDist'] = selectedLayer ? selectedLayer.maxDist : 8000000.0;
             // Style each KML point
             stylefn(entity);
@@ -177,9 +258,9 @@ export class CsIrisService {
         // Tell UI that we have completed updating the map
         me.renderStatusService.updateComplete(layer, onlineResource);
       },
-      err => {
-        me.renderStatusService.updateComplete(layer, onlineResource, true);
-      });
+        err => {
+          me.renderStatusService.updateComplete(layer, onlineResource, true);
+        });
     }
   }
 

@@ -1,7 +1,7 @@
 import { OnlineResourceModel } from '../model/data/onlineresource.model';
 import { Bbox } from '../model/data/bbox.model';
 import { Injectable } from '@angular/core';
-import {HttpParams} from '@angular/common/http';
+import { HttpParams } from '@angular/common/http';
 import * as _ from 'lodash';
 import * as $ from 'jquery';
 
@@ -192,7 +192,7 @@ export class UtilitiesService {
      * @returns truncated URL string
      */
     public static rmParamURL(url: string): string {
-        const u = new URL(url)
+        const u = new URL(url);
         return u.origin + u.pathname;
     }
 
@@ -255,12 +255,11 @@ export class UtilitiesService {
     }
 
     /**
-     *
+     *  Public method for encoding
      *  Base64 encode / decode
      *  http://www.webtoolkit.info/
      *
-     **/
-    // public method for encoding
+     */
     public static encode_base64(input: string): string {
         let output = '';
         let chr1, chr2, chr3, enc1, enc2, enc3, enc4;
@@ -443,12 +442,12 @@ export class UtilitiesService {
         }
       }
 
-      // Set up time extents, if supplied
-      if (layer.capabilityRecords && layer.capabilityRecords.length > 0) {
+      // Set up time extents, if supplied and not already present
+      if (!param.time && layer.capabilityRecords && layer.capabilityRecords.length > 0) {
           const capRec = layer.capabilityRecords[0];
           if (capRec.isWMS && capRec.layers.length > 0) {
               for (layer of capRec.layers) {
-                  if (layer.name == onlineResource.name && layer.timeExtent && layer.timeExtent.length > 0) {
+                  if (layer.name === onlineResource.name && layer.timeExtent && layer.timeExtent.length > 0) {
                       // NB: Only take the first value
                       param['time'] = layer.timeExtent[0];
                       break;
@@ -491,50 +490,41 @@ export class UtilitiesService {
     }
 
     /**
-     * Returns true iff (if and only if) this is a GSKY server
-     * @param onlineResource online resource record for service
-     */
-    public static isGSKY(onlineResource: OnlineResourceModel) {
-        return (onlineResource.applicationProfile && 
-            (onlineResource.url.toLowerCase().indexOf('gsky') > -1 || onlineResource.applicationProfile.toLowerCase().indexOf('gsky')) > -1);
-    }
-    
-    /**
      * Returns a polygon filter out of a filter (usually in an SLD body).
      * @param filter The full filter
      */
     public static getPolygonFilter(filter: string) {
-        return filter.slice( filter.indexOf('<ogc:Intersects>') , filter.indexOf('</ogc:Intersects>') + '</ogc:Intersects>'.length);      
+        return filter.slice( filter.indexOf('<ogc:Intersects>') , filter.indexOf('</ogc:Intersects>') + '</ogc:Intersects>'.length);
     }
-    
+
     /**
      * Reproject cesium rectangle into EPSG:4326 bbox object.
      * @param points an array of 2 cartesian corner points forming the drawn rectangle (upper and lower)
      * @return reprojected bbox object
      */
     public static reprojectToWGS84(points: any) {
-        let bbox = new Bbox();
+        const bbox = new Bbox();
         bbox.crs = 'EPSG:4326';
-        var point1 = points[0].getPosition();
-        var point2 = points[1].getPosition();
-        
-        // reproject to WGS84 
-        var reprojectedPoint1 = Cesium.Ellipsoid.WGS84.cartesianToCartographic(point1);
-        var reprojectedPoint2 = Cesium.Ellipsoid.WGS84.cartesianToCartographic(point2);
+        const point1 = points[0].getPosition();
+        const point2 = points[1].getPosition();
+
+        // reproject to WGS84
+        const reprojectedPoint1 = Cesium.Ellipsoid.WGS84.cartesianToCartographic(point1);
+        const reprojectedPoint2 = Cesium.Ellipsoid.WGS84.cartesianToCartographic(point2);
         // convert radians to degrees
         if (reprojectedPoint1.longitude > reprojectedPoint2.longitude) {
-            bbox.eastBoundLongitude = reprojectedPoint1.longitude * 180/Math.PI;
-            bbox.westBoundLongitude = reprojectedPoint2.longitude * 180/Math.PI;
+            bbox.eastBoundLongitude = reprojectedPoint1.longitude * 180 / Math.PI;
+            bbox.westBoundLongitude = reprojectedPoint2.longitude * 180 / Math.PI;
         } else {
-            bbox.eastBoundLongitude = reprojectedPoint2.longitude * 180/Math.PI;
-            bbox.westBoundLongitude = reprojectedPoint1.longitude * 180/Math.PI;
+            bbox.eastBoundLongitude = reprojectedPoint2.longitude * 180 / Math.PI;
+            bbox.westBoundLongitude = reprojectedPoint1.longitude * 180 / Math.PI;
         }
         if (reprojectedPoint1.latitude > reprojectedPoint2.latitude) {
-            bbox.northBoundLatitude = reprojectedPoint1.latitude * 180/Math.PI;
-            bbox.southBoundLatitude = reprojectedPoint2.latitude * 180/Math.PI;
+            bbox.northBoundLatitude = reprojectedPoint1.latitude * 180 / Math.PI;
+            bbox.southBoundLatitude = reprojectedPoint2.latitude * 180 / Math.PI;
         } else {
-            bbox.northBoundLatitude = reprojectedPoint2.latitude * 180/Math.PI;
-            bbox.southBoundLatitude = reprojectedPoint1.latitude * 180/Math.PI;
+            bbox.northBoundLatitude = reprojectedPoint2.latitude * 180 / Math.PI;
+            bbox.southBoundLatitude = reprojectedPoint1.latitude * 180 / Math.PI;
         }
         return bbox;
     }
@@ -545,11 +535,11 @@ export class UtilitiesService {
     public static getBrowserName(): string {
         if ((navigator.userAgent.indexOf('Opera') || navigator.userAgent.indexOf('OPR')) !== -1 ) {
             return 'Opera';
-        }else if (navigator.userAgent.indexOf('Chrome') !== -1 ){
+        } else if (navigator.userAgent.indexOf('Chrome') !== -1 ){
             return 'Chrome';
-        }else if (navigator.userAgent.indexOf('Safari') !== -1){
+        } else if (navigator.userAgent.indexOf('Safari') !== -1){
             return 'Safari';
-        }else if (navigator.userAgent.indexOf('Firefox') !== -1 ) {
+        } else if (navigator.userAgent.indexOf('Firefox') !== -1 ) {
              return 'Firefox';
         } else if (navigator.userAgent.indexOf('MSIE') !== -1 ){
           return 'IE';
@@ -558,23 +548,22 @@ export class UtilitiesService {
         }
     }
 
-
     /**
-     * Convert String to  Int Vector 
+     * Convert String to  Int Vector
      */
-    public static stringToIntVector(strVal:string, seperator:string):number[]{
-        let retVal=[]
+    public static stringToIntVector(strVal: string, seperator: string): number[]{
+        const retVal = [];
         strVal.split(seperator).map(function(item) {
             retVal.push(parseInt(item, 10));
         });
         return retVal;
-    }  
+    }
 
     /**
-     * Convert String to float Vector 
+     * Convert String to float Vector
      */
-    public static stringToFloatVector(strVal:string, seperator:string):number[]{
-        let retVal=[]
+    public static stringToFloatVector(strVal: string, seperator: string): number[]{
+        const retVal = [];
         strVal.split(seperator).map(function(item) {
             retVal.push(parseFloat(item));
         });
@@ -591,15 +580,13 @@ export class UtilitiesService {
      * @Return updated URL.
      */
     public static setUpdateParameter(uri: string, key: string, value: string):string {
-        var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
-        var separator = uri.indexOf('?') !== -1 ? "&" : "?";
+        const re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
+        const separator = uri.indexOf('?') !== -1 ? "&" : "?";
         if (uri.match(re)) {
             return uri.replace(re, '$1' + key + "=" + value + '$2');
         }
         else {
             return uri + separator + key + "=" + value;
         }
-    }    
-}  
-
-
+    }
+}
