@@ -12,6 +12,7 @@ import { Constants, ResourceType } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 import { MinTenemStyleService } from '../style/wms/min-tenem-style.service';
+import { CQLService } from '../cql/cql.service';
 import { MapsManagerService, AcMapComponent } from '@auscope/angular-cesium';
 import { WebMapServiceImageryProvider, ImageryLayer, Resource, Rectangle } from 'cesium';
 import { LayerStatusService } from '../../utility/layerstatus.service';
@@ -103,9 +104,18 @@ export class CsWMSService {
       STYLES: param && param.styles ? param.styles : '',
     };
 
-    // Add in time parameter, but only if required
-    if (param && param.time) {
-      params['time'] = param.time;
+    if (param) {
+      // Add in time parameter, but only if required
+      if (param.time) {
+          params['time'] = param.time;
+      }
+      // Add in cql_filter parameter, if requested
+      if (param.optionalFilters) {
+        const cql_str = CQLService.assembleQuery(param.optionalFilters);
+        if (cql_str.length > 0) {
+          params['cql_filter'] = cql_str;
+        }
+      }
     }
 
     if (sld_body) {
@@ -150,10 +160,19 @@ export class CsWMSService {
       HEIGHT: Constants.TILE_SIZE
     };
 
-    // Add in time parameter, but only if required
-    if (param && param.time) {
-      params['time'] = param.time;
-    }
+    if (param) {
+      // Add in time parameter, but only if required
+      if (param.time) {
+        params['time'] = param.time;
+      }
+      // Add in cql_filter parameter, if requested
+      if (param.optionalFilters) {
+        const cql_str = CQLService.assembleQuery(param.optionalFilters);
+        if (cql_str.length > 0) {
+          params['cql_filter'] = cql_str;
+        }
+      }
+    } 
 
     if (sld_body) {
       /* ArcGIS and POST requests cannot read base64 encoded styles */
