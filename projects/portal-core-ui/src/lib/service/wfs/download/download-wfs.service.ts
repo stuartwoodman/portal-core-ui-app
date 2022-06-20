@@ -18,7 +18,7 @@ declare var gtag: Function;
 @Injectable()
 export class DownloadWfsService {
   public tsgDownloadBS = new BehaviorSubject<string>('0,0');
-  public tsgDownloadStartBS = new BehaviorSubject<string>('stop');
+  public tsgDownloadStartBS = new BehaviorSubject<any>({});
 
 
   constructor(private layerHandlerService: LayerHandlerService, private http: HttpClient, @Inject('env') private env) {
@@ -104,7 +104,7 @@ export class DownloadWfsService {
    * @param bbox the bounding box of the area to download
    * @param polygonFilter WFS filter parameter
    */
-  public downloadTsgFileUrls(layer: LayerModel, bbox: Bbox, polygonFilter: String): Observable<any> {
+  public downloadTsgFileUrls(layer: LayerModel, bbox: Bbox, email: string, polygonFilter: string): Observable<any> {
       try {
         const wfsResources = this.layerHandlerService.getWFSResource(layer);
         if (this.env.googleAnalyticsKey && typeof gtag === 'function') {
@@ -119,7 +119,7 @@ export class DownloadWfsService {
   
         let httpParams = new HttpParams();
         httpParams = httpParams.set('outputFormat', 'csv');
-        httpParams = httpParams.set('email', 'Lingbo.Jiang@csiro.au');
+        httpParams = httpParams.set('email', email);
   
         for (let i = 0; i < wfsResources.length; i++) {
           const filterParameters = {
@@ -148,6 +148,20 @@ export class DownloadWfsService {
       }
   
     }
+  public checkTsgDownloadAvailable(): Observable<boolean> {
+    return this.http.get(this.env.portalBaseUrl + 'isTSGDownloadAvailable.do', {
+      responseType: 'json'
+    }).pipe(timeoutWith(360000, observableThrowError(new Error('Request have timeout out after 5 minutes'))),
+      map((response) => { 
+        if (response['success'] === true){
+          return true;
+        } else {
+          return false;
+        }
+    }), catchError((error: HttpResponse<any>) => {
+        return observableThrowError(error);
+    }), )
+  }  
   /**
    * Download a TSG file 
    * 
