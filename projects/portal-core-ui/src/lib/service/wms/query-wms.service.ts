@@ -1,4 +1,3 @@
-
 import {throwError as observableThrowError, Observable} from 'rxjs';
 
 import {catchError, map} from 'rxjs/operators';
@@ -38,15 +37,14 @@ export class QueryWMSService {
   }
 
   /**
-  * A get feature info request via proxy
-  * @param onlineresource the WMS online resource
-  * @param lon [lat,long] map coordinates of clicked on point  
-  * @param lat [lat,long] map coordinates of clicked on point  
-  * @param extraFilter 
-  * @param layerId layerId
-  * @return Observable the observable from the http request
+   * A get feature info request via proxy
+   * @param onlineresource the WMS online resource
+   * @param lon [lat,long] map coordinates of clicked on point
+   * @param lat [lat,long] map coordinates of clicked on point
+   * @param extraFilter 
+   * @param layerId layerId
+   * @return Observable the observable from the http request
    */
-
   public wfsGetFeature(onlineResource: OnlineResourceModel, lon: number, lat: number,
                        extraFilter: string, layerId: string): Observable<any> {
     let formdata = new HttpParams();
@@ -77,67 +75,39 @@ export class QueryWMSService {
       ), );
 
   }
+
   /**
-  * A get feature info request via proxy
-  * @param onlineresource the WMS online resource
-  * @param sldBody style layer descriptor
-  * @param x  pixel coordinates of clicked on point
-  * @param y  pixel coordinates of clicked on point* 
-  * @param lon [lat,long] map coordinates of clicked on point  
-  * @param lat [lat,long] map coordinates of clicked on point  
-  * @param width tile width
-  * @param height tile height
-  * @param bbox tile bbox
-  * @return Observable the observable from the http request
+   * A get feature info request via proxy
+   * @param onlineresource the WMS online resource
+   * @param sldBody style layer descriptor
+   * @param infoFormat response format type e.g. 'text/xml', 'application/json'
+   * @postMethod true if POST to be used, false for GET
+   * @param x  pixel coordinates of clicked on point
+   * @param y  pixel coordinates of clicked on point*
+   * @param lon [lat,long] map coordinates of clicked on point
+   * @param lat [lat,long] map coordinates of clicked on point
+   * @param width tile width
+   * @param height tile height
+   * @param bbox tile bbox
+   * @return Observable the observable from the http request
    */
-
-  public getFeatureInfo(onlineResource: OnlineResourceModel, sldBody: string, lon: number, lat: number,
-                        x: number, y: number, width: number, height: number, bbox: number[]): Observable<any> {
-    let formdata = new HttpParams();
-    formdata = formdata.append('serviceUrl', UtilitiesService.rmParamURL(onlineResource.url));
-    formdata = formdata.append('lng', lon.toString());
-    formdata = formdata.append('lat', lat.toString());
-    formdata = formdata.append('QUERY_LAYERS', onlineResource.name);
-    formdata = formdata.append('feature_count', '10');
-    formdata = formdata.append('x', x.toString());
-    formdata = formdata.append('y', y.toString());
-    formdata = formdata.append('WIDTH', width.toString());
-    formdata = formdata.append('HEIGHT', height.toString());
-    formdata = formdata.append('BBOX', bbox.join(','));
-
-    formdata = formdata.append('version', onlineResource.version);
-
-    if (sldBody) {
-      formdata = formdata.append('SLD_BODY', sldBody);
-      formdata = formdata.append('postMethod', 'true');
-    } else {
-      formdata = formdata.append('SLD_BODY', '');
-    }
-
-    if (onlineResource.name.indexOf('ProvinceFullExtent') >= 0) {
-      formdata = formdata.append('INFO_FORMAT', 'application/vnd.ogc.gml');
-    } else {
-      formdata = formdata.append('INFO_FORMAT', 'application/vnd.ogc.gml/3.1.1');
-    }
-
-    if (UtilitiesService.isArcGIS(onlineResource)) {
-      formdata = formdata.set('INFO_FORMAT', 'text/xml');
-      formdata = formdata.set('SLD_BODY', '');
-      formdata = formdata.set('postMethod', 'false');
-    }
-
-    // GSKY services always return JSON responses
-    if (UtilitiesService.isGSKY(onlineResource)) {
-      formdata = formdata.set('INFO_FORMAT', 'application/json');
-    }
-
-    if (onlineResource.description.indexOf('EMAG2 - Total Magnetic Intensity') >= 0) {
-      formdata = formdata.set('INFO_FORMAT', 'text/xml');
-    }
-
-    if (onlineResource.description.indexOf('Onshore Seismic Surveys') >= 0) {
-      formdata = formdata.set('INFO_FORMAT', 'text/xml');
-    }
+  public getFeatureInfo(onlineResource: OnlineResourceModel, sldBody: string, infoFormat: string, postMethod: boolean,
+                        lon: number, lat: number, x: number, y: number, width: number, height: number, bbox: number[]): Observable<any> {
+    const formdata = new HttpParams()
+      .set('serviceUrl', UtilitiesService.rmParamURL(onlineResource.url))
+      .set('lng', lon.toString())
+      .set('lat', lat.toString())
+      .set('QUERY_LAYERS', onlineResource.name)
+      .set('feature_count', '10')
+      .set('x', x.toString())
+      .set('y', y.toString())
+      .set('WIDTH', width.toString())
+      .set('HEIGHT', height.toString())
+      .set('BBOX', bbox.join(','))
+      .set('version', onlineResource.version)
+      .set('SLD_BODY', sldBody)
+      .set('INFO_FORMAT', infoFormat)
+      .set('postMethod', String(postMethod));
 
     return this.http.post(this.env.portalBaseUrl + 'wmsMarkerPopup.do', formdata.toString(), {
       headers: new HttpHeaders()
@@ -150,8 +120,6 @@ export class QueryWMSService {
           return observableThrowError(error);
         }
       ), );
-
-
   }
 
 }
