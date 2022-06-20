@@ -60,7 +60,7 @@ export class DownloadWfsService {
 
       let httpParams = new HttpParams();
       httpParams = httpParams.set('outputFormat', 'csv');
-      httpParams = httpParams.set("serviceUrl", wfsResources[0].url)
+      httpParams = httpParams.set("serviceUrl", encodeURI(wfsResources[0].url))
                               .set("typeName", wfsResources[0].name)
                               .set("maxFeatures", 10000)
                               .set("outputFormat", 'json')

@@ -238,10 +238,10 @@
   "resolved" "https://registry.npmjs.org/@assemblyscript/loader/-/loader-0.10.1.tgz"
   "version" "0.10.1"
 
-"@auscope/angular-cesium@^1.0.0":
-  "integrity" "sha512-QqnAs96US4RPEDCIvkJX0QZ533vZnECVuIYHivUkIJ5+YPXi2Hg+rxpoiMpioVa2LmGDGjTVp1xwYvhCpDOpkA=="
-  "resolved" "https://registry.npmjs.org/@auscope/angular-cesium/-/angular-cesium-1.0.0.tgz"
-  "version" "1.0.0"
+"@auscope/angular-cesium@^13.0.0":
+  "integrity" "sha512-v5r6e5pJKWJN7tcYP5vn1nc/lswWZyI0lIEHojdcNd0NMZEFSrnYz97sfzc0KCWg3Vk8jiYofOVlDCw9rkMPqw=="
+  "resolved" "https://registry.npmjs.org/@auscope/angular-cesium/-/angular-cesium-13.0.0.tgz"
+  "version" "13.0.0"
   dependencies:
     "@auscope/angular2parse" "^2.0.2"
     "@types/geodesy" "^1.1.2"
