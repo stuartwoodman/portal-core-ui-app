@@ -197,7 +197,7 @@ export class CsWMSService {
    */
   private getSldBody(
     sldUrl: string,
-    usePost: Boolean,
+    usePost: boolean,
     onlineResource: OnlineResourceModel,
     param?: any
   ): Observable<any> {
@@ -384,6 +384,31 @@ export class CsWMSService {
   }
 
   /**
+   * Reverse any SLD_BODY coordinates (i.e. lat,lng becomes lng,lat) for the GetFeatureInfo request if present
+   * @param sldBody the SLD_BODY whose coordinates (if present) will be reversed
+   * @returns the new SLD_BODY with reversed coordinates
+   */
+  private reverseSldBodyPolygonFilterCoordinates(sldBody: string) {
+    let newSldBody = sldBody;
+    const coordsOpenTag = '<gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">';
+    const coordsOpenTagIndex = sldBody.indexOf(coordsOpenTag);
+    if (coordsOpenTagIndex !== -1) {
+      const coordsCloseTag = '</gml:coordinates>';
+      const coords = sldBody.substring(sldBody.indexOf(coordsOpenTag) + coordsOpenTag.length, sldBody.indexOf(coordsCloseTag));
+      const coordsArray = coords.split(' ');
+      const newCoordsArray = [];
+      for (const c of coordsArray) {
+        const newCoord = c.substring(c.indexOf(',') + 1, c.length) + ',' + c.substring(0, c.indexOf(','));
+        newCoordsArray.push(newCoord);
+      }
+      while (newSldBody.indexOf(coords) >= 0) {
+        newSldBody = newSldBody.replace(coords, newCoordsArray.join(' '));
+      }
+    }
+    return newSldBody;
+  }
+
+  /**
    * Add a WMS layer to the map
    * @method addLayer
    * @param layer the WMS layer to add to the map.
@@ -439,6 +464,11 @@ export class CsWMSService {
           // Perform add layer request
           layer.csLayers.push(this.addCesiumLayer(layer, wmsOnlineResource, params, longResp, lonlatextent));
           layer.sldBody = response;
+
+          // For 1.3.0 GetFeatureInfo requests need lat,lng swapped to lng,lat if polygon filter present
+          if (wmsOnlineResource.version === '1.3.0' && collatedParam.optionalFilters.find(f => f.type === 'OPTIONAL.POLYGONBBOX')) {
+            layer.sldBody130 = this.reverseSldBodyPolygonFilterCoordinates(response);
+          }
         }));
     }
   }
