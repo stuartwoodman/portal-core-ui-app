@@ -148,16 +148,12 @@ export class DownloadWfsService {
       }
   
     }
-  public checkTsgDownloadAvailable(): Observable<boolean> {
+  public checkTsgDownloadAvailable(): Observable<any> {
     return this.http.get(this.env.portalBaseUrl + 'isTSGDownloadAvailable.do', {
       responseType: 'json'
     }).pipe(timeoutWith(360000, observableThrowError(new Error('Request have timeout out after 5 minutes'))),
       map((response) => { 
-        if (response['success'] === true){
-          return true;
-        } else {
-          return false;
-        }
+        return response;
     }), catchError((error: HttpResponse<any>) => {
         return observableThrowError(error);
     }), )
