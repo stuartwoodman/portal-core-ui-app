@@ -137,7 +137,7 @@ export class DownloadWfsService {
         return this.http.post(this.env.portalBaseUrl + 'downloadTsgFiles.do', httpParams.toString(), {
           headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'), 
           responseType: 'text'
-        }).pipe(timeoutWith(360000, observableThrowError(new Error('Request have timeout out after 5 minutes'))),
+        }).pipe(timeoutWith(360000, observableThrowError(new Error('Request have timeout out after 6 minutes'))),
           map((response) => { // download file
             return response;
       }), catchError((error: HttpResponse<any>) => {
@@ -151,7 +151,7 @@ export class DownloadWfsService {
   public checkTsgDownloadAvailable(): Observable<any> {
     return this.http.get(this.env.portalBaseUrl + 'isTSGDownloadAvailable.do', {
       responseType: 'json'
-    }).pipe(timeoutWith(360000, observableThrowError(new Error('Request have timeout out after 5 minutes'))),
+    }).pipe(timeoutWith(360000, observableThrowError(new Error('Request have timeout out after 6 minutes'))),
       map((response) => { 
         return response;
     }), catchError((error: HttpResponse<any>) => {
@@ -166,7 +166,7 @@ export class DownloadWfsService {
   public downloadTsgFile(url: string): Observable<any> {
     //https://nvcldb.blob.core.windows.net/nvcldb/GBD021_chips.zip
     //https://nvclanalyticscache.z8.web.core.windows.net/Qld/Mirrica1.zip'
-    return this.http.get( url, { responseType: 'blob'}).pipe(timeoutWith(360000, observableThrowError(new Error('Request have timeout out after 5 minutes'))),
+    return this.http.get( url, { responseType: 'blob'}).pipe(timeoutWith(6000000, observableThrowError(new Error('Request have timeout out after 100 minutes'))),
       map((response) => { // download file
       return response;
     }), catchError((error: HttpResponse<any>) => {
@@ -215,7 +215,7 @@ export class DownloadWfsService {
       return this.http.post(this.env.portalBaseUrl + 'downloadGMLAsZip.do', httpParams.toString(), {
         headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'), 
         responseType: 'blob'
-      }).pipe(timeoutWith(360000, observableThrowError(new Error('Request have timeout out after 5 minutes'))),
+      }).pipe(timeoutWith(360000, observableThrowError(new Error('Request have timeout out after 6 minutes'))),
         map((response) => { // download file
           return response;
 	  }), catchError((error: HttpResponse<any>) => {
