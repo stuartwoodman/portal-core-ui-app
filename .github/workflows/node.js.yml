@@ -19,7 +19,7 @@ jobs:
           node-version: '16.x'
       - run: npm install 
       - run: npm link @angular/cli
-      - run: ng build portal-core-ui --prod
+      - run: ng build portal-core-ui --configuration production
       - uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}

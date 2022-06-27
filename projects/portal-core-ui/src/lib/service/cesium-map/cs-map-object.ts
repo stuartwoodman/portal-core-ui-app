@@ -230,6 +230,7 @@ export class CsMapObject {
         polygonStringBS.next(coordString);
         this.polygonEditable$.disable();
         this.isDrawingPolygonBS.next(false);
+        this.ignoreMapClick = false;
        }
     });
     return polygonStringBS;

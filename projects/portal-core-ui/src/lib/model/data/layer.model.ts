@@ -29,7 +29,8 @@ export class LayerModel {
   stackdriverFailingHosts: string[];
   ogcFilter: String;
   wfsUrls: String[];
-  sldBody: string;
+  sldBody: string;      // SLD_BODY for 1.1.1 GetMap/GetFeatureInfo requests
+  sldBody130?: string;  // SLD_BODY FOR 1.3.0 GetMap/GetFeatureInfo requests
   clickCSWRecordsIndex: number[];
   clickPixel: any;
   clickCoord: any;
