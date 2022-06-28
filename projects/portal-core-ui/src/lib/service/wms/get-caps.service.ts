@@ -245,7 +245,18 @@ export class GetCapsService {
     if (serviceUrl.indexOf("http") != 0) {
       serviceUrl = "http://" + serviceUrl;
     }
-    return this.http.get(this.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=' + serviceUrl, {params: httpParams, responseType: "text"}).pipe(map(
+    // get the urls that need proxy
+    let urls = this.env.urlNeedProxy
+    // find the index of \ in url 
+    let index = serviceUrl.indexOf("\/");
+    for (let i=0; i<2; i++) {
+      // find the third \ in url
+      index = serviceUrl.indexOf("\/", index+1);
+    }
+    // cut the url from the third \ so we can compare it.
+    let tempUrl = serviceUrl.substring(0, index)
+    serviceUrl = (urls.indexOf(tempUrl) !== -1) ? this.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=' + serviceUrl : serviceUrl
+    return this.http.get(serviceUrl, {params: httpParams, responseType: "text"}).pipe(map(
       (response) => {
           const rootNode = SimpleXMLService.parseStringToDOM(response);
           const numLayers = this.getNumLayers(rootNode, this.nsResolver);
