@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, Inject} from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {SimpleXMLService} from '../../utility/simplexml.service';
 import {Observable} from 'rxjs';
@@ -9,7 +9,7 @@ import {map} from 'rxjs/operators';
 })
 export class GetCapsService {
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, @Inject('env') private env) { }
 
   /**
    * Namespace resolver for version 1.3 'GetCapabilities' document
@@ -245,6 +245,17 @@ export class GetCapsService {
     if (serviceUrl.indexOf("http") != 0) {
       serviceUrl = "http://" + serviceUrl;
     }
+    // get the urls that need proxy
+    let urls = this.env.urlNeedProxy
+    // find the index of \ in url 
+    let index = serviceUrl.indexOf("\/");
+    for (let i=0; i<2; i++) {
+      // find the third \ in url
+      index = serviceUrl.indexOf("\/", index+1);
+    }
+    // cut the url from the third \ so we can compare it.
+    let tempUrl = serviceUrl.substring(0, index)
+    serviceUrl = (urls.indexOf(tempUrl) !== -1) ? this.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=' + serviceUrl : serviceUrl
     return this.http.get(serviceUrl, {params: httpParams, responseType: "text"}).pipe(map(
       (response) => {
           const rootNode = SimpleXMLService.parseStringToDOM(response);
