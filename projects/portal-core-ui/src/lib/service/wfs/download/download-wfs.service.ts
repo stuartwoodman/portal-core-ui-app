@@ -97,7 +97,15 @@ export class DownloadWfsService {
       return observableThrowError(e);
     }
   }
-    /**
+
+  /**
+   * Used to reset the TSG download counters
+   */
+  public resetTSGDownloads() {
+    this.tsgDownloadBS = new BehaviorSubject<string>('0,0');
+  }
+
+  /**
    * Download the TsgFileUrls from qurey result of a bbox or polygon filter
    * 
    * @param layer the layer to download
