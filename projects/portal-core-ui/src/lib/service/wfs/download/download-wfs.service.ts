@@ -190,7 +190,7 @@ export class DownloadWfsService {
    * @param bbox the bounding box of the area to download
    * @param polygonFilter WFS filter parameter
    */
-  public downloadCSV(layer: LayerModel, bbox: Bbox, polygonFilter: String): Observable<any> {
+  public downloadCSV(layer: LayerModel, bbox: Bbox, polygonFilter: String, bZip: boolean): Observable<any> {
 
     try {
       const wfsResources = this.layerHandlerService.getWFSResource(layer);
@@ -219,11 +219,19 @@ export class DownloadWfsService {
         const serviceUrl = this.env.portalBaseUrl + downloadUrl + '?';
         httpParams = httpParams.append('serviceUrls', serviceUrl + $.param(filterParameters));
       }
-
-      return this.http.post(this.env.portalBaseUrl + 'downloadGMLAsZip.do', httpParams.toString(), {
-        headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'), 
-        responseType: 'blob'
-      }).pipe(timeoutWith(360000, observableThrowError(new Error('Request have timeout out after 6 minutes'))),
+      let downloadObserver; 
+      if (bZip) {
+        downloadObserver = this.http.post(this.env.portalBaseUrl + 'downloadGMLAsZip.do', httpParams.toString(), {
+          headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'), 
+          responseType: 'blob'
+        });
+      } else {
+        downloadObserver = this.http.post(this.env.portalBaseUrl + 'downloadNvclCSV.do', httpParams.toString(), {
+          headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'), 
+          responseType: 'text'
+        });
+      }
+      return downloadObserver.pipe(timeoutWith(360000, observableThrowError(new Error('Request have timeout out after 6 minutes'))),
         map((response) => { // download file
           return response;
 	  }), catchError((error: HttpResponse<any>) => {
@@ -233,5 +241,5 @@ export class DownloadWfsService {
       return observableThrowError(e);
     }
 
-  }
+  }  
 }
