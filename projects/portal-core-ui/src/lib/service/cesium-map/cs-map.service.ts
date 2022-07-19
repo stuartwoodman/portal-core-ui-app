@@ -18,7 +18,7 @@ import { ResourceType } from '../../utility/constants.service';
 import { CsIrisService } from '../kml/cs-iris.service';
 import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, PickOptions, EventResult } from '@auscope/angular-cesium';
 import { Entity, ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle, BingMapsImageryProvider,
-  ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection,  ImagerySplitDirection } from 'cesium';
+  ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection,  SplitDirection } from 'cesium';
 declare var Cesium: any;
 
 /**
@@ -356,7 +356,7 @@ export class CsMapService {
         itemLayer.hidden = false;
         itemLayer.layerMode = 'NA';
         itemLayer.name = cswRecord.name;
-        itemLayer.splitDirection = ImagerySplitDirection.NONE;
+        itemLayer.splitDirection = SplitDirection.NONE;
         try {
             this.addLayer(itemLayer, {});
         } catch (error) {
@@ -620,7 +620,7 @@ export class CsMapService {
    * @param layer the layer to appear in the left, right or both split panes
    * @param splitDirection the direction the layer is to appear in (ImageryLayerSplitDirection.[LEFT|RIGHT|NONE])
    */
-  public setLayerSplitDirection(layer: LayerModel, splitDirection: ImagerySplitDirection) {
+  public setLayerSplitDirection(layer: LayerModel, splitDirection: SplitDirection) {
     layer.splitDirection = splitDirection;
     const viewer = this.map.getCesiumViewer();
     for (const cesiumLayer of layer.csLayers) {

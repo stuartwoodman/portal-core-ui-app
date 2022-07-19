@@ -9,7 +9,7 @@ import { HttpClient } from '@angular/common/http';
 import {LayerModel} from '../../model/data/layer.model';
 import {OnlineResourceModel} from '../../model/data/onlineresource.model';
 import {ResourceType} from '../../utility/constants.service';
-import { ImagerySplitDirection } from 'cesium';
+import { SplitDirection } from 'cesium';
 import { GetCapsService } from '../wms/get-caps.service';
 
 
@@ -77,7 +77,7 @@ export class LayerHandlerService {
                 itemLayer.hidden = false;
                 itemLayer.layerMode = 'NA';
                 itemLayer.name = item.name;
-                itemLayer.splitDirection = ImagerySplitDirection.NONE;
+                itemLayer.splitDirection = SplitDirection.NONE;
                 itemLayer.capabilityRecords = response['data']['capabilityRecords'];
                 itemLayers['Results'].push(itemLayer);
             });
