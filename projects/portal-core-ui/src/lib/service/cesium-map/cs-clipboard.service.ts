@@ -11,7 +11,7 @@ import { SimplifyAP,  ISimplifyArrayPoint} from 'simplify-ts';
  */
 @Injectable()
 export class CsClipboardService {
-  private polygonBBox: Polygon;
+  public polygonBBox: Polygon;
   public polygonsBS: BehaviorSubject<Polygon>;
 
   private bShowClipboard: boolean = false;
