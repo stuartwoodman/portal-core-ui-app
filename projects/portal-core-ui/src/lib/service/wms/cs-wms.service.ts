@@ -583,7 +583,7 @@ export class CsWMSService {
                     });
                   }
                 }).then(deferred.resolve);
-              }).otherwise(deferred.reject);
+              }).catch(deferred.reject);
           };
           /* End of 'createImage' overwrite */
 

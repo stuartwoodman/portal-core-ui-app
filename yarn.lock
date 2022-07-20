@@ -2460,10 +2460,10 @@
   "resolved" "https://registry.npmjs.org/caseless/-/caseless-0.12.0.tgz"
   "version" "0.12.0"
 
-"cesium@>= 1.48.0", "cesium@1.75":
-  "integrity" "sha512-CPf1XHkOBXeabRrZD/fDDGf5ajA+13eXv5GciDmKx151umL7WVnd8Pfgdz0dWcCBIMI7arSK7ZaVyQKMLdUZ+Q=="
-  "resolved" "https://registry.npmjs.org/cesium/-/cesium-1.75.0.tgz"
-  "version" "1.75.0"
+"cesium@>= 1.48.0", "cesium@1.93":
+  "integrity" "sha512-y5+KkISn3+0MZxGj96mNaZc5LAfpiOs1fmZCInH2xHwYw43FaaRbvdSHXZs8OwJ5dZIlo/m1biMyOKr354L+UA=="
+  "resolved" "https://registry.npmjs.org/cesium/-/cesium-1.93.0.tgz"
+  "version" "1.93.0"
 
 "chalk@^1.1.1":
   "integrity" "sha1-qBFcVeSnAv5NFQq9OHKCKn4J/Jg="
