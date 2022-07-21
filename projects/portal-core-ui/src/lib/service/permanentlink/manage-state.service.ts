@@ -1,7 +1,7 @@
 import { Injectable, Inject} from '@angular/core';
 import { v4 as uuidv4 } from 'uuid';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { throwError as observableThrowError, of, throwError } from 'rxjs';
+import { throwError as observableThrowError, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
@@ -15,7 +15,7 @@ import { MapState } from '../../model/data/mapstate.model';
  */
 @Injectable(
   { providedIn: 'root' } // singleton service
-) 
+)
 export class ManageStateService {
 
   private state: any = {};
@@ -27,7 +27,7 @@ export class ManageStateService {
 
   /**
    * Is the map currently displaying a permanent link?
-   * 
+   *
    * @returns permanent link mode
    */
   public isPermLinkMode() {
@@ -36,7 +36,7 @@ export class ManageStateService {
 
   /**
    * Set the permanent link mode
-   * 
+   *
    * @param mode permanent link mode
    */
   public setPermLinkMode(mode: boolean) {
@@ -49,15 +49,19 @@ export class ManageStateService {
    * @param filterCollection the associated filtercollection of the layer
    * @param optionalFilters any optional filters that have been selected
    */
-  public addLayer(layerid: string, filterCollection: any, optionalFilters: any) {
-    if (!filterCollection) {
+  public addLayer(layerid: string, currentTime: Date, filterCollection: any, optionalFilters: any, advancedFilter: any) {
+    if (!filterCollection && !advancedFilter) {
       this.state[layerid] = { filterCollection: {}, optionalFilters: [] };
       return;
     }
     this.state[layerid] = {
       filterCollection: filterCollection,
-      optionalFilters: optionalFilters
+      optionalFilters: optionalFilters,
+      advancedFilter: advancedFilter
     };
+    if (currentTime) {
+      this.state[layerid].time = currentTime;
+    }
     this.permLinkMode = false;
   }
 
@@ -109,7 +113,7 @@ export class ManageStateService {
 
   /**
    * Saves current UI state via back end API call
-   * 
+   *
    * @param state UI state, a JSON string
    * @returns Observable of response
    */
