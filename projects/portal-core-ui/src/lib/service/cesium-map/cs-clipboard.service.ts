@@ -212,7 +212,7 @@ export class CsClipboardService {
     newPolygon.srs = 'EPSG:4326';
     newPolygon.geometryType = GeometryType.POLYGON;
     const coordsEPSG4326LatLng = coords4326ListLatLng.join(' ');
-    newPolygon.coordinates = this.getGeometry(coordsEPSG4326LatLng) //need to be 'lat,lng lat,lng...';
+    newPolygon.coordinates = this.getGeometry(coordsEPSG4326LatLng); //need to be 'lat,lng lat,lng...';
     // save the newPolygon to polygonsBS
     this.polygonBBox = newPolygon;
     this.polygonsBS.next(this.polygonBBox);
