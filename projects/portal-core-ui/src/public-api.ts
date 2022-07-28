@@ -17,8 +17,6 @@ export { LayerHandlerService } from './lib/service/cswrecords/layer-handler.serv
 export { FilterPanelService } from './lib/service/filterpanel/filterpanel-service';
 export { RenderStatusService } from './lib/service/cesium-map/renderstatus/render-status.service';
 export { CsClipboardService, Polygon } from './lib/service/cesium-map/cs-clipboard.service';
-export { OlMapObject } from './lib/service/openlayermap/ol-map-object';
-export { OlMapService } from './lib/service/openlayermap/ol-map.service';
 export { CsMapObject } from './lib/service/cesium-map/cs-map-object';
 export { CsMapService } from './lib/service/cesium-map/cs-map.service';
 export { ManageStateService } from './lib/service/permanentlink/manage-state.service';
@@ -50,47 +48,4 @@ export { LayerStatusService } from './lib/utility/layerstatus.service';
 export { GetCapsService } from './lib/service/wms/get-caps.service';
 
 export { RickshawService } from './lib/widget/chart/rickshaw/rickshaw.service';
-export { SelectMapBoundingComponent } from './lib/widget/selectmap.bounding';
 export { MapState } from './lib/model/data/mapstate.model';
-/*
-export {   } from './lib/model/data/bbox.model';
-export {   } from './lib/model/data/cswrecord.model';
-export {   } from './lib/model/data/layer.model';
-export {   } from './lib/model/data/onlineresource.model';
-export {   } from './lib/model/data/primitive.model';
-export {   } from './lib/model/data/querierinfo.model';
-export {   } from './lib/model/data/statusmap.model';
-export {   } from './lib/model/data/temporal-extent.model';
-
-export {   } from './lib/service/cswrecords/layer-handler.service';
-export {   } from './lib/service/filterpanel/filterpanel-service';
-export {   } from './lib/service/openlayermap/renderstatus/render-status.service';
-export {   } from './lib/service/openlayermap/ol-clipboard.service';
-export {   } from './lib/service/openlayermap/ol-map-object';
-export {   } from './lib/service/openlayermap/ol-map.service';
-export {   } from './lib/service/permanentlink/manage-state.service';
-export {   } from './lib/service/style/wms/min-tenem-style.service';
-export {   } from './lib/service/toppanel/notification.service';
-export {   } from './lib/service/wcs/download/download-wcs.service';
-export {   } from './lib/service/wcsw/ol-csw.service';
-export {   } from './lib/service/wfs/download/download-wfs.service';
-export {   } from './lib/service/wfs/ol-wfs.service';
-export {   } from './lib/service/wfs/query-wfs.service';
-export {   } from './lib/service/wms/legend.service';
-export {   } from './lib/service/wms/ol-wms.service';
-export {   } from './lib/service/wms/query-wms.service';
-export {   } from './lib/service/www/ol-www.service';
-
-export {   } from './lib/uiutilities/imgloading.directive';
-export {   } from './lib/uiutilities/pipes';
-export {   } from './lib/uiutilities/portal-core.pipes.module';
-
-export {   } from './lib/utility/constants.service';
-export {   } from './lib/utility/gmlparser.service';
-export {   } from './lib/utility/simplexml.service';
-export {   } from './lib/utility/utilities.directives';
-export {   } from './lib/utility/utilities.service';
-
-export {   } from './lib/widget/chart/rickshaw/rickshaw.service';
-export {   } from './lib/widget/selectmap.bounding';
-*/

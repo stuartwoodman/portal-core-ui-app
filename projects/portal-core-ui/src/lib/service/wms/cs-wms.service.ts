@@ -7,7 +7,6 @@ import { OnlineResourceModel } from '../../model/data/onlineresource.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 
-import * as extent from 'ol/extent';
 import { Constants, ResourceType } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
@@ -17,6 +16,9 @@ import { MapsManagerService, AcMapComponent } from '@auscope/angular-cesium';
 import { WebMapServiceImageryProvider, ImageryLayer, Resource, Rectangle } from 'cesium';
 import { LayerStatusService } from '../../utility/layerstatus.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
+import bbox from '@turf/bbox';
+import bboxPolygon from '@turf/bbox-polygon';
+import intersect from '@turf/intersect';
 
 import * as when from 'when';
 import TileProviderError from 'cesium/Source/Core/TileProviderError';
@@ -448,12 +450,16 @@ export class CsWMSService {
           const params = wmsOnlineResource.version.startsWith('1.3')
             ? this.getWMS1_3_0param(layer, wmsOnlineResource, collatedParam, longResp, response)
             : this.getWMS1_1param(layer, wmsOnlineResource, collatedParam, longResp, response);
+
           let lonlatextent;
           if (wmsOnlineResource.geographicElements.length > 0) {
             const cswExtent = wmsOnlineResource.geographicElements[0];
-            lonlatextent = extent.buffer([cswExtent.westBoundLongitude, cswExtent.southBoundLatitude, cswExtent.eastBoundLongitude,
-                                              cswExtent.northBoundLatitude], 2);
-            lonlatextent = extent.getIntersection(lonlatextent, [-180, -90, 180, 90]);
+
+            const cswExtentPoly = bboxPolygon([cswExtent.westBoundLongitude, cswExtent.southBoundLatitude,
+                                            cswExtent.eastBoundLongitude, cswExtent.northBoundLatitude]);
+            const globalExtentPoly = bboxPolygon([-180, -90, 180, 90]);
+            const intersectionPoly = intersect(cswExtentPoly, globalExtentPoly);
+            lonlatextent = bbox(intersectionPoly);
           } else {
             // if extent isnt contained in the csw record then use global extent
             lonlatextent = [-180, -90, 180, 90];

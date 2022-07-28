@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import * as olProj from 'ol/proj';
 import { CsMapObject } from './cs-map-object';
 import { GeometryType } from '../../utility/constants.service';
 import { isNumber } from '@turf/helpers';
-import { SimplifyAP,  ISimplifyArrayPoint} from 'simplify-ts';
+import { SimplifyAP } from 'simplify-ts';
+import { MapsManagerService } from '@auscope/angular-cesium';
+import { UtilitiesService } from '../../utility/utilities.service';
 
 /**
  * A wrapper around the clipboard object for use in the portal.
@@ -22,7 +23,7 @@ export class CsClipboardService {
 
   public isDrawingPolygonBS: BehaviorSubject<boolean>;
 
-  constructor(private csMapObject: CsMapObject) {
+  constructor(private csMapObject: CsMapObject, private mapsManagerService: MapsManagerService) {
     this.polygonBBox = null;
     this.polygonsBS = new BehaviorSubject<Polygon>(this.polygonBBox);
     this.polygonsBS.next(this.polygonBBox);
@@ -90,14 +91,16 @@ export class CsClipboardService {
             '</gml:polygonMember>' +
           '</gml:MultiPolygon>';
   }
+
   /**
    * Method for rendering a polygon on cesium map.
    * @param coordsArray array of coords
    * @returns void.
-   */  
-  public renderPolygon(coordsArray:Number[]) {
+   */
+  public renderPolygon(coordsArray: Number[]) {
     this.csMapObject.renderPolygon(coordsArray);
   }
+
   /**
    * Method for drawing a polygon on the map.
    * @returns the polygon coordinates string BS on which the polygon is drawn on.
@@ -119,30 +122,30 @@ export class CsClipboardService {
    * Draw a polygon on map using a KML File
    *
    * @param file File object, contains KML polygon, assumes EPSG:4326
-   */ 
+   */
   public loadPolygonFromKML(file:File) {
     if (file) {
-      var reader = new FileReader();
+      let reader = new FileReader();
       reader.onload = () => {
           const kml = reader.result.toString();
-          var coordsString = kml.substring(
+          let coordsString = kml.substring(
             kml.indexOf("<coordinates>") + "<coordinates>".length, 
             kml.lastIndexOf("</coordinates>")
           );
           const coordsEPSG4326LngLat = coordsString.trim().replace(/\r?\n|\r/g,' ');
-          const coordsList = coordsEPSG4326LngLat.split(' ');        
-          let coordsListLngLat = [];
-          let coordsListLatLng = [];
+          const coordsList = coordsEPSG4326LngLat.split(' ');
+          const coordsListLngLat = [];
+          const coordsListLatLng = [];
           for (let i = 0; i<coordsList.length; i++) {
-            const coord = coordsList[i].split(',')
+            const coord = coordsList[i].split(',');
             const lng = parseFloat(coord[0]).toFixed(3);
-            const lat = parseFloat(coord[1]).toFixed(3)
+            const lat = parseFloat(coord[1]).toFixed(3);
             if (isNumber(lng) && isNumber(lat)) {
               coordsListLngLat.push(lng);
               coordsListLngLat.push(lat);
-              coordsListLatLng.push(lat.toString() + ',' + lng.toString())
+              coordsListLatLng.push(lat.toString() + ',' + lng.toString());
             }
-          } 
+          }
           this.renderPolygon(coordsListLngLat); //need to be [lng lat lng lat]
           const coordsEPSG4326LatLng = coordsListLatLng.join(' ');
           const newPolygon = {
@@ -150,7 +153,7 @@ export class CsClipboardService {
             srs: 'EPSG:4326',
             geometryType: GeometryType.POLYGON,
             coordinates: this.getGeometry(coordsEPSG4326LatLng) //need to be 'lat,lng lat,lng...'
-          };  
+          };
           this.polygonBBox = newPolygon;
           this.polygonsBS.next(this.polygonBBox);
       };
@@ -171,28 +174,26 @@ export class CsClipboardService {
     const coordString = this.getCoordinates( newPolygon.coordinates);
     const coordsArray = coordString.split(' ');
     let coords4326ListLngLat = []; //for rendering
-    let coords4326ListLatLng = []; //for polygon wms query
-    let lng,lat;
+    const coords4326ListLatLng = []; //for polygon wms query
     if (newPolygon.srs === 'EPSG:3857') {
-      for (let i = 0; i < coordsArray.length; i ++) {
-        const lonLat = coordsArray[i].split(',');
-        // transform from 'EPSG:3857' to 'EPSG:4326' format 
-        [lng, lat] = olProj.transform([lonLat[0], lonLat[1]], newPolygon.srs , 'EPSG:4326');
-        if (isNumber(lng) && isNumber(lat)) { //some coord is Null
-          coords4326ListLngLat.push([lng,lat]);
-        }
+      for (const coords of coordsArray) {
+        const lonLat = coords.split(',');
+        // transform from 'EPSG:3857' to 'EPSG:4326' format
+        const lonLatCoords = UtilitiesService.coordinates3857To4326(Number(lonLat[0]), Number(lonLat[1]));
+        coords4326ListLngLat.push(lonLatCoords);
+        coords4326ListLatLng.push([lonLatCoords[1], lonLatCoords[0]]);
       }
-    } else if(newPolygon.srs === 'EPSG:4326') {
-      for (let i = 0; i < coordsArray.length; i ++) {
-        const lonLat = coordsArray[i].split(',');
+    } else if (newPolygon.srs === 'EPSG:4326') {
+      for (const coords of coordsArray) {
+        const lonLat = coords.split(',');
         const lng = parseFloat(lonLat[0]);
         const lat = parseFloat(lonLat[1]);
         if (isNumber(lng) && isNumber(lat)) { //some coord is Null
-          coords4326ListLngLat.push([lng,lat]);
+          coords4326ListLngLat.push([lng, lat]);
         }
       }
     } else {
-      console.log("ERROR:addPolygon's layer are either EPSG3857 nor EPSG4326");
+      console.log('ERROR: addPolygon\'s layer are either EPSG3857 nor EPSG4326');
       return;
     }
 
@@ -202,7 +203,7 @@ export class CsClipboardService {
     const simplifiedCoords4326 = SimplifyAP(coords4326ListLngLat, tolerance, highQuality);
     //
     coords4326ListLngLat = [];
-    for (let i=0;i<simplifiedCoords4326.length;i++) {
+    for (let i = 0; i < simplifiedCoords4326.length; i++) {
       coords4326ListLngLat.push(simplifiedCoords4326[i][0]);
       coords4326ListLngLat.push(simplifiedCoords4326[i][1]);
       coords4326ListLatLng.push(simplifiedCoords4326[i][1].toString() + ',' + simplifiedCoords4326[i][0].toString());
@@ -229,6 +230,7 @@ export class CsClipboardService {
     this.polygonBBox = null;
     this.polygonsBS.next(this.polygonBBox);
   }
+
 }
 
 export interface Polygon {

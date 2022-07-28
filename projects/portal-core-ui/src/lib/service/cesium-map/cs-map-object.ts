@@ -12,7 +12,7 @@ import { MapState } from '../../model/data/mapstate.model';
 declare var Cesium;
 
 /**
- * A wrapper around the openlayer object for use in the portal.
+ * A wrapper around the cesium object for use in the portal.
  */
 @Injectable()
 export class CsMapObject {
