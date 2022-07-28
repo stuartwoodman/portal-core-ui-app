@@ -589,4 +589,24 @@ export class UtilitiesService {
             return uri + separator + key + "=" + value;
         }
     }
+
+  /**
+   * Convert an EPSG:3857 coordinate to EPSG:4326
+   *
+   * @param long3857 longitude of EPSG:3857 coordinate
+   * @param lat3857 latitude of EPSG:3857 coordinate
+   * @returns an array [longitude, latitude] EPSG:4326
+   */
+   public static coordinates3857To4326(long3857: number, lat3857: number): number[] {
+    const e = 2.7182818284;
+    const X = 20037508.34;
+    const long4326 = (long3857 * 180) / X;
+    let lat4326 = lat3857 / (X / 180);
+    const exponent = (Math.PI / 180) * lat4326;
+    lat4326 = Math.atan(e ** exponent);
+    lat4326 = lat4326 / (Math.PI / 360);
+    lat4326 = lat4326 - 90;
+    return [long4326, lat4326];
+  }
+
 }

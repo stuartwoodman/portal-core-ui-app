@@ -1,7 +1,5 @@
 import { CSWRecordModel } from '../../model/data/cswrecord.model';
 import { Injectable, Inject } from '@angular/core';
-import * as olExtent from 'ol/extent';
-import * as olProj from 'ol/proj';
 import {BehaviorSubject, Subject } from 'rxjs';
 import { point } from '@turf/helpers';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
@@ -16,9 +14,10 @@ import { CsWMSService } from '../wms/cs-wms.service';
 import { CsWWWService } from '../www/cs-www.service';
 import { ResourceType } from '../../utility/constants.service';
 import { CsIrisService } from '../kml/cs-iris.service';
-import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, PickOptions, EventResult } from '@auscope/angular-cesium';
+import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, EventResult } from '@auscope/angular-cesium';
 import { Entity, ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle, BingMapsImageryProvider,
-  ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection,  SplitDirection } from 'cesium';
+         ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection,  SplitDirection } from 'cesium';
+import { UtilitiesService } from '../../utility/utilities.service';
 declare var Cesium: any;
 
 /**
@@ -191,51 +190,6 @@ export class CsMapService {
     } catch (error) {
       throw error;
     }
-  }
-
-  /*
-   * Return a list of CSWRecordModels present in active layers that intersect
-   * the supplied extent.
-   * 
-   * TODO: Get rid of olExtent and olProj
-   *
-   * @param extent the extent with which to test the intersection of CSW
-   * records
-   */
-  public getCSWRecordsForExtent(extent: olExtent): CSWRecordModel[] {
-    const intersectedCSWRecordList: CSWRecordModel[] = [];
-    extent = olProj.transformExtent(extent, 'EPSG:3857', 'EPSG:4326');
-    const groupLayers = []; // this.map.getLayers(); // FIXME
-    const mapLayerColl = []; // this.map.getLayers(); // FIXME
-    const me = this;
-    mapLayerColl.forEach(function(layer) {
-       for (const layerId in groupLayers) {
-           for (const activeLayer of groupLayers[layerId]) {
-               if (layer === activeLayer) {
-                   const layerModel = me.getLayerModel(layerId);
-                   /*
-                   if (!layerModel || !me.layerHandlerService.containsWMS(layerModel)) {
-                      continue;
-                   }
-                   */
-                   for (const cswRecord of layerModel.cswRecords) {
-                       let cswRecordIntersects: boolean = false;
-                       for (const bbox of cswRecord.geographicElements) {
-                           const tBbox = [bbox.westBoundLongitude, bbox.southBoundLatitude, bbox.eastBoundLongitude, bbox.northBoundLatitude];
-                           if (olExtent.intersects(extent, tBbox)) {
-                               cswRecordIntersects = true;
-                           }
-                       }
-                       if (cswRecordIntersects) {
-                           intersectedCSWRecordList.push(cswRecord);
-                       }
-                   }
-               }
-           }
-        }
-     });
-
-    return intersectedCSWRecordList;
   }
 
   /**
@@ -451,10 +405,10 @@ export class CsMapService {
    * @param extent An array of numbers representing an extent: [minx, miny, maxx, maxy]
    */
   public fitView(extent: [number, number, number, number]): void {
-    const northWest = olProj.toLonLat([extent[0], extent[1]]);
-    const northEast = olProj.toLonLat([extent[2], extent[1]]);
-    const southEast = olProj.toLonLat([extent[2], extent[3]]);
-    const southWest = olProj.toLonLat([extent[0], extent[3]]);
+    const northWest = UtilitiesService.coordinates3857To4326(extent[0], extent[1]);
+    const northEast = UtilitiesService.coordinates3857To4326(extent[2], extent[1]);
+    const southEast = UtilitiesService.coordinates3857To4326(extent[2], extent[3]);
+    const southWest = UtilitiesService.coordinates3857To4326(extent[0], extent[3]);
     const extentPoly = this.getViewer().entities.add({
       polygon : {
         hierarchy : Cesium.Cartesian3.fromDegreesArray([
