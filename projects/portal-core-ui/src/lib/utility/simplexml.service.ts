@@ -407,7 +407,7 @@ export class SimpleXMLService {
             if (featureNode.childNodes !== undefined &&
               featureNode.childNodes[0] !== undefined &&
               featureNode.childNodes[0].hasOwnProperty('getAttribute')) {
-              name = featureNode.childNodes[0].getAttribute('fid')
+              name = featureNode.childNodes[0].getAttribute('fid');
             }
             if (UtilitiesService.isEmpty(name)) {
               name = feature.onlineResource.name + '.' + Math.floor(Math.random() * 60) + 1;

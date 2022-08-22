@@ -11,6 +11,7 @@ export class CSWRecordModel {
   useLimitConstraints: any;
   accessConstraints: any;
   contactOrg: string;
+  funderOrg: string;
   datasetURIs: any;
   date: string;
   description: string;
