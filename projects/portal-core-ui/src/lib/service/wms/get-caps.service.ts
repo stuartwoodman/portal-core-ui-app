@@ -62,7 +62,7 @@ export class GetCapsService {
   private getOnlineResElems(doc: Document, nsResolver: (prefix: string) => string, layerNum: number) {
     const ONLINE_RES = {
       'url': "string(/xsi:WMS_Capabilities/xsi:Capability/xsi:Request/xsi:GetMap/xsi:DCPType/xsi:HTTP/xsi:Get/xsi:OnlineResource/@*[local-name()='href'])",
-      'name': 'string(/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:Layer['+ layerNum + ']/xsi:Name)',
+      'name': 'string(/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:Layer[' + layerNum + ']/xsi:Name)',
       'description': 'string(/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:Layer[' + layerNum + ']/xsi:Title)',
       'version': "string(/xsi:WMS_Capabilities/@*[local-name()='version'])"
     };
@@ -156,10 +156,10 @@ export class GetCapsService {
   private getLayerSRS(doc: Document, node: Node, nsResolver: (prefix: string) => string) {
     const LAYER_SRS = '/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:CRS';
     const layerSRS = [];
-          const layerSRSElems: Element[] = SimpleXMLService.evaluateXPathNodeArray(doc, node, LAYER_SRS, nsResolver);
-          for (const elem of layerSRSElems) {
-            layerSRS.push(elem.textContent);
-          }
+    const layerSRSElems: Element[] = SimpleXMLService.evaluateXPathNodeArray(doc, node, LAYER_SRS, nsResolver);
+    for (const elem of layerSRSElems) {
+      layerSRS.push(elem.textContent);
+    }
     return layerSRS;
   }
 
@@ -210,23 +210,23 @@ export class GetCapsService {
   }
 
     /**
-   * Function used to detect Access Constraints
-   * 
-   * @param doc Document interface of GetCapabilities response
-   * @param nsResolver namespace resolver function
-   * @returns AccessConstraints string
-   */
+     * Function used to detect Access Constraints
+     *
+     * @param doc Document interface of GetCapabilities response
+     * @param nsResolver namespace resolver function
+     * @returns AccessConstraints string
+     */
      private findAccessConstraints(doc: Document, nsResolver: (prefix: string) => string): string[] {
       const mapFormats = "string(/xsi:WMS_Capabilities/xsi:Service/xsi:AccessConstraints)";
       const accessConstraints = [];
       accessConstraints.push( SimpleXMLService.evaluateXPathString(doc, doc, mapFormats, nsResolver));
-      return accessConstraints;  
+      return accessConstraints;
     }
 
   /**
    * Retrieve the csw record located at the WMS serviceurl endpoint.
    * Currently only supports v1.3.0
-   * 
+   *
    * @Return a layer with the retrieved cswrecord wrapped in a layer model.
    */
   public getCaps(serviceUrl: string): Observable<any> {
@@ -234,9 +234,22 @@ export class GetCapsService {
     const LEGEND_URL = "string(//xsi:LegendURL/xsi:OnlineResource/@*[local-name()='href'])";
     const me = this;
 
-    const version = '1.3.0';
+    // GetCaps parameters
+    let version = '1.3.0';
     const service = 'WMS';
-    let httpParams = new HttpParams()
+
+    // Check for existing parameters in the URL, we only care about version
+    const paramIndex = serviceUrl.indexOf('?');
+    if (paramIndex !== -1) {
+      const urlParams = new URLSearchParams(serviceUrl.toLowerCase());
+      const pVersion = urlParams.get('version');
+      if (pVersion) {
+        version = pVersion;
+      }
+      serviceUrl = serviceUrl.substring(0, paramIndex);
+    }
+
+    const httpParams = new HttpParams()
       .append('request', 'GetCapabilities')
       .append('version', version)
       .append('service', service);
@@ -246,16 +259,16 @@ export class GetCapsService {
       serviceUrl = "http://" + serviceUrl;
     }
     // get the urls that need proxy
-    let urls = this.env.urlNeedProxy
-    // find the index of \ in url 
+    const urls = this.env.urlNeedProxy;
+    // find the index of \ in url
     let index = serviceUrl.indexOf("\/");
-    for (let i=0; i<2; i++) {
+    for (let i = 0; i < 2; i++) {
       // find the third \ in url
-      index = serviceUrl.indexOf("\/", index+1);
+      index = serviceUrl.indexOf("\/", index + 1);
     }
     // cut the url from the third \ so we can compare it.
-    let tempUrl = serviceUrl.substring(0, index)
-    serviceUrl = (urls.indexOf(tempUrl) !== -1) ? this.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=' + serviceUrl : serviceUrl
+    const tempUrl = serviceUrl.substring(0, index)
+    serviceUrl = (urls.indexOf(tempUrl) !== -1) ? this.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=' + serviceUrl : serviceUrl;
     return this.http.get(serviceUrl, {params: httpParams, responseType: "text"}).pipe(map(
       (response) => {
           const rootNode = SimpleXMLService.parseStringToDOM(response);
@@ -271,8 +284,8 @@ export class GetCapsService {
           const applicationProfile = this.findApplicationProfile(rootNode, this.nsResolver);
           const accessConstraints = this.findAccessConstraints(rootNode, this.nsResolver);
 
-          let retVal = { data: { cswRecords: [], capabilityRecords: [], invalidLayerCount: 0 }, msg: "", success: true};
-          
+          const retVal = { data: { cswRecords: [], capabilityRecords: [], invalidLayerCount: 0 }, msg: "", success: true};
+
           // Loop over all the layers found in the GetCapabilies response
           for (let layerNum = 0 ; layerNum < numLayers; layerNum++) {
 
@@ -306,7 +319,7 @@ export class GetCapsService {
             });
 
             // Only add one GetCapabilities object
-            if (layerNum == 0) {
+            if (layerNum === 0) {
               retVal.data.capabilityRecords = [{
                 serviceType: service.toLowerCase(),
                 organisation: cswRecElems['contactOrg'],
@@ -336,8 +349,8 @@ export class GetCapsService {
             });
 
           } // end 'layerNum' loop
-          
-          return retVal;                  
+
+          return retVal;
     }));
   }
 }
