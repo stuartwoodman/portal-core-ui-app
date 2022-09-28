@@ -1,5 +1,5 @@
 
-import { throwError as observableThrowError,  Observable, BehaviorSubject } from 'rxjs';
+import { throwError as observableThrowError,  Observable, ReplaySubject } from 'rxjs';
 
 import { catchError, map, timeoutWith, mergeMap } from 'rxjs/operators';
 import { Bbox } from '../../../model/data/bbox.model';
@@ -17,8 +17,8 @@ declare var gtag: Function;
 // @dynamic
 @Injectable()
 export class DownloadWfsService {
-  public tsgDownloadBS = new BehaviorSubject<string>('0,0');
-  public tsgDownloadStartBS = new BehaviorSubject<any>({});
+  public tsgDownloadBS = new ReplaySubject<string>(0);
+  public tsgDownloadStartBS = new ReplaySubject<string>(0);
 
 
   constructor(private layerHandlerService: LayerHandlerService, private http: HttpClient, @Inject('env') private env) {
@@ -102,7 +102,7 @@ export class DownloadWfsService {
    * Used to reset the TSG download counters
    */
   public resetTSGDownloads() {
-    this.tsgDownloadBS = new BehaviorSubject<string>('0,0');
+    this.tsgDownloadBS = new ReplaySubject<string>(0);
   }
 
   /**
