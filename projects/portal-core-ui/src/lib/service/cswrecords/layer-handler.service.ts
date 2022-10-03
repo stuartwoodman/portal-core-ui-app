@@ -14,7 +14,6 @@ import { GetCapsService } from '../wms/get-caps.service';
 
 /**
  * Service class to handle jobs relating to getting csw records from the server
- *
  */
 @Injectable()
 export class LayerHandlerService {
@@ -66,12 +65,10 @@ export class LayerHandlerService {
     const layersBS = new BehaviorSubject<LayerModel[]>(null);
     return this.layerRecord.pipe(switchMap(records => {
       const matchingLayers: LayerModel[] = [];
-
       for (const layerGroup in records) {
         if (layerGroup) {
           for (const layer of records[layerGroup]) {
             if (layerIds.indexOf(layer.id) !== -1) {
-              console.log('Found layer: ' + layer.id);
               matchingLayers.push(layer);
             }
           }
