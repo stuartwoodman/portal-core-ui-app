@@ -62,11 +62,13 @@ export class LayerHandlerService {
    */
   public getCustomLayerRecord(serviceUrl: string): Observable<any> {
     // Send out a 'GetCapabilities' request
-    const retVal = this.getCapsService.getCaps(serviceUrl).pipe(map((response: { data: { cswRecords: any, capabilityRecords: any }}) => {
+    const retVal = this.getCapsService.getCaps(serviceUrl, "custom").pipe(map((response: { data: { cswRecords: any, capabilityRecords: any }}) => {
           // Create a list of LayerModels using the 'GetCapabilities' response
           const itemLayers = [];
-          const cswRecord = response['data']['cswRecords'];
-          if (cswRecord) {
+          if (Object.keys(response).length == 0) {
+            return
+          }
+          const cswRecord = response['data']['cswRecords'];          if (cswRecord) {
             itemLayers['Results'] = [];
             cswRecord.forEach(function (item, i, ar) {
                 const itemLayer = new LayerModel();

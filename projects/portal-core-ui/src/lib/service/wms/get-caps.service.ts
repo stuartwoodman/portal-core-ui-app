@@ -229,7 +229,7 @@ export class GetCapsService {
    *
    * @Return a layer with the retrieved cswrecord wrapped in a layer model.
    */
-  public getCaps(serviceUrl: string): Observable<any> {
+  public getCaps(serviceUrl: string, from?: string): Observable<any> {
     const METADATA_URL = "string(//xsi:MetadataURL/xsi:OnlineResource/@*[local-name()='href'])";
     const LEGEND_URL = "string(//xsi:LegendURL/xsi:OnlineResource/@*[local-name()='href'])";
     const me = this;
@@ -268,7 +268,11 @@ export class GetCapsService {
     }
     // cut the url from the third \ so we can compare it.
     const tempUrl = serviceUrl.substring(0, index)
-    serviceUrl = (urls.indexOf(tempUrl) !== -1) ? this.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=' + serviceUrl : serviceUrl;
+    if (from) {
+      serviceUrl = this.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=' + serviceUrl;
+    } else {
+      serviceUrl = (urls.indexOf(tempUrl) !== -1) ? this.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=' + serviceUrl : serviceUrl;
+    }
     return this.http.get(serviceUrl, {params: httpParams, responseType: "text"}).pipe(map(
       (response) => {
           const rootNode = SimpleXMLService.parseStringToDOM(response);
