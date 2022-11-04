@@ -1,4 +1,4 @@
-import { Observable, BehaviorSubject, Subject } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 
 import { map, switchMap } from 'rxjs/operators';
 import { CSWRecordModel } from '../../model/data/cswrecord.model';
@@ -90,8 +90,8 @@ export class LayerHandlerService {
     const retVal = this.getCapsService.getCaps(serviceUrl, "custom").pipe(map((response: { data: { cswRecords: any, capabilityRecords: any }}) => {
           // Create a list of LayerModels using the 'GetCapabilities' response
           const itemLayers = [];
-          if (Object.keys(response).length == 0) {
-            return
+          if (Object.keys(response).length === 0) {
+            return;
           }
           const cswRecord = response['data']['cswRecords'];          if (cswRecord) {
             itemLayers['Results'] = [];
