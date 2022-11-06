@@ -1,7 +1,7 @@
 import { Injectable, Inject} from '@angular/core';
 import { v4 as uuidv4 } from 'uuid';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { throwError as observableThrowError, of } from 'rxjs';
+import { throwError as observableThrowError, of, BehaviorSubject } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
@@ -21,6 +21,10 @@ export class ManageStateService {
   private state: any = {};
   private prevState: any = {};
   private permLinkMode: boolean = false; // Is true if a permanent link has been employed
+
+  // Layer requires expanding
+  private layerToExpandBS: BehaviorSubject<string> = new BehaviorSubject<string>(null);
+  public readonly layerToExpand = this.layerToExpandBS.asObservable();
 
   constructor(private csMapObject: CsMapObject, private http: HttpClient, @Inject('env') private env) {
   }
@@ -168,6 +172,15 @@ export class ManageStateService {
         return observableThrowError(error);
       }
     ), );
+  }
+
+  /**
+   * Notify listeners (LayerPanel) that a layer is to be expanded
+   *
+   * @param layerId ID of layer
+   */
+  setLayerToExpand(layerId: string) {
+    this.layerToExpandBS.next(layerId);
   }
 
 }
