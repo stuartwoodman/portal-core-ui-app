@@ -1,6 +1,6 @@
 {
   "name": "@auscope/portal-core-ui",
-  "version": "1.0.43",
+  "version": "1.0.52",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -33,7 +33,8 @@
     "simplify-ts": "^1.0.2",
     "tslib": "^2.4.1",
     "when": "~3.7.8",
-    "zone.js": "~0.11.4"
+    "zone.js": "~0.11.4",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~13.3.9",
