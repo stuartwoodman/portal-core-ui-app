@@ -36,4 +36,5 @@ export class LayerModel {
   clickCoord: any;
   // SplitDirection.[LEFT|RIGHT|NONE], NONE by default, made optional for compatibility
   splitDirection?: SplitDirection;
+  supportsCsvDownloads: boolean;  // Layer supports downloading, usually feature data in CSV form
 }
