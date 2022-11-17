@@ -189,6 +189,7 @@ export class DownloadWfsService {
    * @param layer the layer to download
    * @param bbox the bounding box of the area to download
    * @param polygonFilter WFS filter parameter
+   * @param bZip download as a zip file
    */
   public downloadCSV(layer: LayerModel, bbox: Bbox, polygonFilter: String, bZip: boolean): Observable<any> {
 
