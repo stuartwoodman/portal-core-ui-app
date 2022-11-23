@@ -255,11 +255,11 @@ export class GetCapsService {
       .append('service', service);
 
     // Add in 'http:' if it is missing
-    if (serviceUrl.indexOf("http") != 0) {
+    if (serviceUrl.indexOf("http") !== 0) {
       serviceUrl = "http://" + serviceUrl;
     }
     // get the urls that need proxy
-    const urls = this.env.urlNeedProxy;
+    const urls = this.env.hasOwnProperty('urlNeedProxy') ? this.env.urlNeedProxy : [];
     // find the index of \ in url
     let index = serviceUrl.indexOf("\/");
     for (let i = 0; i < 2; i++) {
@@ -267,7 +267,7 @@ export class GetCapsService {
       index = serviceUrl.indexOf("\/", index + 1);
     }
     // cut the url from the third \ so we can compare it.
-    const tempUrl = serviceUrl.substring(0, index)
+    const tempUrl = serviceUrl.substring(0, index);
     if (from) {
       serviceUrl = this.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=' + serviceUrl;
     } else {
@@ -293,11 +293,11 @@ export class GetCapsService {
           // Loop over all the layers found in the GetCapabilies response
           for (let layerNum = 0 ; layerNum < numLayers; layerNum++) {
 
-            const cswRecElems = this.getCSWRecElems(rootNode, rootNode, this.nsResolver, layerNum+1);
-            const onlineResElems = this.getOnlineResElems(rootNode, this.nsResolver, layerNum+1);
+            const cswRecElems = this.getCSWRecElems(rootNode, rootNode, this.nsResolver, layerNum + 1);
+            const onlineResElems = this.getOnlineResElems(rootNode, this.nsResolver, layerNum + 1);
             onlineResElems['applicationProfile'] = applicationProfile;
-            const geoElems = this.getGeoElems(rootNode, this.nsResolver, layerNum+1);
-            const timeExtent = this.findDims(rootNode, rootNode, this.nsResolver, 'time', layerNum+1);
+            const geoElems = this.getGeoElems(rootNode, this.nsResolver, layerNum + 1);
+            const timeExtent = this.findDims(rootNode, rootNode, this.nsResolver, 'time', layerNum + 1);
 
             // One cswRecord object per layer
             retVal.data.cswRecords.push({
