@@ -579,7 +579,7 @@ export class CsWMSService {
                   }
                   // 'createImageBitmap' was not fully supported in older versions of Firefox (ESR & version <= 92.0) and Safari 
                   // due to bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1367251
-                  if (browserInfo.browser === 'Safari' || (browserInfo.browser === 'Firefox' && parseFloat(browserInfo.browser_version) <= 92.0)) {
+                  if (browserInfo.browser === 'Firefox' && parseFloat(browserInfo.browser_version) <= 92.0) {
                     return createImageBitmap(blob);
                   } else {
                     return (Resource as any).createImageBitmapFromBlob(blob, {
