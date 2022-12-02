@@ -11,6 +11,7 @@ import { Constants, ResourceType } from '../../utility/constants.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 import { MinTenemStyleService } from '../style/wms/min-tenem-style.service';
+import { GSML41StyleService } from '../style/wms/gsml41-style.service';
 import { CQLService } from '../cql/cql.service';
 import { MapsManagerService, AcMapComponent } from '@auscope/angular-cesium';
 import { WebMapServiceImageryProvider, ImageryLayer, Resource, Rectangle } from 'cesium';
@@ -214,12 +215,32 @@ export class CsWMSService {
     if (UtilitiesService.isArcGIS(onlineResource) && onlineResource.name === 'MineralTenement') {
       return new Observable(observer => {
         param.styles = 'mineralTenementStyle';
-        const x = MinTenemStyleService.getMineralTenementsSld(onlineResource.name, param.styles, param.ccProperty);
-        observer.next(x);
+        const sld_body = MinTenemStyleService.getSld(onlineResource.name, param.styles, param.ccProperty);
+        observer.next(sld_body);
         observer.complete();
       });
     }
 
+    // For GeoSciML 4.1 we can get SLD_BODY parameter locally
+    if (onlineResource.name === 'gsmlbh:Borehole') {
+      return new Observable(observer => {
+        param.styles = onlineResource.name;
+        // If borehole name was set in filter
+        let nameFilter = '';
+        if ('optionalFilters' in param && param.optionalFilters.length > 0) {
+          for (const filt of param.optionalFilters) {
+            if (filt.label === 'Name') {
+              nameFilter = filt.value;
+              break;
+            }
+          }
+        }
+        const sld_body = GSML41StyleService.getSld(onlineResource.name, param.styles, nameFilter);
+        observer.next(sld_body);
+        observer.complete();
+      });
+  }
+    // If there is no SLD URL coming from config
     if (!sldUrl) {
       return new Observable(observer => {
         observer.next(null);
@@ -444,12 +465,12 @@ export class CsWMSService {
       const usePost = this.wmsUrlTooLong(this.env.portalBaseUrl + layer.proxyStyleUrl + collatedParam.toString(), layer);
       // Perform request for style data, store subscription so we can cancel if user removes layer
       this.sldSubscriptions[layer.id].push(this.getSldBody(layer.proxyStyleUrl, usePost, wmsOnlineResource, collatedParam).subscribe(
-        response => {
-          const longResp = this.wmsUrlTooLong(response, layer);
+        sld_body => {
+          const longResp = this.wmsUrlTooLong(sld_body, layer);
           // Create parameters for add layer request
           const params = wmsOnlineResource.version.startsWith('1.3')
-            ? this.getWMS1_3_0param(layer, wmsOnlineResource, collatedParam, longResp, response)
-            : this.getWMS1_1param(layer, wmsOnlineResource, collatedParam, longResp, response);
+            ? this.getWMS1_3_0param(layer, wmsOnlineResource, collatedParam, longResp, sld_body)
+            : this.getWMS1_1param(layer, wmsOnlineResource, collatedParam, longResp, sld_body);
 
           let lonlatextent;
           if (wmsOnlineResource.geographicElements.length > 0) {
@@ -469,11 +490,11 @@ export class CsWMSService {
 
           // Perform add layer request
           layer.csLayers.push(this.addCesiumLayer(layer, wmsOnlineResource, params, longResp, lonlatextent));
-          layer.sldBody = response;
+          layer.sldBody = sld_body;
 
           // For 1.3.0 GetFeatureInfo requests need lat,lng swapped to lng,lat if polygon filter present
           if (wmsOnlineResource.version === '1.3.0' && collatedParam.optionalFilters.find(f => f.type === 'OPTIONAL.POLYGONBBOX')) {
-            layer.sldBody130 = this.reverseSldBodyPolygonFilterCoordinates(response);
+            layer.sldBody130 = this.reverseSldBodyPolygonFilterCoordinates(sld_body);
           }
         }));
     }
@@ -493,9 +514,9 @@ export class CsWMSService {
       const viewer = this.map.getCesiumViewer();
       const me = this;
       if (this.layerHandlerService.contains(layer, ResourceType.WMS)) {
-        // WMS tile loading callback function, l = number of tiles left to load
-        const tileLoading = (l: number) => {
-          if (l === 0) {
+        // WMS tile loading callback function, numLeft = number of tiles left to load
+        const tileLoading = (numLeft: number) => {
+          if (numLeft === 0) {
               // When there are no more tiles to load it is complete
               this.renderStatusService.updateComplete(layer, wmsOnlineResource);
           }
