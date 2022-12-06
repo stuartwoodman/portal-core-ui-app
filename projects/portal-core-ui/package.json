@@ -1,6 +1,6 @@
 {
   "name": "@auscope/portal-core-ui",
-  "version": "1.0.58",
+  "version": "1.0.59",
   "license": "(LGPL OR Apache-2.0)",
   "repository": {
     "type": "git",
@@ -16,8 +16,8 @@
     "@angular/platform-browser": "~13.3.11",
     "@angular/platform-browser-dynamic": "~13.3.11",
     "@angular/router": "~13.3.11",
-    "@auscope/angular-cesium": "^13.0.0",
-    "cesium": "~1.93.0",
+    "@auscope/angular-cesium": "^13.0.1",
+    "cesium": "1.93.0",
     "rxjs": "~6.6.7",
     "zone.js": "~0.11.4",
     "@thi.ng/hiccup": "^3.6.22",
