@@ -57,7 +57,7 @@ export class SimpleXMLService {
     if (document.evaluate) {
       let result;
       try {
-        if (typeof nsResolver === undefined) {
+        if (typeof nsResolver === 'undefined') {
             result = document.evaluate(xPath, domNode, document.createNSResolver(domNode), resultType, null);
         } else {
             result = document.evaluate(xPath, domNode, nsResolver, resultType, null);
