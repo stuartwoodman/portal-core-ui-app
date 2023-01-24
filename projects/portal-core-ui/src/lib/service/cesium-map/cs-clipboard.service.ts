@@ -47,7 +47,7 @@ export class CsClipboardService {
 
   /**
    * Toggle the polygon filter layers. Can be set using optional parameter.
-   * 
+   *
    * @param layersOn (optional) if supplied, set the filter layers to this value
    */
   public toggleFilterLayers(layersOn?: boolean) {
@@ -58,6 +58,7 @@ export class CsClipboardService {
     }
     this.filterLayersBS.next(this.bFilterLayers);
   }
+
   /**
    * Method for extract a polygon coords string from geometry.
    * @param geometry string
@@ -65,12 +66,13 @@ export class CsClipboardService {
    */
   public getCoordinates(geometry: string): string {
     const tag = '<gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">';
-    var coordsString = geometry.substring(
-      geometry.indexOf(tag) + tag.length, 
-      geometry.lastIndexOf("</gml:coordinates>")
+    const coordsString = geometry.substring(
+      geometry.indexOf(tag) + tag.length,
+      geometry.indexOf('</gml:coordinates>')
     );
     return coordsString;
   }
+
   /**
    * Method for construct a polygon geometry.
    * @param coords string
@@ -123,16 +125,16 @@ export class CsClipboardService {
    *
    * @param file File object, contains KML polygon, assumes EPSG:4326
    */
-  public loadPolygonFromKML(file:File) {
+  public loadPolygonFromKML(file: File) {
     if (file) {
-      let reader = new FileReader();
+      const reader = new FileReader();
       reader.onload = () => {
           const kml = reader.result.toString();
-          let coordsString = kml.substring(
-            kml.indexOf("<coordinates>") + "<coordinates>".length, 
+          const coordsString = kml.substring(
+            kml.indexOf("<coordinates>") + "<coordinates>".length,
             kml.lastIndexOf("</coordinates>")
           );
-          const coordsEPSG4326LngLat = coordsString.trim().replace(/\r?\n|\r/g,' ');
+          const coordsEPSG4326LngLat = coordsString.trim().replace(/\r?\n|\r/g, ' ');
           const coordsList = coordsEPSG4326LngLat.split(' ');
           const coordsListLngLat = [];
           const coordsListLatLng = [];
@@ -174,7 +176,7 @@ export class CsClipboardService {
     const coordString = this.getCoordinates( newPolygon.coordinates);
     const coordsArray = coordString.split(' ');
     let coords4326ListLngLat = []; //for rendering
-    const coords4326ListLatLng = []; //for polygon wms query
+    let coords4326ListLatLng = []; //for polygon wms query
     if (newPolygon.srs === 'EPSG:3857') {
       for (const coords of coordsArray) {
         const lonLat = coords.split(',');
@@ -203,6 +205,7 @@ export class CsClipboardService {
     const simplifiedCoords4326 = SimplifyAP(coords4326ListLngLat, tolerance, highQuality);
     //
     coords4326ListLngLat = [];
+    coords4326ListLatLng = [];
     for (let i = 0; i < simplifiedCoords4326.length; i++) {
       coords4326ListLngLat.push(simplifiedCoords4326[i][0]);
       coords4326ListLngLat.push(simplifiedCoords4326[i][1]);
