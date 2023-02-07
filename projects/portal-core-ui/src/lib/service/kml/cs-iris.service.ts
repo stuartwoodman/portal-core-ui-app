@@ -3,11 +3,9 @@ import { throwError as observableThrowError, Observable } from 'rxjs';
 
 import { catchError, map } from 'rxjs/operators';
 
-import { CSWRecordModel } from '../../../lib/model/data/cswrecord.model';
 import { Injectable, Inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { LayerModel } from '../../../lib/model/data/layer.model';
-import { OnlineResourceModel } from '../../../lib/model/data/onlineresource.model';
 import { LayerHandlerService } from '../../service/cswrecords/layer-handler.service';
 import { MapsManagerService } from '@auscope/angular-cesium';
 import { ResourceType } from '../../../lib/utility/constants.service';
