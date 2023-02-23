@@ -25,6 +25,7 @@ import { DownloadWcsService } from './service/wcs/download/download-wcs.service'
 import { CsWWWService } from './service/www/cs-www.service';
 import { QueryWMSService} from './service/wms/query-wms.service';
 import { QueryWFSService} from './service/wfs/query-wfs.service';
+import { SldService } from './service/style/wms/sld.service';
 
 // Directives
 import { ImgLoadingDirective } from './uiutilities/imgloading.directive';
@@ -63,7 +64,8 @@ import { PolygonsEditorService } from '@auscope/angular-cesium';
     ManageStateService,
     LayerStatusService,
     CsCSWService,
-    PolygonsEditorService
+    PolygonsEditorService,
+    SldService
   ]
 })
 
