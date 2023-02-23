@@ -1,6 +1,10 @@
-import { OnlineResourceModel } from '../../model/data/onlineresource.model';
+
+import { throwError as observableThrowError, Observable } from 'rxjs';
 import { Injectable, Inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { catchError, map } from 'rxjs/operators';
+
+import { OnlineResourceModel } from '../../model/data/onlineresource.model';
 import { LayerModel } from '../../model/data/layer.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
 import { MapsManagerService } from '@auscope/angular-cesium';
@@ -24,7 +28,28 @@ export class CsKMLService {
     @Inject('env') private env) {
   }
 
- 
+  /**
+   * Downloads KML, cleans it by removing illegal chars and 
+   * forcing proxying of icon images to avoid CORS errors
+   * 
+   * @param kmlResource KML resource to be fetched
+   * @returns cleaned KML text
+   */
+  private getKMLFeature(kmlResource: OnlineResourceModel): Observable<any> {
+    return this.http.get(kmlResource.url, { responseType: 'text'}).pipe(map((kmlTxt: string) => {
+      // Removes non-standard chars that can cause errors
+      kmlTxt = kmlTxt.replace(/\016/g, '');
+      kmlTxt = kmlTxt.replace(/\002/g, '');
+      // Inserts our proxy to avoid CORS errors
+      kmlTxt = kmlTxt.replace(/<href>(.*)<\/href>/g, '<href>' + this.env.portalBaseUrl + 'getViaProxy.do?url=$1</href>');
+      return kmlTxt;
+    }), catchError(
+      (error: HttpResponse<any>) => {
+        return observableThrowError(error);
+      }
+    ));
+  }
+
 
   /**
    * Add the KML layer
@@ -33,29 +58,44 @@ export class CsKMLService {
    */
   public addLayer(layer: LayerModel, param?: any): void {
     const kmlOnlineResources: OnlineResourceModel[] = this.layerHandlerService.getOnlineResources(layer, ResourceType.KML);
+    const me = this;
+
+    // Get CesiumJS viewer
+    const viewer = this.getViewer();
+    const options = {
+      camera: viewer.scene.camera,
+      canvas: viewer.scene.canvas,
+    };
 
     for (const onlineResource of kmlOnlineResources) {
 
       // Tell UI that we're about to add a resource to map
       this.renderStatusService.addResource(layer, onlineResource);
 
-      // Get CesiumJS viewer
-      const viewer = this.getViewer();
-      const options = {
-        camera: viewer.scene.camera,
-        canvas: viewer.scene.canvas
-      };
-      
       // Create data source
       let source = new Cesium.KmlDataSource(options);
-
-      // Add all the KML points to map
-      viewer.dataSources.add(source.load(onlineResource.url)).then(dataSrc => {
-        layer.csLayers.push(dataSrc);
+      // Add an event to tell us when loading is finished
+      source.loadingEvent.addEventListener(function(evt, isLoading: boolean) {
+        if (!isLoading) {
+          // Tell UI that we have completed updating the map
+          me.renderStatusService.updateComplete(layer, onlineResource);
+        }
       });
-
-      // Tell UI that we have completed updating the map
-      this.renderStatusService.updateComplete(layer, onlineResource);
+      // Add KML to map
+      this.getKMLFeature(onlineResource).subscribe((response) => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(response, "text/xml");
+        source.load(doc).then(function (dataSource) {
+          viewer.dataSources.add(dataSource).then(dataSrc => {
+            layer.csLayers.push(dataSrc);
+          })
+        })
+      }, (err) => {
+        alert("Unable to load KML: " + err.message);
+        console.error("Unable to load KML: ", err);
+        // Tell UI that we have completed updating the map & there was an error
+        this.renderStatusService.updateComplete(layer, onlineResource, true);
+      });
     }
   }
 
@@ -75,7 +115,7 @@ export class CsKMLService {
 
   /** 
    * Fetches Cesium 'Viewer'
-  */
+   */
   private getViewer() {
     return this.mapsManagerService.getMap().getCesiumViewer();
   }

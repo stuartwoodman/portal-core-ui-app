@@ -615,7 +615,7 @@ export class CsWMSService {
           /* End of 'createImage' overwrite */
 
           // Create a resource which uses our custom proxy
-          const res = new Resource({url: url, proxy: new MyDefaultProxy(me.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=')});
+          const res = new Resource({url: url, proxy: new MyDefaultProxy(me.env.portalBaseUrl + 'getViaProxy.do?url=')});
 
 
           // Force Resource to use 'POST' and our proxy
