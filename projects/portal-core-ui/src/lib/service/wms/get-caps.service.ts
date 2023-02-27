@@ -269,9 +269,9 @@ export class GetCapsService {
     // cut the url from the third \ so we can compare it.
     const tempUrl = serviceUrl.substring(0, index);
     if (from) {
-      serviceUrl = this.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=' + serviceUrl;
+      serviceUrl = this.env.portalBaseUrl + 'getViaProxy.do?url=' + serviceUrl;
     } else {
-      serviceUrl = (urls.indexOf(tempUrl) !== -1) ? this.env.portalBaseUrl + 'getWMSMapViaProxy.do?url=' + serviceUrl : serviceUrl;
+      serviceUrl = (urls.indexOf(tempUrl) !== -1) ? this.env.portalBaseUrl + 'getViaProxy.do?url=' + serviceUrl : serviceUrl;
     }
     return this.http.get(serviceUrl, {params: httpParams, responseType: "text"}).pipe(map(
       (response) => {

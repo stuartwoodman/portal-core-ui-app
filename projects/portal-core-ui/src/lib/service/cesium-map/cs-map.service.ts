@@ -14,6 +14,7 @@ import { CsWMSService } from '../wms/cs-wms.service';
 import { CsWWWService } from '../www/cs-www.service';
 import { ResourceType } from '../../utility/constants.service';
 import { CsIrisService } from '../kml/cs-iris.service';
+import { CsKMLService } from '../kml/cs-kml.service';
 import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, EventResult } from '@auscope/angular-cesium';
 import { Entity, ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle, BingMapsImageryProvider,
          ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection,  SplitDirection } from 'cesium';
@@ -38,9 +39,9 @@ export class CsMapService {
   private splitMapShown = false;
 
   constructor(private layerHandlerService: LayerHandlerService, private csWMSService: CsWMSService,
-    private csWFSService: CsWFSService, private csMapObject: CsMapObject, private manageStateService: ManageStateService,
-    private csCSWService: CsCSWService, private csWWWService: CsWWWService,
-    private csIrisService: CsIrisService, private mapsManagerService: MapsManagerService,
+    private csMapObject: CsMapObject, private manageStateService: ManageStateService,
+    private csCSWService: CsCSWService, private csIrisService: CsIrisService, 
+    private csKMLService: CsKMLService, private mapsManagerService: MapsManagerService,
     @Inject('env') private env, @Inject('conf') private conf)  {
     this.csMapObject.registerClickHandler(this.mapClickHandler.bind(this));
     this.addLayerSubject = new Subject<LayerModel>();
@@ -198,7 +199,7 @@ export class CsMapService {
    * @returns a list of supported OnlineResource types as strings
    */
   public getSupportedOnlineResourceTypes(): ResourceType[] {
-    return [ResourceType.WMS, ResourceType.IRIS];
+    return [ResourceType.WMS, ResourceType.IRIS, ResourceType.KML];
   }
 
   /**
@@ -250,7 +251,7 @@ export class CsMapService {
       this.csWMSService.addLayer(layer, param);
       this.cacheLayerModelList(layer.id, layer);
 
-    // IRIS layer
+    // Add an IRIS layer
     } else if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
       // Remove old existing layer
       if (this.layerExists(layer.id)) {
@@ -259,6 +260,17 @@ export class CsMapService {
       }
       // Add layer
       this.csIrisService.addLayer(layer, param);
+      this.cacheLayerModelList(layer.id, layer);
+    
+    // Add a KML layer
+    } else if (this.layerHandlerService.contains(layer, ResourceType.KML)) {
+      // Remove old existing layer
+      if (this.layerExists(layer.id)) {
+        this.csKMLService.rmLayer(layer);
+        delete this.layerModelList[layer.id];
+      }
+      // Add layer
+      this.csKMLService.addLayer(layer, param);
       this.cacheLayerModelList(layer.id, layer);
 
     // Add a WFS layer to map
@@ -328,6 +340,8 @@ export class CsMapService {
         this.csCSWService.rmLayer(layer);
       } else if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
         this.csIrisService.rmLayer(layer);
+      } else if (this.layerHandlerService.contains(layer, ResourceType.KML)) {
+        this.csKMLService.rmLayer(layer);
       } else {
         this.csWMSService.rmLayer(layer);
       }

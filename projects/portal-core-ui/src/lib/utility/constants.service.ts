@@ -4,18 +4,19 @@ declare var window: any;
 declare var XPathResult: any;
 
 export enum ResourceType {
+  CSWService = "CSWService",
+  FTP = "FTP",
+  IRIS = "IRIS",
+  KML = "KML",
+  NCSS = "NCSS",
+  OPeNDAP = "OPeNDAP",
+  OTHERS = 'OTHERS',
+  SOS = "SOS",
+  UNSUPPORTED = 'Unsupported',
   WMS = "WMS",
   WFS = "WFS",
   WCS = "WCS",
-  WWW = "WWW",
-  OPeNDAP = "OPeNDAP",
-  FTP = "FTP",
-  SOS = "SOS",
-  IRIS = "IRIS",
-  CSWService = "CSWService",
-  NCSS = "NCSS",
-  UNSUPPORTED = 'Unsupported',
-  OTHERS = 'OTHERS'
+  WWW = "WWW"
 }
 
 export enum GeometryType {
