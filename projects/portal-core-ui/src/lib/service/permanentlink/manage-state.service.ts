@@ -26,8 +26,7 @@ export class ManageStateService {
   private layerToExpandBS: BehaviorSubject<string> = new BehaviorSubject<string>(null);
   public readonly layerToExpand = this.layerToExpandBS.asObservable();
 
-  constructor(private csMapObject: CsMapObject, private http: HttpClient, @Inject('env') private env) {
-  }
+  constructor(private csMapObject: CsMapObject, private http: HttpClient, @Inject('env') private env) {}
 
   /**
    * Is the map currently displaying a permanent link?
@@ -101,6 +100,18 @@ export class ManageStateService {
   public getState(): MapState {
     this.state.map = this.csMapObject.getCurrentMapState();
     return this.state;
+  }
+
+  /**
+   * Get the state for an individual layer
+   * @param layerId the ID of the layer
+   * @returns the state of the request layer
+   */
+  public getLayerState(layerId: string) {
+    if (this.state.hasOwnProperty(layerId)) {
+      return this.state[layerId];
+    }
+    return {};
   }
 
   /**
