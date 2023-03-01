@@ -23,7 +23,7 @@ export class LayerModel {
   proxyUrl: string;
   relatedRecords: any;
   singleTile: boolean;
-  staticLegendUrl: boolean;
+  legendImg?: string;
   iconUrl: string;
   filterCollection: any;
   stackdriverFailingHosts: string[];
@@ -34,7 +34,7 @@ export class LayerModel {
   clickCSWRecordsIndex: number[];
   clickPixel: any;
   clickCoord: any;
-  // SplitDirection.[LEFT|RIGHT|NONE], NONE by default, made optional for compatibility
+  // SplitDirection.[LEFT|RIGHT|NONE], NONE by default
   splitDirection?: SplitDirection;
   supportsCsvDownloads: boolean;  // Layer supports downloading, usually feature data in CSV form
 }
