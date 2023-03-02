@@ -4,6 +4,8 @@ import { Injectable } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
 import * as _ from 'lodash';
 import * as $ from 'jquery';
+import { ResourceType } from './constants.service';
+import { LayerModel } from '../../public-api';
 
 declare function unescape(s: string): string;
 declare var Cesium;
@@ -607,6 +609,45 @@ export class UtilitiesService {
     lat4326 = lat4326 / (Math.PI / 360);
     lat4326 = lat4326 - 90;
     return [long4326, lat4326];
+  }
+
+  /**
+   * Find whether a layer contains any online resources of a particular type
+   *
+   * @param layer the layer
+   * @param resourceType the resource type (e.g. 'WMS', 'WFS' etc.)
+   * @returns true if a layer contains a resource of type resourceType, false otherwise
+   */
+  public static layerContainsResourceType(layer: LayerModel, resourceType: ResourceType): boolean {
+    if (layer.cswRecords && layer.cswRecords.length > 0) {
+      for (const record of layer.cswRecords) {
+        if (record.onlineResources && record.onlineResources.length > 0) {
+          if (record.onlineResources.find(r => r.type === resourceType)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Retrieve all resources of a given type for a given layer
+   *
+   * @param layer the layer
+   * @param resourceType the type of online resource (e.g. 'WMS', 'WFS' etc.)
+   * @returns an array of OnlineResourceModels that are of type resourceType
+   */
+  public static getLayerResources(layer: LayerModel, resourceType: ResourceType): OnlineResourceModel[] {
+    let resources: OnlineResourceModel[] = [];
+    if (layer.cswRecords && layer.cswRecords.length > 0) {
+      for (const record of layer.cswRecords) {
+        if (record.onlineResources && record.onlineResources.length > 0) {
+            resources = resources.concat(record.onlineResources.filter(r => r.type === resourceType));
+        }
+      }
+    }
+    return resources;
   }
 
 }
