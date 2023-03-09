@@ -8,10 +8,8 @@ import { LayerModel } from '../../model/data/layer.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
 import { ManageStateService } from '../permanentlink/manage-state.service';
 import { CsCSWService } from '../wcsw/cs-csw.service';
-import { CsWFSService } from '../wfs/cs-wfs.service';
 import { CsMapObject } from './cs-map-object';
 import { CsWMSService } from '../wms/cs-wms.service';
-import { CsWWWService } from '../www/cs-www.service';
 import { ResourceType } from '../../utility/constants.service';
 import { CsIrisService } from '../kml/cs-iris.service';
 import { CsKMLService } from '../kml/cs-kml.service';
@@ -401,6 +399,24 @@ export class CsMapService {
         this.csWMSService.setOpacity(layer, opacity);
       }
     }
+  }
+
+  /**
+   * Test whether a layer supports opacity, currently we only support WMS, WFS and
+   * anything in the cswrenderer list
+   *
+   * @param layer the layer
+   * @returns true if a layer supports opacity, false otherwise
+   */
+  public layerHasOpacity(layer: LayerModel): boolean {
+    if (this.layerExists(layer.id)) {
+      if ((this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) ||
+          UtilitiesService.layerContainsResourceType(layer, ResourceType.WMS) ||
+          UtilitiesService.layerContainsResourceType(layer, ResourceType.WFS)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
