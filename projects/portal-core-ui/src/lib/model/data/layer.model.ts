@@ -16,9 +16,7 @@ export class LayerModel {
   layerMode: string;
   name: string;
   order: string;
-  proxyCountUrl: string;
   proxyDownloadUrl: string;
-  proxyGetFeatureInfoUrl: string;
   proxyStyleUrl: string;
   proxyUrl: string;
   relatedRecords: any;
@@ -36,5 +34,7 @@ export class LayerModel {
   clickCoord: any;
   // SplitDirection.[LEFT|RIGHT|NONE], NONE by default
   splitDirection?: SplitDirection;
-  supportsCsvDownloads: boolean;  // Layer supports downloading, usually feature data in CSV form
+  // Layer supports downloading, usually feature data in CSV form
+  supportsCsvDownloads: boolean;
+  kmlDoc: any; // Document object for custom KML layer
 }

@@ -85,16 +85,16 @@ export class LayerHandlerService {
    * @param serviceUrl WMS URL of service
    * @returns a layer with the retrieved cswrecord wrapped in a layer model.
    */
-  public getCustomLayerRecord(serviceUrl: string): Observable<any> {
+  public getCustomLayerRecord(serviceUrl: string): Observable<LayerModel[]> {
     // Send out a 'GetCapabilities' request
     const retVal = this.getCapsService.getCaps(serviceUrl, "custom").pipe(map((response: { data: { cswRecords: any, capabilityRecords: any }}) => {
           // Create a list of LayerModels using the 'GetCapabilities' response
-          const itemLayers = [];
           if (Object.keys(response).length === 0) {
             return;
           }
-          const cswRecord = response['data']['cswRecords'];          if (cswRecord) {
-            itemLayers['Results'] = [];
+          const itemLayers: LayerModel[] = [];
+          const cswRecord = response['data']['cswRecords'];
+          if (cswRecord) {
             cswRecord.forEach(function (item, i, ar) {
                 const itemLayer = new LayerModel();
                 itemLayer.cswRecords = [item];
@@ -106,12 +106,88 @@ export class LayerHandlerService {
                 itemLayer.name = item.name;
                 itemLayer.splitDirection = SplitDirection.NONE;
                 itemLayer.capabilityRecords = response['data']['capabilityRecords'];
-                itemLayers['Results'].push(itemLayer);
+                itemLayer.kmlDoc = {};
+                itemLayers.push(itemLayer);
             });
           }
           return itemLayers;
         }));
     return retVal;
+  }
+
+  /**
+   * Make a custom KML layer record
+   *  
+   * @param name Name of custom KML layer
+   * @returns LayerModel object
+   */
+  public makeCustomKMLLayerRecord(name: string, kmlDoc: {}): LayerModel {
+    const id = "KML_" + name.substring(0,10) + "_" + Math.floor(Math.random() * 10000).toString();
+    const itemLayer = new LayerModel();
+    const cswRec = this.makeCustomKMLCSWRec(name, id);
+    itemLayer.cswRecords = [cswRec];
+    itemLayer['expanded'] = false;
+    itemLayer.id = id;
+    itemLayer.description = "Because this is a custom KML layer there is no more information to display";
+    itemLayer.hidden = false;
+    itemLayer.layerMode = 'NA';
+    itemLayer.name = name;
+    itemLayer.splitDirection = SplitDirection.NONE;
+    itemLayer.capabilityRecords = {};
+    itemLayer.kmlDoc = kmlDoc;
+    return itemLayer;
+  }
+
+  /**
+   * Make a custom CSW Record with a KML layer inside
+   * 
+   * @param name name of KML layer
+   * @param id KML layer id
+   * @returns CSWRecordModel object
+   */
+  public makeCustomKMLCSWRec(name: string, id: string): CSWRecordModel {
+    const cswRec = new CSWRecordModel();
+    cswRec.adminArea = "";
+    cswRec.childRecords = {};
+    cswRec.constraints = "";
+    cswRec.useLimitConstraints = "";
+    cswRec.accessConstraints = "";
+    cswRec.contactOrg = "";
+    cswRec.funderOrg = "";
+    cswRec.datasetURIs= {};
+    cswRec.date = "";
+    cswRec.description = "";
+    cswRec.descriptiveKeywords = {};
+    cswRec.geographicElements = {};
+    cswRec.id = id;
+    cswRec.name = name;
+    cswRec.noCache = true;
+    const ormRec = this.makeCustomOnlineResourceModel("KML", name);
+    cswRec.onlineResources = [ormRec];
+    cswRec.recordInfoUrl = "";
+    cswRec.resourceProvider= "";
+    cswRec.service = false;
+    cswRec.expanded = false;
+    return cswRec;
+  }
+
+  /**
+   * Make a custom placeholder OnlineResourceModel
+   * @param type layer type (e.g. 'KML', 'WMS' ...)
+   * @param name name of layer
+   * @returns OnlineResourceModel object
+   */
+  public makeCustomOnlineResourceModel(type: string, name: string): OnlineResourceModel {
+    const ormRec = new OnlineResourceModel();
+    ormRec.applicationProfile = "";
+    ormRec.description = "";
+    ormRec.name = name;
+    ormRec.type = type;
+    ormRec.url = name;
+    ormRec.version = "";
+    ormRec.geographicElements = {};
+    ormRec.protocolRequest = "";
+    return ormRec;
   }
 
   /**
@@ -178,7 +254,7 @@ export class LayerHandlerService {
     const uniqueURLSet = new Set<string>();
     for (const cswRecord of cswRecords) {
       for (const onlineResource of cswRecord.onlineResources) {
-        // VT: We really just wanted the extent in the cswRecord so that ol only load whats is in the extent.
+        // VT: We really just wanted the extent in the cswRecord so that map rendering library only loads what is in the extent.
         onlineResource.geographicElements = cswRecord.geographicElements;
         if (resourceType && onlineResource.type === resourceType) {
           if (!uniqueURLSet.has(onlineResource.url)) {

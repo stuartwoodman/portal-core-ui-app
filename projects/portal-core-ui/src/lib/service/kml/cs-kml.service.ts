@@ -10,6 +10,7 @@ import { LayerHandlerService } from '../cswrecords/layer-handler.service';
 import { MapsManagerService } from '@auscope/angular-cesium';
 import { ResourceType } from '../../utility/constants.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
+import { KMLDocService } from './kml.service';
 
 // NB: Cannot use "import { XXX, YYY, ZZZ, Color } from 'cesium';" - it prevents initialising ContextLimits.js properly
 // which causes a 'DeveloperError' when trying to draw the KML 
@@ -25,31 +26,24 @@ export class CsKMLService {
     private http: HttpClient,
     private renderStatusService: RenderStatusService,
     private mapsManagerService: MapsManagerService,
-    @Inject('env') private env) {
+    private kmlService: KMLDocService) {
   }
 
   /**
-   * Downloads KML, cleans it by removing illegal chars and 
-   * forcing proxying of icon images to avoid CORS errors
+   * Downloads KML, cleans it 
    * 
    * @param kmlResource KML resource to be fetched
    * @returns cleaned KML text
    */
   private getKMLFeature(kmlResource: OnlineResourceModel): Observable<any> {
-    return this.http.get(kmlResource.url, { responseType: 'text'}).pipe(map((kmlTxt: string) => {
-      // Removes non-standard chars that can cause errors
-      kmlTxt = kmlTxt.replace(/\016/g, '');
-      kmlTxt = kmlTxt.replace(/\002/g, '');
-      // Inserts our proxy to avoid CORS errors
-      kmlTxt = kmlTxt.replace(/<href>(.*)<\/href>/g, '<href>' + this.env.portalBaseUrl + 'getViaProxy.do?url=$1</href>');
-      return kmlTxt;
+    return this.http.get(kmlResource.url, {responseType: 'text'}).pipe(map((kmlTxt: string) => {
+      return this.kmlService.cleanKML(kmlTxt);
     }), catchError(
       (error: HttpResponse<any>) => {
         return observableThrowError(error);
       }
     ));
   }
-
 
   /**
    * Add the KML layer
@@ -81,21 +75,29 @@ export class CsKMLService {
           me.renderStatusService.updateComplete(layer, onlineResource);
         }
       });
-      // Add KML to map
-      this.getKMLFeature(onlineResource).subscribe((response) => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(response, "text/xml");
-        source.load(doc).then(function (dataSource) {
+      if (layer.kmlDoc) {
+        source.load(layer.kmlDoc).then(function (dataSource) {
           viewer.dataSources.add(dataSource).then(dataSrc => {
             layer.csLayers.push(dataSrc);
           })
         })
-      }, (err) => {
-        alert("Unable to load KML: " + err.message);
-        console.error("Unable to load KML: ", err);
-        // Tell UI that we have completed updating the map & there was an error
-        this.renderStatusService.updateComplete(layer, onlineResource, true);
-      });
+      } else {
+        // Add KML to map
+        this.getKMLFeature(onlineResource).subscribe((response) => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(response, "text/xml");
+          source.load(doc).then(function (dataSource) {
+            viewer.dataSources.add(dataSource).then(dataSrc => {
+              layer.csLayers.push(dataSrc);
+            })
+          })
+        }, (err) => {
+          alert("Unable to load KML: " + err.message);
+          console.error("Unable to load KML: ", err);
+          // Tell UI that we have completed updating the map & there was an error
+          this.renderStatusService.updateComplete(layer, onlineResource, true);
+        });
+      }
     }
   }
 
