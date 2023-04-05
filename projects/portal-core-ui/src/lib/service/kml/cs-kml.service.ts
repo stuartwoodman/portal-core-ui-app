@@ -35,8 +35,9 @@ export class CsKMLService {
    * @param kmlResource KML resource to be fetched
    * @returns cleaned KML text
    */
-  private getKMLFeature(kmlResource: OnlineResourceModel): Observable<any> {
-    return this.http.get(kmlResource.url, {responseType: 'text'}).pipe(map((kmlTxt: string) => {
+  private getKMLFeature(url: string): Observable<any> {
+    return this.http.get(url, {responseType: 'text'}).pipe(map((kmlTxt: string) => {
+      // Remove unwanted characters and inject proxy for embedded URLs
       return this.kmlService.cleanKML(kmlTxt);
     }), catchError(
       (error: HttpResponse<any>) => {
@@ -75,6 +76,8 @@ export class CsKMLService {
           me.renderStatusService.updateComplete(layer, onlineResource);
         }
       });
+
+      // If KML is sourced from a file loaded from a browser ...
       if (layer.kmlDoc) {
         source.load(layer.kmlDoc).then(function (dataSource) {
           viewer.dataSources.add(dataSource).then(dataSrc => {
@@ -82,8 +85,10 @@ export class CsKMLService {
           })
         })
       } else {
+        // If KML was sourced from a URL ...
+
         // Add KML to map
-        this.getKMLFeature(onlineResource).subscribe((response) => {
+        this.getKMLFeature(onlineResource.url).subscribe((response) => {
           const parser = new DOMParser();
           const doc = parser.parseFromString(response, "text/xml");
           source.load(doc).then(function (dataSource) {

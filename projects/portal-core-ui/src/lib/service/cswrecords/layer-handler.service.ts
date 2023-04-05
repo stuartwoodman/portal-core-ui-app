@@ -80,7 +80,8 @@ export class LayerHandlerService {
   }
 
   /**
-   * Retrieve the CSW record located at the WMS serviceurl endpoint.
+   * Retrieve the CSW record located at the WMS serviceurl endpoint using an
+   * OCG WMS GetCapabilities request
    *
    * @param serviceUrl WMS URL of service
    * @returns a layer with the retrieved cswrecord wrapped in a layer model.
@@ -88,30 +89,30 @@ export class LayerHandlerService {
   public getCustomLayerRecord(serviceUrl: string): Observable<LayerModel[]> {
     // Send out a 'GetCapabilities' request
     const retVal = this.getCapsService.getCaps(serviceUrl, "custom").pipe(map((response: { data: { cswRecords: any, capabilityRecords: any }}) => {
-          // Create a list of LayerModels using the 'GetCapabilities' response
-          if (Object.keys(response).length === 0) {
-            return;
-          }
-          const itemLayers: LayerModel[] = [];
-          const cswRecord = response['data']['cswRecords'];
-          if (cswRecord) {
-            cswRecord.forEach(function (item, i, ar) {
-                const itemLayer = new LayerModel();
-                itemLayer.cswRecords = [item];
-                itemLayer['expanded'] = false;
-                itemLayer.id = item.id;
-                itemLayer.description = item.description;
-                itemLayer.hidden = false;
-                itemLayer.layerMode = 'NA';
-                itemLayer.name = item.name;
-                itemLayer.splitDirection = SplitDirection.NONE;
-                itemLayer.capabilityRecords = response['data']['capabilityRecords'];
-                itemLayer.kmlDoc = {};
-                itemLayers.push(itemLayer);
-            });
-          }
-          return itemLayers;
-        }));
+      // Create a list of LayerModels using the 'GetCapabilities' response
+      if (Object.keys(response).length === 0) {
+        return;
+      }
+      const itemLayers: LayerModel[] = [];
+      const cswRecord = response['data']['cswRecords'];
+      if (cswRecord) {
+        cswRecord.forEach(function (item, i, ar) {
+            const itemLayer = new LayerModel();
+            itemLayer.cswRecords = [item];
+            itemLayer['expanded'] = false;
+            itemLayer.id = item.id;
+            itemLayer.description = item.description;
+            itemLayer.hidden = false;
+            itemLayer.layerMode = 'NA';
+            itemLayer.name = item.name;
+            itemLayer.splitDirection = SplitDirection.NONE;
+            itemLayer.capabilityRecords = response['data']['capabilityRecords'];
+            itemLayer.kmlDoc = {};
+            itemLayers.push(itemLayer);
+        });
+      }
+      return itemLayers;
+    }));
     return retVal;
   }
 
@@ -121,10 +122,10 @@ export class LayerHandlerService {
    * @param name Name of custom KML layer
    * @returns LayerModel object
    */
-  public makeCustomKMLLayerRecord(name: string, kmlDoc: {}): LayerModel {
+  public makeCustomKMLLayerRecord(name: string, url: string, kmlDoc: {}): LayerModel {
     const id = "KML_" + name.substring(0,10) + "_" + Math.floor(Math.random() * 10000).toString();
     const itemLayer = new LayerModel();
-    const cswRec = this.makeCustomKMLCSWRec(name, id);
+    const cswRec = this.makeCustomKMLCSWRec(name, id, url);
     itemLayer.cswRecords = [cswRec];
     itemLayer['expanded'] = false;
     itemLayer.id = id;
@@ -145,7 +146,7 @@ export class LayerHandlerService {
    * @param id KML layer id
    * @returns CSWRecordModel object
    */
-  public makeCustomKMLCSWRec(name: string, id: string): CSWRecordModel {
+  public makeCustomKMLCSWRec(name: string, id: string, url: string): CSWRecordModel {
     const cswRec = new CSWRecordModel();
     cswRec.adminArea = "";
     cswRec.childRecords = {};
@@ -162,7 +163,7 @@ export class LayerHandlerService {
     cswRec.id = id;
     cswRec.name = name;
     cswRec.noCache = true;
-    const ormRec = this.makeCustomOnlineResourceModel("KML", name);
+    const ormRec = this.makeCustomOnlineResourceModel("KML", name, url);
     cswRec.onlineResources = [ormRec];
     cswRec.recordInfoUrl = "";
     cswRec.resourceProvider= "";
@@ -177,13 +178,13 @@ export class LayerHandlerService {
    * @param name name of layer
    * @returns OnlineResourceModel object
    */
-  public makeCustomOnlineResourceModel(type: string, name: string): OnlineResourceModel {
+  public makeCustomOnlineResourceModel(type: string, name: string, url: string): OnlineResourceModel {
     const ormRec = new OnlineResourceModel();
     ormRec.applicationProfile = "";
     ormRec.description = "";
     ormRec.name = name;
     ormRec.type = type;
-    ormRec.url = name;
+    ormRec.url = url;
     ormRec.version = "";
     ormRec.geographicElements = {};
     ormRec.protocolRequest = "";
