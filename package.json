@@ -1,6 +1,6 @@
 {
   "name": "@auscope/portal-core-ui",
-  "version": "1.0.62",
+  "version": "1.0.67",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
