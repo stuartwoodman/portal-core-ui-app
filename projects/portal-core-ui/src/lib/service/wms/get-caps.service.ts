@@ -224,10 +224,12 @@ export class GetCapsService {
     }
 
   /**
-   * Retrieve the csw record located at the WMS serviceurl endpoint.
+   * Retrieve the CSW record located at the WMS serviceurl endpoint.
    * Currently only supports v1.3.0
    *
-   * @Return a layer with the retrieved cswrecord wrapped in a layer model.
+   * @param serviceUrl The URL that is to be to be proxied
+   * @param from If 'from' is defined then use the proxy
+   * @Return A layer with the retrieved cswrecord wrapped in a layer model.
    */
   public getCaps(serviceUrl: string, from?: string): Observable<any> {
     const METADATA_URL = "string(//xsi:MetadataURL/xsi:OnlineResource/@*[local-name()='href'])";
@@ -249,8 +251,8 @@ export class GetCapsService {
       serviceUrl = serviceUrl.substring(0, paramIndex);
     }
 
+    // Assemble 'GetCapabilities' parameters
     const httpParams = new HttpParams()
-      .append('request', 'GetCapabilities')
       .append('version', version)
       .append('service', service);
 
@@ -258,21 +260,25 @@ export class GetCapsService {
     if (serviceUrl.indexOf("http") !== 0) {
       serviceUrl = "http://" + serviceUrl;
     }
-    // get the urls that need proxy
+    // Get the urls that need proxy
     const urls = this.env.hasOwnProperty('urlNeedProxy') ? this.env.urlNeedProxy : [];
-    // find the index of \ in url
+    // Find the index of \ in url
     let index = serviceUrl.indexOf("\/");
     for (let i = 0; i < 2; i++) {
-      // find the third \ in url
+      // Find the third \ in url
       index = serviceUrl.indexOf("\/", index + 1);
     }
-    // cut the url from the third \ so we can compare it.
+    // Cut the url from the third \ so we can compare it.
     const tempUrl = serviceUrl.substring(0, index);
     if (from) {
+      // If 'from' is defined then use the proxy
       serviceUrl = this.env.portalBaseUrl + 'getViaProxy.do?url=' + serviceUrl;
     } else {
+      // If the url is in the 'urlNeedProxy' list then add proxy
       serviceUrl = (urls.indexOf(tempUrl) !== -1) ? this.env.portalBaseUrl + 'getViaProxy.do?url=' + serviceUrl : serviceUrl;
     }
+    // Add in the remaining 'request' parameter with a leading '?'
+    serviceUrl += '?request=GetCapabilities';
     return this.http.get(serviceUrl, {params: httpParams, responseType: "text"}).pipe(map(
       (response) => {
           const rootNode = SimpleXMLService.parseStringToDOM(response);
