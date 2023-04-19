@@ -32,7 +32,6 @@
       }
     }
   },
-  "defaultProject": "portal-core-ui",
   "cli": {
     "analytics": false
   }
