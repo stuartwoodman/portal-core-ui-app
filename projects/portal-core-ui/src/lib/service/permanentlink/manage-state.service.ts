@@ -55,13 +55,13 @@ export class ManageStateService {
   public addLayer(layerid: string, currentTime: Date, filterCollection: any, optionalFilters: any, advancedFilter: any) {
     if (!filterCollection && !advancedFilter) {
       this.state[layerid] = { filterCollection: {}, optionalFilters: [] };
-      return;
+    } else {
+      this.state[layerid] = {
+        filterCollection: filterCollection,
+        optionalFilters: optionalFilters,
+        advancedFilter: advancedFilter
+      };
     }
-    this.state[layerid] = {
-      filterCollection: filterCollection,
-      optionalFilters: optionalFilters,
-      advancedFilter: advancedFilter
-    };
     if (currentTime) {
       this.state[layerid].time = currentTime;
     }
