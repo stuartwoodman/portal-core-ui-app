@@ -17,6 +17,7 @@ import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, 
 import { Entity, ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle, BingMapsImageryProvider,
          ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection,  SplitDirection } from 'cesium';
 import { UtilitiesService } from '../../utility/utilities.service';
+import ImageryLayerCollection from 'cesium/Source/Scene/ImageryLayerCollection';
 declare var Cesium: any;
 
 /**
@@ -26,7 +27,7 @@ declare var Cesium: any;
 export class CsMapService {
 
   // VT: a storage to keep track of the layers that have been added to the map. This is use to handle click events.
-  private layerModelList: Map<string, LayerModel> = new Map<string, LayerModel>();
+  private layerModelList: Array<LayerModel> = new Array<LayerModel>();
   private addLayerSubject: Subject<LayerModel>;
 
   private clickedLayerListBS = new BehaviorSubject<any>({});
@@ -127,13 +128,10 @@ export class CsMapService {
       // Create a GeoJSON point
       const clickPoint = point([lon, lat]);
       // Compile a list of clicked on layers
-      const activeLayers = this.layerModelList;
       const clickedLayerList: LayerModel[] = [];
 
       // tslint:disable-next-line:forin
-      for (const layerId in activeLayers) {
-        const layerModel = activeLayers[layerId];
-
+      for (const layerModel of this.layerModelList) {
         if (!me.layerHandlerService.contains(layerModel, ResourceType.WMS) &&
             !me.layerHandlerService.contains(layerModel, ResourceType.WWW)) {
           continue;
@@ -158,7 +156,8 @@ export class CsMapService {
 
           // Expand the bbox slightly to make it easy to select features on the boundary
           const margin = 0.05;
-          const poly = bboxPolygon([bbox.westBoundLongitude - margin, bbox.southBoundLatitude - margin, bbox.eastBoundLongitude + margin, bbox.northBoundLatitude + margin]);
+          const poly = bboxPolygon([bbox.westBoundLongitude - margin, bbox.southBoundLatitude - margin,
+                                    bbox.eastBoundLongitude + margin, bbox.northBoundLatitude + margin]);
           if (booleanPointInPolygon(clickPoint, poly)) {
             // Add to list of clicked layers
             layerModel.clickPixel = [pixel.x, pixel.y];
@@ -224,65 +223,39 @@ export class CsMapService {
   public addLayer(layer: LayerModel, param: any): void {
     // initiate csLayers to prevent undefined errors
     if (!layer.csLayers) {
-       layer.csLayers = [];
+      layer.csLayers = [];
     }
-    this.csMapObject.removeLayerById(layer.id);
-    // Add a CSW layer to map
+    // Remove layer if already present
+    if (this.layerExists(layer.id)) {
+      this.removeLayer(layer);
+    }
+    // Add layer depending on type
     if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
-      // Remove old existing layer
-      if (this.layerExists(layer.id)) {
-        this.csCSWService.rmLayer(layer);
-        delete this.layerModelList[layer.id];
-      }
-      // Add layer
+      // Add a CSW layer to map
       this.csCSWService.addLayer(layer, param);
-      this.cacheLayerModelList(layer.id, layer);
-
-    // Add a WMS layer to map
+      this.cacheLayerModelList(layer);
     } else if (this.layerHandlerService.contains(layer, ResourceType.WMS)) {
-      // Remove old existing layer
-      if (this.layerExists(layer.id)) {
-        this.csWMSService.rmLayer(layer);
-        delete this.layerModelList[layer.id];
-      }
-      // Add layer
+      // Add a WMS layer to map
       this.csWMSService.addLayer(layer, param);
-      this.cacheLayerModelList(layer.id, layer);
-
-    // Add an IRIS layer
+      this.cacheLayerModelList(layer);
     } else if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
-      // Remove old existing layer
-      if (this.layerExists(layer.id)) {
-        this.csIrisService.rmLayer(layer);
-        delete this.layerModelList[layer.id];
-      }
-      // Add layer
+      // Add an IRIS layer
       this.csIrisService.addLayer(layer, param);
-      this.cacheLayerModelList(layer.id, layer);
-    
-    // Add a KML layer
+      this.cacheLayerModelList(layer);
     } else if (this.layerHandlerService.contains(layer, ResourceType.KML)) {
-      // Remove old existing layer
-      if (this.layerExists(layer.id)) {
-        this.csKMLService.rmLayer(layer);
-        delete this.layerModelList[layer.id];
-      }
-      // Add layer
+      // Add a WMS layer to map
       this.csKMLService.addLayer(layer, param);
-      this.cacheLayerModelList(layer.id, layer);
-
-    // Add a WFS layer to map
+      this.cacheLayerModelList(layer);
     } else if (this.layerHandlerService.contains(layer, ResourceType.WFS)) {
+      // Add a WFS layer to map
       // FIXME this.csWFSService.addLayer(layer, param);
       // FIXME this.layerModelList[layer.id] = layer;
       // TODO: Add to getSupportedOnlineResourceTypes() when supported
-
-     // Add a WWW layer to map
     } else if (this.layerHandlerService.contains(layer, ResourceType.WWW)) {
+      // Add a WWW layer to map
       // FIXME this.csWWWService.addLayer(layer, param);
       // FIXME this.layerModelList[layer.id] = layer;
       // TODO: Add to getSupportedOnlineResourceTypes() when supported
-
     } else {
       throw new Error('No Suitable service found');
     }
@@ -290,11 +263,15 @@ export class CsMapService {
 
   /**
    * Add new layer to layer model list
-   * @param id layer id
    * @param layer layer
    */
-  private cacheLayerModelList(id: string, layer: LayerModel) {
-    this.layerModelList[layer.id] = layer;
+  private cacheLayerModelList(layer: LayerModel) {
+    const existingLayerIndex = this.layerModelList.findIndex(l => l.id === layer.id);
+    if (existingLayerIndex === -1) {
+      this.layerModelList.push(layer);
+    } else {
+      this.layerModelList[existingLayerIndex] = layer;
+    }
     this.addLayerSubject.next(layer);
   }
 
@@ -304,7 +281,7 @@ export class CsMapService {
     *  this is to support custom layer renderer such as iris that uses kml
     */
    public appendToLayerModelList(layer) {
-     this.cacheLayerModelList(layer.id, layer);
+     this.cacheLayerModelList(layer);
    }
 
   /**
@@ -312,20 +289,20 @@ export class CsMapService {
    * @param layer the layer to add to the map
    */
    public addCSWRecord(cswRecord: CSWRecordModel): void {
-        const itemLayer = new LayerModel();
-        itemLayer.cswRecords = [cswRecord];
-        itemLayer['expanded'] = false;
-        itemLayer.id = cswRecord.id;
-        itemLayer.description = cswRecord.description;
-        itemLayer.hidden = false;
-        itemLayer.layerMode = 'NA';
-        itemLayer.name = cswRecord.name;
-        itemLayer.splitDirection = SplitDirection.NONE;
-        try {
-            this.addLayer(itemLayer, {});
-        } catch (error) {
-            throw error;
-        }
+    const itemLayer = new LayerModel();
+    itemLayer.cswRecords = [cswRecord];
+    itemLayer['expanded'] = false;
+    itemLayer.id = cswRecord.id;
+    itemLayer.description = cswRecord.description;
+    itemLayer.hidden = false;
+    itemLayer.layerMode = 'NA';
+    itemLayer.name = cswRecord.name;
+    itemLayer.splitDirection = SplitDirection.NONE;
+    try {
+      this.addLayer(itemLayer, {});
+    } catch (error) {
+      throw error;
+    }
    }
 
   /**
@@ -333,17 +310,29 @@ export class CsMapService {
    * @param layer the layer to remove from the map
    */
   public removeLayer(layer: LayerModel): void {
-      this.manageStateService.removeLayer(layer.id);
-      if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
-        this.csCSWService.rmLayer(layer);
-      } else if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
-        this.csIrisService.rmLayer(layer);
-      } else if (this.layerHandlerService.contains(layer, ResourceType.KML)) {
-        this.csKMLService.rmLayer(layer);
-      } else {
-        this.csWMSService.rmLayer(layer);
-      }
-      delete this.layerModelList[layer.id];
+    this.csMapObject.removeLayerById(layer.id);
+    this.manageStateService.removeLayer(layer.id);
+    if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
+      this.csCSWService.rmLayer(layer);
+    } else if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
+      this.csIrisService.rmLayer(layer);
+    } else if (this.layerHandlerService.contains(layer, ResourceType.KML)) {
+      this.csKMLService.rmLayer(layer);
+    } else {
+      this.csWMSService.rmLayer(layer);
+    }
+    this.layerModelList = this.layerModelList.filter(l => l.id !== layer.id);
+  }
+
+  /**
+   * Remove a layer by its ID
+   * @param layerId the layer ID
+   */
+  removeLayerById(layerId: string) {
+    const layer = this.layerModelList.find(l => l.id === layerId);
+    if (layer) {
+      this.removeLayer(layer);
+    }
   }
 
   /**
@@ -351,10 +340,7 @@ export class CsMapService {
    * @param layerId layer's id string
    */
   public getLayerModel(layerId: string): LayerModel {
-      if (this.layerModelList.hasOwnProperty(layerId)) {
-          return this.layerModelList[layerId];
-      }
-      return null;
+    return this.layerModelList.find(layer => layer.id === layerId);
   }
 
   /**
@@ -362,11 +348,7 @@ export class CsMapService {
    * @param layerId the ID of the layer to check for
    */
   public layerExists(layerId: string): boolean {
-    if (layerId in this.layerModelList) {
-      return true;
-    } else {
-      return false;
-    }
+    return (this.layerModelList.find(layer => layer.id === layerId) !== undefined);
   }
 
   /**
@@ -375,8 +357,7 @@ export class CsMapService {
    * @returns the LayerModel containing the Cesium
    */
   public getLayerForEntity(entity: Entity): LayerModel {
-    for (const key of Object.keys(this.layerModelList)) {
-      const layer = this.layerModelList[key];
+    for (const layer of this.layerModelList) {
       for (const csLayer of layer.csLayers) {
           if (csLayer.entities && csLayer.entities.values.indexOf(entity) !== -1) {
               return layer;
@@ -422,7 +403,7 @@ export class CsMapService {
   /**
    * Retrieve the active layer list
    */
-  public getLayerModelList(): Map<string, LayerModel> {
+  public getLayerModelList(): Array<LayerModel> {
     return this.layerModelList;
   }
 
@@ -629,6 +610,75 @@ export class CsMapService {
    */
   public setSplitMapShown(splitMapShown: boolean) {
     this.splitMapShown = splitMapShown;
+  }
+
+  /**
+   * Retrieve the index of the layer within the layerModelList. That is, the list of top-level layers,
+   * not the csLayers that comprise a top-level layer.
+   * @param layerId the ID of the layer
+   * @returns th eindex of the layer within the layerModelList, or -1 if the layer cannot be found
+   */
+  public getLayerIndex(layerId: string): number {
+    return this.layerModelList.indexOf(this.layerModelList.find(l => l.id === layerId));
+  }
+
+  /**
+   * Get a list of array inices for a LayerModel's csLayers within the Viewer's ImageryLayerCollection
+   * @param layer the layer
+   * @returns an array of integers representing the indices of the various csLayers in the ImageryLayerCollection
+   */
+  private getCsLayerPositionsForLayer(layer: LayerModel): number[] {
+    const layerIndices: number[] = [];
+    if (layer) {
+      const imageryCollection: ImageryLayerCollection = this.getViewer().imageryLayers;
+      for (const csLayer of layer.csLayers) {
+        const idx = imageryCollection.indexOf(csLayer);
+        if (idx !== -1) {
+          layerIndices.push(idx);
+        }
+      }
+      // Not sure if sorting is necessary, but will ensure top and bottom positions are easily identifiable
+      layerIndices.sort((a, b) => {
+        return a - b;
+      });
+    }
+    return layerIndices;
+  }
+
+  /**
+   * Move layer a layer to specific position in the layersModelList
+   *
+   * @param fromIndex from index within the layersModelList. Note that this may contain multiple imagery layers (LayerModel.csLayers).
+   * @param toIndex to index within the layersModelList. Note that this may contain multiple imagery layers (LayerModel.csLayers).
+   */
+  public moveLayer(fromIndex: number, toIndex: number) {
+    const fromLayer = this.layerModelList[fromIndex];
+    const toLayer = this.layerModelList[toIndex];
+    // Move layer in layerModelList
+    this.layerModelList.splice(toIndex, 0, this.layerModelList.splice(fromIndex, 1)[0]);
+    // Move Cesium layers
+    const fromCesiumLayerIndices: number[] = this.getCsLayerPositionsForLayer(fromLayer);
+    const toCesiumLayerIndices: number[] = this.getCsLayerPositionsForLayer(toLayer);
+    const imageryCollection: ImageryLayerCollection = this.getViewer().imageryLayers;
+    // If fromIndex greater, lower the layer, else raise
+    if (fromIndex > toIndex) {
+      const layerPositionsToMove = fromCesiumLayerIndices[0] - toCesiumLayerIndices[0];
+      for (const i of fromCesiumLayerIndices) {
+        const layerToMove = imageryCollection.get(i);
+        for (let j = 0; j < layerPositionsToMove; j++) {
+          imageryCollection.lower(layerToMove);
+        }
+      }
+    } else {
+      const layerPositionsToMove = toCesiumLayerIndices[toCesiumLayerIndices.length - 1] -
+                                   fromCesiumLayerIndices[fromCesiumLayerIndices.length - 1];
+      for (let i = fromCesiumLayerIndices.length - 1; i >= 0; i--) {
+        const layerToMove = imageryCollection.get(fromCesiumLayerIndices[i]);
+        for (let j = 0; j < layerPositionsToMove; j++) {
+          imageryCollection.raise(layerToMove);
+        }
+      }
+    }
   }
 
 }

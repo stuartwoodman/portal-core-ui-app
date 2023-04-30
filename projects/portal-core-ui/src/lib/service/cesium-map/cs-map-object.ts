@@ -143,7 +143,7 @@ export class CsMapObject {
   }
 
   /**
-   * Add an layer to the map. At the same time keep a reference map of the layers
+   * Add a layer to the map. At the same time keep a reference map of the layers
    * @param layer: the layer to add to map
    * @param id the layer id is used
    */

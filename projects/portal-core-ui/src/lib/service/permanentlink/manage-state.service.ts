@@ -95,9 +95,9 @@ export class ManageStateService {
 
   /**
    * Return the current state
-   * @return return the state as a MapState object
+   * @return return the state as a JSON object
    */
-  public getState(): MapState {
+  public getState(): any {
     this.state.map = this.csMapObject.getCurrentMapState();
     return this.state;
   }
