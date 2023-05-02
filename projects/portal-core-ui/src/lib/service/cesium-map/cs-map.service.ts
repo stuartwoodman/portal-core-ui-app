@@ -132,8 +132,8 @@ export class CsMapService {
 
       // tslint:disable-next-line:forin
       for (const layerModel of this.layerModelList) {
-        if (!me.layerHandlerService.contains(layerModel, ResourceType.WMS) &&
-            !me.layerHandlerService.contains(layerModel, ResourceType.WWW)) {
+        if (!UtilitiesService.layerContainsResourceType(layerModel, ResourceType.WMS) &&
+            !UtilitiesService.layerContainsResourceType(layerModel, ResourceType.WWW)) {
           continue;
         }
         const cswRecords = layerModel.cswRecords;
@@ -209,7 +209,7 @@ export class CsMapService {
       return true;
     }
     for (const resourceType of this.getSupportedOnlineResourceTypes()) {
-      if (this.layerHandlerService.contains(layer, resourceType)) {
+      if (UtilitiesService.layerContainsResourceType(layer, resourceType)) {
         return true;
       }
     }
@@ -234,24 +234,24 @@ export class CsMapService {
       // Add a CSW layer to map
       this.csCSWService.addLayer(layer, param);
       this.cacheLayerModelList(layer);
-    } else if (this.layerHandlerService.contains(layer, ResourceType.WMS)) {
+    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WMS)) {
       // Add a WMS layer to map
       this.csWMSService.addLayer(layer, param);
       this.cacheLayerModelList(layer);
-    } else if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
+    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.IRIS)) {
       // Add an IRIS layer
       this.csIrisService.addLayer(layer, param);
       this.cacheLayerModelList(layer);
-    } else if (this.layerHandlerService.contains(layer, ResourceType.KML)) {
+    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KML)) {
       // Add a WMS layer to map
       this.csKMLService.addLayer(layer, param);
       this.cacheLayerModelList(layer);
-    } else if (this.layerHandlerService.contains(layer, ResourceType.WFS)) {
+    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WFS)) {
       // Add a WFS layer to map
       // FIXME this.csWFSService.addLayer(layer, param);
       // FIXME this.layerModelList[layer.id] = layer;
       // TODO: Add to getSupportedOnlineResourceTypes() when supported
-    } else if (this.layerHandlerService.contains(layer, ResourceType.WWW)) {
+    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WWW)) {
       // Add a WWW layer to map
       // FIXME this.csWWWService.addLayer(layer, param);
       // FIXME this.layerModelList[layer.id] = layer;
@@ -314,9 +314,9 @@ export class CsMapService {
     this.manageStateService.removeLayer(layer.id);
     if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
       this.csCSWService.rmLayer(layer);
-    } else if (this.layerHandlerService.contains(layer, ResourceType.IRIS)) {
+    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.IRIS)) {
       this.csIrisService.rmLayer(layer);
-    } else if (this.layerHandlerService.contains(layer, ResourceType.KML)) {
+    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KML)) {
       this.csKMLService.rmLayer(layer);
     } else {
       this.csWMSService.rmLayer(layer);

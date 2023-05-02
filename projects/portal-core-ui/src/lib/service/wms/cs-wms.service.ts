@@ -416,7 +416,7 @@ export class CsWMSService {
       const browserInfo = this.deviceService.getDeviceInfo();
       const viewer = this.map.getCesiumViewer();
       const me = this;
-      if (this.layerHandlerService.contains(layer, ResourceType.WMS)) {
+      if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WMS)) {
         // WMS tile loading callback function, numLeft = number of tiles left to load
         const tileLoading = (numLeft: number) => {
           if (numLeft === 0) {
