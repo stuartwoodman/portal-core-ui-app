@@ -8,11 +8,10 @@ export class LayerModel {
   cswRecords: CSWRecordModel[];
   capabilityRecords: any;
   description: string;
-  feature_count: number;
   group: string;
   hidden: boolean;
   id: string;
-  csLayers: any;
+  csLayers: any[];
   layerMode: string;
   name: string;
   order: string;
