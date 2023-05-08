@@ -232,10 +232,10 @@
   resolved "https://registry.npmjs.org/@assemblyscript/loader/-/loader-0.10.1.tgz"
   integrity sha512-H71nDOOL8Y7kWRLqf6Sums+01Q5msqBW2KhDUTemh1tvY04eSkSXrK0uj/4mmY0Xr16/3zyZmsrxN7CKuRbNRg==
 
-"@auscope/angular-cesium@^15.0.0":
-  version "15.0.0"
-  resolved "https://registry.npmjs.org/@auscope/angular-cesium/-/angular-cesium-15.0.0.tgz"
-  integrity sha512-mBmu7atNVL5kIbdaMuhAqCSLlyqmvlw+4KmSEfKtoPz5iDqPo8w9BInDyJ0Ap8Tk/iwdG8uwdBH0iraWVCRP9g==
+"@auscope/angular-cesium@^15.0.1":
+  version "15.0.1"
+  resolved "https://registry.npmjs.org/@auscope/angular-cesium/-/angular-cesium-15.0.1.tgz"
+  integrity sha512-BjwY39+Vcu8W/uAcKs8ZyMGt1jc7P/uKimfI2hbxOAYYx/9pCQYwxAvij1Ky5UkPDwkrUJiL8IMcM2C+p4/08A==
   dependencies:
     "@auscope/angular2parse" "^4.0.0"
     "@types/geodesy" "^1.1.3"
@@ -2444,7 +2444,7 @@ caseless@~0.12.0:
   resolved "https://registry.npmjs.org/caseless/-/caseless-0.12.0.tgz"
   integrity sha512-4tYFyifaFfGacoiObjJegolkwSU4xQNGbVgUiNYVUxbQ2x2lUsFvY4hVgVzGiIe6WLOPqycWXA40l+PWsxthUw==
 
-"cesium@>= 1.93.0", cesium@1.93.0:
+cesium@1.93.0:
   version "1.93.0"
   resolved "https://registry.npmjs.org/cesium/-/cesium-1.93.0.tgz"
   integrity sha512-y5+KkISn3+0MZxGj96mNaZc5LAfpiOs1fmZCInH2xHwYw43FaaRbvdSHXZs8OwJ5dZIlo/m1biMyOKr354L+UA==
