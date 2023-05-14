@@ -54,26 +54,31 @@ export class DownloadWfsService {
    * @param datasetURL feature name which holds the URLs to download
    * @returns Observable of response
    */
-  public downloadDatasetURL(layer: LayerModel, bbox: Bbox, filter: string, datasetURL : string = 'datasetURL'): Observable<any> {
+  public downloadDatasetURL(layer: LayerModel, bbox: Bbox, filter: string, datasetURL: string, skipGsmlpShapeProperty: boolean): Observable<any> {
     try {
       const wfsResources = this.layerHandlerService.getWFSResource(layer);
       if (this.env.googleAnalyticsKey && typeof gtag === 'function') {
         gtag('event', 'DatasetDownload',  {'event_category': 'DatasetDownload', 'event_action': layer.id });
       }
-
+      let skipShapeProperty = false;
+      if (skipGsmlpShapeProperty) {
+        skipShapeProperty = true;
+      }
       let httpParams = new HttpParams();
       httpParams = httpParams.set('outputFormat', 'csv');
-      httpParams = httpParams.set("serviceUrl", encodeURI(wfsResources[0].url))
-                              .set("typeName", wfsResources[0].name)
-                              .set("maxFeatures", 10000)
-                              .set("outputFormat", 'json')
-                              .set("bbox", bbox ? JSON.stringify(bbox) : '')
-                              .set("filter", "");
+      httpParams = httpParams.set('serviceUrl', encodeURI(wfsResources[0].url))
+                              .set('typeName', wfsResources[0].name)
+                              .set('maxFeatures', 10000)
+                              .set('outputFormat', 'json')
+                              .set('bbox', bbox ? JSON.stringify(bbox) : '')
+                              .set('filter', '')
+                              .set('skipGsmlpShapeProperty', skipShapeProperty);
+      
       // Call WFS GetFeature to find the dataset URLs
       return this.http.get(this.env.portalBaseUrl + "doBoreholeViewFilter.do", { params: httpParams}).pipe(
         timeoutWith(300000, observableThrowError(new Error('Request has timed out after 5 minutes'))),
         // 'mergeMap' can be used when you want to create nested observables
-        mergeMap((response) => {  
+        mergeMap((response) => {
           if (response['success'] === true) {
             // Extract dataset URLs from JSON feature data
             const urlList: string[] = [];
@@ -81,7 +86,11 @@ export class DownloadWfsService {
             if (json_data['type'] === 'FeatureCollection') {
               for (const feature of json_data['features']) {
                   if (feature.properties.hasOwnProperty(datasetURL)) {
-                    urlList.push(feature.properties.datasetURL);
+
+                    const dsetUrl = feature.properties[datasetURL];
+                    console.log('dsetUrl: ' + dsetUrl);
+                    urlList.push(dsetUrl);
+                    //urlList.push(feature.properties.datasetURL);
                   }
               }
             }
