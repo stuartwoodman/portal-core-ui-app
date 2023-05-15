@@ -54,19 +54,6 @@ export class CsMapService {
     const clickEvent = mapEventManager.register(eventRegistration).subscribe((result) => {
       this.mapClickHandler(result);
     });
-
-    //setTimeout(() => {
-      Cesium.subscribeAndEvaluate(this.getViewer().baseLayerPicker.viewModel, 'selectedImagery', imagery => {
-        console.log(JSON.stringify(imagery));
-    //}, 100);
-
-    }, 100);
-    
-    /*
-    this.getViewer().baseLayerPicker.viewModel.selectedImagery.subscribe(imagery => {
-      console.log(JSON.stringify(imagery));
-    });
-    */
   }
 
   /**
