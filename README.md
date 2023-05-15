@@ -106,6 +106,20 @@ Note: I've yet to test where a deployed package puts these files, will update th
 
 ### Deploying the package 
 
-To publish a new version, make sure you have incremented both the version number in both the project's package.json file as well as the library's package.json file.
-
 After each push, Github Actions will automatically publish the new version into [npmjs](https://www.npmjs.com/package/@auscope/portal-core-ui).
+
+If you have to publish manually:
+
+First make sure you have incremented both the version number in both the project's package.json file as well as the library's package.json file. Use 'npm version' command to increment package versions
+
+Then, e.g. for version 1.2.3 on master branch
+```
+git commit
+git tag -a v1.2.3 - m "Version 1.2.3"
+git push --tags origin master
+ng build portal-core-ui --configuration production
+cd dist/portal-core-ui
+npm publish
+```
+
+
