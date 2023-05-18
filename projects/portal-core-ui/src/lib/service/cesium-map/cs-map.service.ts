@@ -468,7 +468,6 @@ export class CsMapService {
    * Create a list of base maps from the environment file
    */
   public createBaseMapLayers(): any[] {
-    const me = this;
     const baseMapLayers: any[] = [];
     for (const layer of this.env.baseMapLayers) {
       if (layer.layerType === 'OSM') {
@@ -511,7 +510,7 @@ export class CsMapService {
             creationFunction() {
               return new BingMapsImageryProvider({
                 url: 'https://dev.virtualearth.net',
-                key: me.env.bingMapsKey,
+                key: this.env.bingMapsKey,
                 mapStyle: bingMapsStyle,
                 // defaultAlpha: 1.0,
               });
@@ -558,19 +557,6 @@ export class CsMapService {
             creationFunction() {
               return new ArcGisMapServerImageryProvider({
                 url: esriUrl,
-              });
-            },
-          })
-        );
-      } else if (layer.layerType === 'NEII') {
-        baseMapLayers.push(
-          new ProviderViewModel({
-            name: layer.viewValue,
-            iconUrl: buildModuleUrl('Widgets/Images/ImageryProviders/naturalEarthII.png'),
-            tooltip: layer.tooltip,
-            creationFunction() {
-              return new TileMapServiceImageryProvider({
-                url: buildModuleUrl('Assets/Textures/NaturalEarthII'),
               });
             },
           })
