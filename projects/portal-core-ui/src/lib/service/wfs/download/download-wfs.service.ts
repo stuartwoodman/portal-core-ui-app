@@ -51,19 +51,18 @@ export class DownloadWfsService {
    * @param bbox the bounding box of the area to download
    * @param filter WFS filter parameter
    * @param datasetURL feature name which holds the URLs to download
+   * @param omitGsmlpShapeProperty if true the gsmlp:shape property will be excluded from the download filter
+   *                               (can cause problems with GADDS 2.0)
    * @returns Observable of response
    */
   public downloadDatasetURL(layer: LayerModel, bbox: Bbox, filter: string, datasetURL: string,
-                            skipGsmlpShapeProperty: boolean): Observable<any> {
+                            omitGsmlpShapeProperty: boolean): Observable<any> {
     try {
       const wfsResources = this.layerHandlerService.getWFSResource(layer);
       if (this.env.googleAnalyticsKey && typeof gtag === 'function') {
-        gtag('event', 'DatasetDownload',  {'event_category': 'DatasetDownload', 'event_action': layer.id });
+        gtag('event', 'DatasetDownload',  { 'event_category': 'DatasetDownload', 'event_action': layer.id });
       }
-      let skipShapeProperty = false;
-      if (skipGsmlpShapeProperty) {
-        skipShapeProperty = true;
-      }
+      omitGsmlpShapeProperty = omitGsmlpShapeProperty !== undefined ? omitGsmlpShapeProperty : false;
       let httpParams = new HttpParams();
       httpParams = httpParams.set('outputFormat', 'csv');
       httpParams = httpParams.set('serviceUrl', encodeURI(wfsResources[0].url))
@@ -72,18 +71,18 @@ export class DownloadWfsService {
                              .set('outputFormat', 'json')
                              .set('bbox', bbox ? JSON.stringify(bbox) : '')
                              .set('filter', '')
-                             .set('skipGsmlpShapeProperty', skipShapeProperty);
+                             .set('omitGsmlpShapeProperty', omitGsmlpShapeProperty);
       // Call WFS GetFeature to find the dataset URLs
-      return this.http.get(this.env.portalBaseUrl + "doBoreholeViewFilter.do", { params: httpParams}).pipe(
+      return this.http.get(this.env.portalBaseUrl + 'doBoreholeViewFilter.do', { params: httpParams}).pipe(
         timeoutWith(300000, observableThrowError(new Error('Request has timed out after 5 minutes'))),
         // 'mergeMap' can be used when you want to create nested observables
         mergeMap((response) => {
           if (response['success'] === true) {
             // Extract dataset URLs from JSON feature data
             const urlList: string[] = [];
-            const json_data = JSON.parse(response['data']['gml']);
-            if (json_data['type'] === 'FeatureCollection') {
-              for (const feature of json_data['features']) {
+            const jsonData = JSON.parse(response['data']['gml']);
+            if (jsonData['type'] === 'FeatureCollection') {
+              for (const feature of jsonData['features']) {
                   if (feature.properties.hasOwnProperty(datasetURL)) {
                     urlList.push(feature.properties[datasetURL]);
                   }
@@ -97,7 +96,7 @@ export class DownloadWfsService {
         })
       );
     } catch (e) {
-      console.error("Download error:", e);
+      console.error('Download error: ', e);
       return observableThrowError(e);
     }
   }
@@ -111,7 +110,7 @@ export class DownloadWfsService {
 
   /**
    * Download the TsgFileUrls from qurey result of a bbox or polygon filter
-   * 
+   *
    * @param layer the layer to download
    * @param bbox the bounding box of the area to download
    * @param polygonFilter WFS filter parameter
@@ -147,7 +146,7 @@ export class DownloadWfsService {
         }
 
         return this.http.post(this.env.portalBaseUrl + 'downloadTsgFiles.do', httpParams.toString(), {
-          headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'), 
+          headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'),
           responseType: 'text'
         }).pipe(timeoutWith(360000, observableThrowError(new Error('Request have timeout out after 6 minutes'))),
           map((response) => { // download file
@@ -170,6 +169,7 @@ export class DownloadWfsService {
         return observableThrowError(error);
     }), );
   }
+
   /**
    * Download a TSG file
    *
