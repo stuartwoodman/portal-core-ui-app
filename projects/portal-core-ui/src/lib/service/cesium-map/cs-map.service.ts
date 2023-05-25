@@ -5,7 +5,6 @@ import { point } from '@turf/helpers';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import bboxPolygon from '@turf/bbox-polygon';
 import { LayerModel } from '../../model/data/layer.model';
-import { LayerHandlerService } from '../cswrecords/layer-handler.service';
 import { ManageStateService } from '../permanentlink/manage-state.service';
 import { CsCSWService } from '../wcsw/cs-csw.service';
 import { CsMapObject } from './cs-map-object';
@@ -37,14 +36,13 @@ export class CsMapService {
   // If the split map pane is visible or not
   private splitMapShown = false;
 
-  constructor(private layerHandlerService: LayerHandlerService, private csWMSService: CsWMSService,
-    private csMapObject: CsMapObject, private manageStateService: ManageStateService,
-    private csCSWService: CsCSWService, private csIrisService: CsIrisService, 
-    private csKMLService: CsKMLService, private mapsManagerService: MapsManagerService,
-    @Inject('env') private env, @Inject('conf') private conf)  {
+  constructor(private csWMSService: CsWMSService,
+              private csMapObject: CsMapObject, private manageStateService: ManageStateService,
+              private csCSWService: CsCSWService, private csIrisService: CsIrisService,
+              private csKMLService: CsKMLService, private mapsManagerService: MapsManagerService,
+              @Inject('env') private env, @Inject('conf') private conf)  {
     this.csMapObject.registerClickHandler(this.mapClickHandler.bind(this));
     this.addLayerSubject = new Subject<LayerModel>();
-
   }
 
   init() {
@@ -664,6 +662,18 @@ export class CsMapService {
           imageryCollection.raise(layerToMove);
         }
       }
+    }
+  }
+
+  /**
+   * Set the current base map layer by name
+   *
+   * @param baseMapLayer the name of the base map layer
+   */
+  public setBaseMapLayer(baseMapLayer: string) {
+    const basemap = this.getViewer().baseLayerPicker.viewModel.imageryProviderViewModels.find(ipvm => ipvm.name === baseMapLayer);
+    if (basemap) {
+      this.getViewer().baseLayerPicker.viewModel.selectedImagery = basemap;
     }
   }
 
