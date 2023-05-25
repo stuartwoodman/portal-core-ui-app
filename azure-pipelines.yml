@@ -15,7 +15,8 @@ steps:
   persistCredentials: true
 - task: NodeTool@0
   inputs:
-    versionSpec: '14.x'
+    versionSource: 'spec'
+    versionSpec: '18.x'
   displayName: 'Install Node.js'
 - script: |
     git config --global user.email 'azdo-ci@geoanalytics.group'
@@ -28,10 +29,10 @@ steps:
     npm version patch -m "[skip ci] Upgrade to version %s"
   displayName: 'Bump package version'
 - script: |
-    npm install -g npm@7
-    npm install -g @angular/cli@11
+    npm install -g npm@9
+    npm install -g @angular/cli@15
     npm install
-    ng build portal-core-ui --prod
+    ng build --configuration production portal-core-ui
   displayName: 'npm install and build'
 - script: |
     git push origin $(Build.SourceBranchName)

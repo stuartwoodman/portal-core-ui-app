@@ -1,6 +1,6 @@
 
 import { throwError as observableThrowError, Observable } from 'rxjs';
-import { Injectable, Inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { catchError, map } from 'rxjs/operators';
 
@@ -22,6 +22,11 @@ declare var Cesium;
 @Injectable()
 export class CsKMLService {
 
+  // List of KML layers that have been cancelled
+  private cancelledLayers: Array<string> = [];
+  // Number of KML resources added for a given layer
+  private numberOfResourcesAdded: Map<string, number> = new Map<string, number>();
+
   constructor(private layerHandlerService: LayerHandlerService,
     private http: HttpClient,
     private renderStatusService: RenderStatusService,
@@ -30,8 +35,8 @@ export class CsKMLService {
   }
 
   /**
-   * Downloads KML, cleans it 
-   * 
+   * Downloads KML, cleans it
+   *
    * @param kmlResource KML resource to be fetched
    * @returns cleaned KML text
    */
@@ -52,6 +57,9 @@ export class CsKMLService {
    * @param param parameters for the KML layer
    */
   public addLayer(layer: LayerModel, param?: any): void {
+    // Remove from cancelled layer list (if present)
+    this.cancelledLayers = this.cancelledLayers.filter(l => l !== layer.id);
+
     const kmlOnlineResources: OnlineResourceModel[] = this.layerHandlerService.getOnlineResources(layer, ResourceType.KML);
     const me = this;
 
@@ -63,46 +71,77 @@ export class CsKMLService {
     };
 
     for (const onlineResource of kmlOnlineResources) {
-
       // Tell UI that we're about to add a resource to map
       this.renderStatusService.addResource(layer, onlineResource);
 
       // Create data source
-      let source = new Cesium.KmlDataSource(options);
+      const source = new Cesium.KmlDataSource(options);
       // Add an event to tell us when loading is finished
-      source.loadingEvent.addEventListener(function(evt, isLoading: boolean) {
+      source.loadingEvent.addEventListener((evt, isLoading: boolean) => {
         if (!isLoading) {
           // Tell UI that we have completed updating the map
           me.renderStatusService.updateComplete(layer, onlineResource);
         }
       });
 
-      // If KML is sourced from a file loaded from a browser ...
+      // If KML is sourced from a file loaded from a browser, else URL
       if (layer.kmlDoc) {
-        source.load(layer.kmlDoc).then(function (dataSource) {
-          viewer.dataSources.add(dataSource).then(dataSrc => {
-            layer.csLayers.push(dataSrc);
-          })
-        })
+          source.load(layer.kmlDoc).then(dataSource => {
+            if (this.cancelledLayers.indexOf(layer.id) === -1) {
+              viewer.dataSources.add(dataSource).then(dataSrc => {
+                layer.csLayers.push(dataSrc);
+                this.incrementLayersAdded(layer, 1);
+              });
+            }
+          });
       } else {
-        // If KML was sourced from a URL ...
+        if (!this.numberOfResourcesAdded.get(layer.id)) {
+          this.numberOfResourcesAdded.set(layer.id, 0);
+        }
 
         // Add KML to map
-        this.getKMLFeature(onlineResource.url).subscribe((response) => {
+        this.getKMLFeature(onlineResource.url).subscribe(response => {
           const parser = new DOMParser();
-          const doc = parser.parseFromString(response, "text/xml");
-          source.load(doc).then(function (dataSource) {
-            viewer.dataSources.add(dataSource).then(dataSrc => {
-              layer.csLayers.push(dataSrc);
-            })
-          })
+          const doc = parser.parseFromString(response, 'text/xml');
+          source.load(doc).then(dataSource => {
+            if (this.cancelledLayers.indexOf(layer.id) === -1) {
+              viewer.dataSources.add(dataSource).then(dataSrc => {
+                layer.csLayers.push(dataSrc);
+                this.incrementLayersAdded(layer, kmlOnlineResources.length);
+              });
+            }
+          });
         }, (err) => {
-          alert("Unable to load KML: " + err.message);
-          console.error("Unable to load KML: ", err);
+          alert('Unable to load KML: ' + err.message);
+          console.error('Unable to load KML: ', err);
           // Tell UI that we have completed updating the map & there was an error
           this.renderStatusService.updateComplete(layer, onlineResource, true);
+          this.incrementLayersAdded(layer, kmlOnlineResources.length);
         });
       }
+    }
+  }
+
+  /**
+   * Increment the number of layers added for a given LayerModel, and clear the layer from the
+   * cancelled layer list if all layers have been added
+   * @param layer the LayerModel
+   * @param totalLayers total number of layers for LayerModel
+   */
+  private incrementLayersAdded(layer: LayerModel, totalLayers: number) {
+    this.numberOfResourcesAdded.set(layer.id, this.numberOfResourcesAdded.get(layer.id) + 1);
+    if (this.numberOfResourcesAdded.get(layer.id) === totalLayers) {
+      this.cancelledLayers = this.cancelledLayers.filter(l => l !== layer.id);
+    }
+  }
+
+  /**
+   * Request cancellation of layer if it's still being added
+   * @param layerId ID of layer
+   */
+  public cancelLayerAdded(layerId: string) {
+    if (this.cancelledLayers.indexOf(layerId) === -1) {
+      this.cancelledLayers.push(layerId);
     }
   }
 
@@ -112,15 +151,18 @@ export class CsKMLService {
    * @param layer the KML layer to remove from the map.
    */
   public rmLayer(layer: LayerModel): void {
+    // Request cancellation of layer if it's still being added
+    this.cancelLayerAdded(layer.id);
+
     const viewer = this.getViewer();
     for (const dataSrc of layer.csLayers) {
       viewer.dataSources.remove(dataSrc);
     }
     layer.csLayers = [];
-    this.renderStatusService.resetLayer(layer.id)
+    this.renderStatusService.resetLayer(layer.id);
   }
 
-  /** 
+  /**
    * Fetches Cesium 'Viewer'
    */
   private getViewer() {
