@@ -521,8 +521,8 @@ export class CsWMSService {
           const res = new Resource({url: url, proxy: new MyDefaultProxy(me.env.portalBaseUrl + 'getViaProxy.do?url=')});
 
 
-          // Force Resource to use  our proxy and the POST method from the proxy to the origin server
-          params['usepostafterproxy'] = true;
+          // Force Resource to use 'POST' and our proxy
+          params['usepost'] = true;
           wmsImagProv = new WebMapServiceImageryProvider({
             url: res,
             layers: wmsOnlineResource.name,
