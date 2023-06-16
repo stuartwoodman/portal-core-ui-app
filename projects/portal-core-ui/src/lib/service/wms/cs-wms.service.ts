@@ -431,7 +431,7 @@ export class CsWMSService {
         let wmsImagProv;
 
         // Set up WMS service
-        if (!usePost || UtilitiesService.isArcGIS(wmsOnlineResource) ) {
+        if ((!usePost || UtilitiesService.isArcGIS(wmsOnlineResource)) && !layer.useDefaultProxy) {
           // NB: ArcGisMapServerImageryProvider does not allow additional parameters for ArcGIS, i.e. no styling
           // So we use a normal GET request & WebMapServiceImageryProvider instead
           wmsImagProv = new WebMapServiceImageryProvider({
@@ -441,7 +441,6 @@ export class CsWMSService {
             rectangle: Rectangle.fromDegrees(lonlatextent[0], lonlatextent[1], lonlatextent[2], lonlatextent[3])
           });
         } else {
-
           // Keep old function call
           let oldCreateImage = (Resource as any)._Implementations.createImage;
 
@@ -518,8 +517,8 @@ export class CsWMSService {
           /* End of 'createImage' overwrite */
 
           // Create a resource which uses our custom proxy
-          const res = new Resource({url: url, proxy: new MyDefaultProxy(me.env.portalBaseUrl + 'getViaProxy.do?url=')});
-
+          const proxyUrl = me.env.portalBaseUrl + 'getViaProxy.do?usewhitelist=' + (layer.useProxyWhitelist ? 'true' : 'false') + '&url=';
+          const res = new Resource({url: url, proxy: new MyDefaultProxy(proxyUrl)});
 
           // Force Resource to use 'POST' and our proxy
           params['usepost'] = true;

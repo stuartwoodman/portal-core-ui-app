@@ -88,7 +88,8 @@ export class LayerHandlerService {
    */
   public getCustomLayerRecord(serviceUrl: string): Observable<LayerModel[]> {
     // Send out a 'GetCapabilities' request
-    const retVal = this.getCapsService.getCaps(serviceUrl, "custom").pipe(map((response: { data: { cswRecords: any, capabilityRecords: any }}) => {
+    const retVal = this.getCapsService.getCaps(serviceUrl, 'custom').pipe(
+                        map((response: { data: { cswRecords: any, capabilityRecords: any }}) => {
       // Create a list of LayerModels using the 'GetCapabilities' response
       if (Object.keys(response).length === 0) {
         return;
@@ -108,6 +109,9 @@ export class LayerHandlerService {
             itemLayer.splitDirection = SplitDirection.NONE;
             itemLayer.capabilityRecords = response['data']['capabilityRecords'];
             itemLayer.kmlDoc = {};
+            // Custom layers to use default proxy and skip whitelist
+            itemLayer.useDefaultProxy = true;
+            itemLayer.useProxyWhitelist = false;
             itemLayers.push(itemLayer);
         });
       }
@@ -118,18 +122,18 @@ export class LayerHandlerService {
 
   /**
    * Make a custom KML layer record
-   *  
+   *
    * @param name Name of custom KML layer
    * @returns LayerModel object
    */
   public makeCustomKMLLayerRecord(name: string, url: string, kmlDoc: {}): LayerModel {
-    const id = "KML_" + name.substring(0,10) + "_" + Math.floor(Math.random() * 10000).toString();
+    const id = 'KML_' + name.substring(0, 10) + '_' + Math.floor(Math.random() * 10000).toString();
     const itemLayer = new LayerModel();
     const cswRec = this.makeCustomKMLCSWRec(name, id, url);
     itemLayer.cswRecords = [cswRec];
     itemLayer['expanded'] = false;
     itemLayer.id = id;
-    itemLayer.description = "Because this is a custom KML layer there is no more information to display";
+    itemLayer.description = 'Because this is a custom KML layer there is no more information to display';
     itemLayer.hidden = false;
     itemLayer.layerMode = 'NA';
     itemLayer.name = name;
@@ -148,25 +152,25 @@ export class LayerHandlerService {
    */
   public makeCustomKMLCSWRec(name: string, id: string, url: string): CSWRecordModel {
     const cswRec = new CSWRecordModel();
-    cswRec.adminArea = "";
+    cswRec.adminArea = '';
     cswRec.childRecords = {};
-    cswRec.constraints = "";
-    cswRec.useLimitConstraints = "";
-    cswRec.accessConstraints = "";
-    cswRec.contactOrg = "";
-    cswRec.funderOrg = "";
-    cswRec.datasetURIs= {};
-    cswRec.date = "";
-    cswRec.description = "";
+    cswRec.constraints = '';
+    cswRec.useLimitConstraints = '';
+    cswRec.accessConstraints = '';
+    cswRec.contactOrg = '';
+    cswRec.funderOrg = '';
+    cswRec.datasetURIs = {};
+    cswRec.date = '';
+    cswRec.description = '';
     cswRec.descriptiveKeywords = {};
     cswRec.geographicElements = {};
     cswRec.id = id;
     cswRec.name = name;
     cswRec.noCache = true;
-    const ormRec = this.makeCustomOnlineResourceModel("KML", name, url);
+    const ormRec = this.makeCustomOnlineResourceModel('KML', name, url);
     cswRec.onlineResources = [ormRec];
-    cswRec.recordInfoUrl = "";
-    cswRec.resourceProvider= "";
+    cswRec.recordInfoUrl = '';
+    cswRec.resourceProvider = '';
     cswRec.service = false;
     cswRec.expanded = false;
     return cswRec;
@@ -180,14 +184,14 @@ export class LayerHandlerService {
    */
   public makeCustomOnlineResourceModel(type: string, name: string, url: string): OnlineResourceModel {
     const ormRec = new OnlineResourceModel();
-    ormRec.applicationProfile = "";
-    ormRec.description = "";
+    ormRec.applicationProfile = '';
+    ormRec.description = '';
     ormRec.name = name;
     ormRec.type = type;
     ormRec.url = url;
-    ormRec.version = "";
+    ormRec.version = '';
     ormRec.geographicElements = {};
-    ormRec.protocolRequest = "";
+    ormRec.protocolRequest = '';
     return ormRec;
   }
 
