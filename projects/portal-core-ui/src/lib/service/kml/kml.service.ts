@@ -17,12 +17,13 @@ export class KMLDocService {
    * @param kmlTxt KML text to be cleaned
    * @returns clean KML string
    */
-  public cleanKML(kmlTxt: string) {
+  public cleanKML(kmlTxt: string): string {
     // Removes non-standard chars that can cause errors
     kmlTxt = kmlTxt.replace(/\016/g, '');
     kmlTxt = kmlTxt.replace(/\002/g, '');
     // Inserts our proxy to avoid CORS errors
-    kmlTxt = kmlTxt.replace(/<href>(.*)<\/href>/g, '<href>' + this.env.portalBaseUrl + 'getViaProxy.do?url=$1</href>');
+    kmlTxt = kmlTxt.replace(/<href>http(.*)<\/href>/g, '<href>' + this.env.portalBaseUrl +
+              'getViaProxy.do?usewhitelist=false&url=$1</href>');
     return kmlTxt;
   }
 }

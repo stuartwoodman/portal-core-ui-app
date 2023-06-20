@@ -18,6 +18,8 @@ export class LayerModel {
   proxyDownloadUrl: string;
   proxyStyleUrl: string;
   proxyUrl: string;
+  useDefaultProxy?: boolean;    // Use the default proxy (getViaProxy.do) if true (custom layers)
+  useProxyWhitelist?: boolean;  // Use the default proxy whitelist if true (custom layers)
   relatedRecords: any;
   singleTile: boolean;
   legendImg?: string;

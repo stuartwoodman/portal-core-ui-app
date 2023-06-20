@@ -238,7 +238,6 @@ export class GetCapsService {
 
     // GetCaps parameters
     let version = '1.3.0';
-    const service = 'WMS';
 
     // Check for existing parameters in the URL, we only care about version
     const paramIndex = serviceUrl.indexOf('?');
@@ -251,35 +250,36 @@ export class GetCapsService {
       serviceUrl = serviceUrl.substring(0, paramIndex);
     }
 
-    // Assemble 'GetCapabilities' parameters
-    const httpParams = new HttpParams()
-      .append('version', version)
-      .append('service', service);
-
     // Add in 'http:' if it is missing
-    if (serviceUrl.indexOf("http") !== 0) {
-      serviceUrl = "http://" + serviceUrl;
+    if (serviceUrl.indexOf('http') !== 0) {
+      serviceUrl = 'http://' + serviceUrl;
     }
     // Get the urls that need proxy
     const urls = this.env.hasOwnProperty('urlNeedProxy') ? this.env.urlNeedProxy : [];
     // Find the index of \ in url
-    let index = serviceUrl.indexOf("\/");
+    let index = serviceUrl.indexOf('\/');
     for (let i = 0; i < 2; i++) {
       // Find the third \ in url
-      index = serviceUrl.indexOf("\/", index + 1);
+      index = serviceUrl.indexOf('\/', index + 1);
     }
+
+    let httpParams = new HttpParams().append('version', version);
+
     // Cut the url from the third \ so we can compare it.
     const tempUrl = serviceUrl.substring(0, index);
     if (from) {
       // If 'from' is defined then use the proxy
-      serviceUrl = this.env.portalBaseUrl + 'getViaProxy.do?url=' + serviceUrl;
-    } else {
+      httpParams = httpParams.append('url', serviceUrl).append('usewhitelist', false);
+      serviceUrl = this.env.portalBaseUrl + 'getWMSCapabilitiesViaProxy.do';
+    } else if (urls.indexOf(tempUrl) !== -1) {
       // If the url is in the 'urlNeedProxy' list then add proxy
-      serviceUrl = (urls.indexOf(tempUrl) !== -1) ? this.env.portalBaseUrl + 'getViaProxy.do?url=' + serviceUrl : serviceUrl;
+      httpParams = httpParams.append('url', serviceUrl).append('usewhitelist', true);
+      serviceUrl = this.env.portalBaseUrl + 'getWMSCapabilitiesViaProxy.do';
+    } else {
+      httpParams = httpParams.append('request', 'GetCapabilities').append('service', 'WMS');
     }
-    // Add in the remaining 'request' parameter with a leading '?'
-    serviceUrl += '?request=GetCapabilities';
-    return this.http.get(serviceUrl, {params: httpParams, responseType: "text"}).pipe(map(
+
+    return this.http.get(serviceUrl, {params: httpParams, responseType: 'text'}).pipe(map(
       (response) => {
           const rootNode = SimpleXMLService.parseStringToDOM(response);
           const numLayers = this.getNumLayers(rootNode, this.nsResolver);
@@ -294,7 +294,7 @@ export class GetCapsService {
           const applicationProfile = this.findApplicationProfile(rootNode, this.nsResolver);
           const accessConstraints = this.findAccessConstraints(rootNode, this.nsResolver);
 
-          const retVal = { data: { cswRecords: [], capabilityRecords: [], invalidLayerCount: 0 }, msg: "", success: true};
+          const retVal = { data: { cswRecords: [], capabilityRecords: [], invalidLayerCount: 0 }, msg: '', success: true};
 
           // Loop over all the layers found in the GetCapabilies response
           for (let layerNum = 0 ; layerNum < numLayers; layerNum++) {
@@ -323,7 +323,7 @@ export class GetCapsService {
               constraints: [],
               useLimitConstraints: [],
               childRecords: [],
-              date: "",
+              date: '',
               minScale: null,
               maxScale: null
             });
@@ -331,9 +331,9 @@ export class GetCapsService {
             // Only add one GetCapabilities object
             if (layerNum === 0) {
               retVal.data.capabilityRecords = [{
-                serviceType: service.toLowerCase(),
+                serviceType: 'wms',
                 organisation: cswRecElems['contactOrg'],
-                mapUrl: "",
+                mapUrl: '',
                 metadataUrl: metadataUrl,
                 isWFS: false,
                 isWMS: true,
