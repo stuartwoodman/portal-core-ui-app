@@ -21,9 +21,10 @@ export class KMLDocService {
     // Removes non-standard chars that can cause errors
     kmlTxt = kmlTxt.replace(/\016/g, '');
     kmlTxt = kmlTxt.replace(/\002/g, '');
-    // Inserts our proxy to avoid CORS errors
-    kmlTxt = kmlTxt.replace(/<href>http(.*)<\/href>/g, '<href>' + this.env.portalBaseUrl +
-              'getViaProxy.do?usewhitelist=false&url=$1</href>');
+    // Inserts local paddle image to avoid CORS errors
+    // Cesium does not load proxied images for some as yet unknown reason
+    kmlTxt = kmlTxt.replace(/<Icon>\s*<href>.*<\/href>/g, 
+             '<Icon>\n<href>extension/images/white-paddle.png</href>');
     return kmlTxt;
   }
 }
