@@ -23,8 +23,8 @@ export class KMLDocService {
     kmlTxt = kmlTxt.replace(/\002/g, '');
     // Inserts local paddle image to avoid CORS errors
     // Cesium does not load proxied images for some as yet unknown reason
-    kmlTxt = kmlTxt.replace(/<href>.*<\/href>/g, 
-             '<href>extension/images/white-paddle.png</href>');
+    kmlTxt = kmlTxt.replace(/<Icon>\s*<href>.*<\/href>/g, 
+             '<Icon>\n<href>extension/images/white-paddle.png</href>');
     return kmlTxt;
   }
 }
