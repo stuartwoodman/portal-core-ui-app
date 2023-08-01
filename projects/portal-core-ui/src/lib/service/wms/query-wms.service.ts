@@ -79,7 +79,6 @@ export class QueryWMSService {
   /**
    * A get feature info request via proxy
    * @param onlineresource the WMS online resource
-   * @param sldBody style layer descriptor
    * @param infoFormat response format type e.g. 'text/xml', 'application/json'
    * @postMethod true if POST to be used, false for GET
    * @param x  pixel coordinates of clicked on point
@@ -91,7 +90,7 @@ export class QueryWMSService {
    * @param bbox tile bbox
    * @return Observable the observable from the http request
    */
-  public getFeatureInfo(onlineResource: OnlineResourceModel, sldBody: string, infoFormat: string, postMethod: boolean,
+  public getFeatureInfo(onlineResource: OnlineResourceModel, infoFormat: string, postMethod: boolean,
                         lon: number, lat: number, x: number, y: number, width: number, height: number, bbox: number[]): Observable<any> {
     const formdata = new HttpParams()
       .set('serviceUrl', UtilitiesService.rmParamURL(onlineResource.url))
@@ -105,7 +104,6 @@ export class QueryWMSService {
       .set('HEIGHT', height.toString())
       .set('BBOX', bbox.join(','))
       .set('version', onlineResource.version)
-      .set('SLD_BODY', sldBody)
       .set('INFO_FORMAT', infoFormat)
       .set('postMethod', String(postMethod));
 
