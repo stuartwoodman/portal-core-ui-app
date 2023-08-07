@@ -8,7 +8,8 @@ declare var ActiveXObject: any;
 declare var window: any;
 
 /**
- * Port over from old portal-core extjs for dealing with xml in wfs
+ * Port over from old portal-core extjs for dealing with xml in wfs.
+ * Also contains some SLD_BODY XML parsing and manipulation.
  */
 
 // @dynamic
@@ -53,7 +54,8 @@ export class SimpleXMLService {
    * @param nsResolver [Optional] namespace resolver function
    * @return dom - the dom result
    */
-  public static evaluateXPath(document: Document, domNode: Node, xPath: string, resultType: any, nsResolver?: (prefix: string) => string): any {
+  public static evaluateXPath(document: Document, domNode: Node, xPath: string, resultType: any,
+                              nsResolver?: (prefix: string) => string): any {
     if (document.evaluate) {
       let result;
       try {
@@ -64,7 +66,7 @@ export class SimpleXMLService {
         }
         return result;
       } catch (e) {
-        console.error("SimpleXMLService.evaluateXPath() Exception", e);
+        console.error('SimpleXMLService.evaluateXPath() Exception', e);
         // Return empty result
         switch (resultType) {
           case Constants.XPATH_STRING_TYPE:
@@ -268,7 +270,7 @@ export class SimpleXMLService {
 
   /**
    * Given a DOM node, return its text content (however the browser defines it)
-   * 
+   *
    * @method getNodeTextContent
    * @param domNode - Node class, defines where to start looking
    * @return string - text content
@@ -282,7 +284,7 @@ export class SimpleXMLService {
 
   /**
    * Parse string to DOM
-   * 
+   *
    * @method parseStringToDOM
    * @param xmlString - xml string
    * @return dom - return the result in a dom
@@ -309,7 +311,7 @@ export class SimpleXMLService {
 
   /**
    * Cleanup empty text nodes.
-   * 
+   *
    * @method removeEmptyNodes
    * @param node - Node class, defines where to start cleaning
    */
@@ -325,7 +327,7 @@ export class SimpleXMLService {
 
   /**
    * Parses XML document fetching feature information
-   * 
+   *
    * @param rootNode XML document root node
    * @param feature feature information
    * @returns list of objects, property values are: 'key', 'layer', 'onlineResource', 'value', 'format'
@@ -429,5 +431,109 @@ export class SimpleXMLService {
     return docs;
   }
 
+  /**
+   * Extract all ogc:Intersects filters from an SLD_BODY string
+   *
+   * @param sldBody the SLD_BODY as a string
+   * @returns the SLD_BODY with all ogc:Intersects filters removed
+   */
+  public static extractIntersectsFiltersFromSld(sldBody: string): string {
+    let newSldBody = sldBody;
+    try {
+      const sldParser = new DOMParser();
+      const sldDoc = sldParser.parseFromString(sldBody, 'text/xml');
+
+      // Intersects will be inside Filters...
+      const filterNodes = sldDoc.evaluate('//ogc:Filter', sldDoc, SimpleXMLService.namespaceResolver,
+                                          XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+      for (let f = 0; f < filterNodes.snapshotLength; f++) {
+        const currentFilterNode = filterNodes.snapshotItem(f);
+        const childFilters = SimpleXMLService.getAllNonOgcAndChildNodes(sldDoc, currentFilterNode);
+        SimpleXMLService.addChildFiltersToParent(sldDoc, currentFilterNode, childFilters);
+      }
+
+      // Serialize XML to string
+      const s = new XMLSerializer();
+      newSldBody = s.serializeToString(sldDoc);
+    } catch (e) {
+      console.log(e);
+      return sldBody;
+    }
+    return newSldBody;
+  }
+
+  /**
+   * For an ogc:Filter or ogc:And parent Node, recursively return all non-ogc:And Nodes and then remove all Nodes from parentNode
+   *
+   * @param sldDoc the XML Document
+   * @param parentNode the parent ogc:Filter or ogc:And Node
+   * @returns an array of all non-ogc:And Nodes found under parentNode
+   */
+  public static getAllNonOgcAndChildNodes(sldDoc: Document, parentNode: Node): Node[] {
+    let filterNodes: Node[] = [];
+
+    // Get non-And (Filter) nodes of parent that are not Intersects
+    const childOtherNodes = sldDoc.evaluate('./*[not(self::ogc:And)]', parentNode,
+                                            SimpleXMLService.namespaceResolver, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+    for (let i = 0; i < childOtherNodes.snapshotLength; i++) {
+      const currentOtherNode = childOtherNodes.snapshotItem(i);
+      if (currentOtherNode.nodeName !== 'ogc:Intersects') {
+        filterNodes.push(currentOtherNode);
+        parentNode.removeChild(currentOtherNode);
+      }
+    }
+
+    // Recurse any And nodes
+    const childAndNodes = sldDoc.evaluate('ogc:And', parentNode, SimpleXMLService.namespaceResolver,
+                                          XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+    for (let i = 0; i < childAndNodes.snapshotLength; i++) {
+      const currentAndNode = childAndNodes.snapshotItem(i);
+      filterNodes = [...filterNodes, ...SimpleXMLService.getAllNonOgcAndChildNodes(sldDoc, currentAndNode)];
+      parentNode.removeChild(currentAndNode);
+    }
+
+    return filterNodes;
+  }
+
+  /**
+   * Construct an ogc:Filter Node based on the children it is to contain.
+   *
+   * @param sldDoc the XML Document
+   * @param parentNode the parent ogc:Filter (or ogc:And if recursing) node
+   * @param childFilters a list of child Filters
+   */
+  public static addChildFiltersToParent(sldDoc: Document, parentNode: Node, childFilters: Node[]) {
+    if (childFilters.length === 1) {
+      // Simply add a single child
+      parentNode.appendChild(childFilters[0]);
+    } else if (childFilters.length === 2) {
+      // Two children will require an ogc:And parent
+      const andNode = sldDoc.createElement('ogc:And');
+      andNode.appendChild(childFilters[0]);
+      andNode.appendChild(childFilters[1]);
+      parentNode.appendChild(andNode);
+    } else if (childFilters.length > 2) {
+      // More than 2 and we need to add new ogc:And to parent, and add the first child to this and then recurse
+      const andNode = sldDoc.createElement('ogc:And');
+      parentNode.appendChild(andNode);
+      andNode.appendChild(childFilters[0]);
+      childFilters = childFilters.slice(1);
+      SimpleXMLService.addChildFiltersToParent(sldDoc, andNode, childFilters);
+    }
+  }
+
+  /**
+   * Simple namepsace resolver for modifying SLD_BODYs.
+   * Currently only cares about ogc, can be expanded as neccessary
+   *
+   * @param prefix namespace prefix
+   */
+  public static namespaceResolver(prefix: string) {
+    if (prefix === 'ogc') {
+      return 'http://www.opengis.net/ogc';
+    } else {
+      return null;
+    }
+  }
 
 }
