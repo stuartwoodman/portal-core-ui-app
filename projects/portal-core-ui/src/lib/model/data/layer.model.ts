@@ -38,4 +38,5 @@ export class LayerModel {
   // Layer supports downloading, usually feature data in CSV form
   supportsCsvDownloads: boolean;
   kmlDoc: any; // Document object for custom KML layer
+  serverType?: string;  // Type of server hosting the data
 }

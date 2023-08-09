@@ -124,7 +124,8 @@ export class CsWMSService {
 
     if (sld_body) {
       /* ArcGIS and POST requests cannot read base64 encoded styles */
-      if (!UtilitiesService.isArcGIS(onlineResource) && this.wmsUrlTooLong(sld_body, layer) && !usePost) {
+      if (!UtilitiesService.layerIsArcGIS(layer) && !UtilitiesService.resourceIsArcGIS(onlineResource) &&
+          this.wmsUrlTooLong(sld_body, layer) && !usePost) {
         params['sld_body'] = window.btoa(sld_body);
       } else {
         params['sld_body'] = sld_body;
@@ -179,7 +180,8 @@ export class CsWMSService {
 
     if (sld_body) {
       /* ArcGIS and POST requests cannot read base64 encoded styles */
-      if (!UtilitiesService.isArcGIS(onlineResource) && this.wmsUrlTooLong(sld_body, layer) && !usePost) {
+      if (!UtilitiesService.layerIsArcGIS(layer) &&  !UtilitiesService.resourceIsArcGIS(onlineResource) &&
+          this.wmsUrlTooLong(sld_body, layer) && !usePost) {
         params['sld_body'] = window.btoa(sld_body);
       } else {
         params['sld_body'] = sld_body;
@@ -431,7 +433,7 @@ export class CsWMSService {
         let wmsImagProv;
 
         // Set up WMS service
-        if ((!usePost || UtilitiesService.isArcGIS(wmsOnlineResource)) && !layer.useDefaultProxy) {
+        if ((!usePost || UtilitiesService.layerIsArcGIS(layer) || UtilitiesService.resourceIsArcGIS(wmsOnlineResource)) && !layer.useDefaultProxy) {
           // NB: ArcGisMapServerImageryProvider does not allow additional parameters for ArcGIS, i.e. no styling
           // So we use a normal GET request & WebMapServiceImageryProvider instead
           wmsImagProv = new WebMapServiceImageryProvider({
@@ -500,7 +502,7 @@ export class CsWMSService {
                     );
                     return;
                   }
-                  // 'createImageBitmap' was not fully supported in older versions of Firefox (ESR & version <= 92.0) and Safari 
+                  // 'createImageBitmap' was not fully supported in older versions of Firefox (ESR & version <= 92.0) and Safari
                   // due to bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1367251
                   if (browserInfo.browser === 'Firefox' && parseFloat(browserInfo.browser_version) <= 92.0) {
                     return createImageBitmap(blob);
