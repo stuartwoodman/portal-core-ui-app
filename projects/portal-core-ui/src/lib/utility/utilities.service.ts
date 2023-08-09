@@ -487,8 +487,17 @@ export class UtilitiesService {
      * Returns true iff (if and only if) this is an ESRI ArcGIS server
      * @param onlineResource online resource record for service
      */
-    public static isArcGIS(onlineResource: OnlineResourceModel) {
+    public static resourceIsArcGIS(onlineResource: OnlineResourceModel) {
         return (onlineResource.applicationProfile && onlineResource.applicationProfile.indexOf('Esri:ArcGIS Server') > -1);
+    }
+
+    /**
+     * Check if a LayerModel has been defined as being an ESRI ArcGIS server
+     * @param layer the LayerModel
+     * @returns true if the LayerModel has an 'ESRI' serverType
+     */
+    public static layerIsArcGIS(layer: LayerModel): boolean {
+        return layer.serverType?.toLowerCase() === 'esri';
     }
 
     /**

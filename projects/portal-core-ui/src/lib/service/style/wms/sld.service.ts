@@ -34,7 +34,7 @@ export class SldService {
       });
     }
     // For ArcGIS mineral tenements layer we can get SLD_BODY parameter locally
-    if (UtilitiesService.isArcGIS(onlineResource) && onlineResource.name === 'MineralTenement') {
+    if (UtilitiesService.resourceIsArcGIS(onlineResource) && onlineResource.name === 'MineralTenement') {
       return new Observable(observer => {
         param.styles = 'mineralTenementStyle';
         const sldBody = MinTenemStyleService.getSld(onlineResource.name, param.styles, param.ccProperty);
