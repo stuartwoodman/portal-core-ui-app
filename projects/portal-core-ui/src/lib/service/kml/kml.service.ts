@@ -27,4 +27,18 @@ export class KMLDocService {
              '<Icon>\n<href>extension/images/white-paddle.png</href>');
     return kmlTxt;
   }
+
+  /**
+   * Clean KMZ text by removing illegal chars
+   * future: when cesium support proxying of images
+   * 
+   * @param kmzTxt KML text to be cleaned
+   * @returns clean KML string
+   */
+  public cleanKMZ(kmZTxt: string): string {
+    // Removes non-standard chars that can cause errors
+    kmZTxt = kmZTxt.replace(/\016/g, '');
+    kmZTxt = kmZTxt.replace(/\002/g, '');
+    return kmZTxt;
+  }
 }

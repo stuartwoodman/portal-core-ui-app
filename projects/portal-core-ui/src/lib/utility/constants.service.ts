@@ -7,6 +7,7 @@ export enum ResourceType {
   CSWService = "CSWService",
   FTP = "FTP",
   IRIS = "IRIS",
+  KMZ = "KMZ",
   KML = "KML",
   NCSS = "NCSS",
   OPeNDAP = "OPeNDAP",
