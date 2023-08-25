@@ -194,7 +194,7 @@ export class CsMapService {
    * @returns a list of supported OnlineResource types as strings
    */
   public getSupportedOnlineResourceTypes(): ResourceType[] {
-    return [ResourceType.WMS, ResourceType.IRIS, ResourceType.KML];
+    return [ResourceType.WMS, ResourceType.IRIS, ResourceType.KML, ResourceType.KMZ];
   }
 
   /**
@@ -213,7 +213,7 @@ export class CsMapService {
     }
     return false;
   }
-
+  
   /**
    * Add layer to the wms
    * @param layer the layer to add to the map
@@ -239,6 +239,10 @@ export class CsMapService {
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.IRIS)) {
       // Add an IRIS layer
       this.csIrisService.addLayer(layer, param);
+      this.cacheLayerModelList(layer);
+    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KMZ)) {
+      // Add a WMS layer to map
+      this.csKMLService.addLayer(layer, param);
       this.cacheLayerModelList(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KML)) {
       // Add a WMS layer to map
@@ -315,6 +319,8 @@ export class CsMapService {
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.IRIS)) {
       this.csIrisService.rmLayer(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KML)) {
+      this.csKMLService.rmLayer(layer);
+    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KMZ)) {
       this.csKMLService.rmLayer(layer);
     } else {
       this.csWMSService.rmLayer(layer);

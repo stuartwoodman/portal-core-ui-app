@@ -143,6 +143,62 @@ export class LayerHandlerService {
     return itemLayer;
   }
 
+    /**
+   * Make a custom KMZ layer record
+   *
+   * @param name Name of custom KMZ layer
+   * @returns LayerModel object
+   */
+    public makeCustomKMZLayerRecord(name: string, url: string, kmzDoc: {}): LayerModel {
+      const id = 'KMZ_' + name.substring(0, 10) + '_' + Math.floor(Math.random() * 10000).toString();
+      const itemLayer = new LayerModel();
+      const cswRec = this.makeCustomKMZCSWRec(name, id, url);
+      itemLayer.cswRecords = [cswRec];
+      itemLayer['expanded'] = false;
+      itemLayer.id = id;
+      itemLayer.description = 'Because this is a custom KMZ layer there is no more information to display';
+      itemLayer.hidden = false;
+      itemLayer.layerMode = 'NA';
+      itemLayer.name = name;
+      itemLayer.splitDirection = SplitDirection.NONE;
+      itemLayer.capabilityRecords = {};
+      itemLayer.kmlDoc = kmzDoc;
+      return itemLayer;
+    }
+  
+  /**
+   * Make a custom CSW Record with a KMZ layer inside
+   * 
+   * @param name name of KMZ layer
+   * @param id KMZ layer id
+   * @returns CSWRecordModel object
+   */
+  public makeCustomKMZCSWRec(name: string, id: string, url: string): CSWRecordModel {
+    const cswRec = new CSWRecordModel();
+    cswRec.adminArea = '';
+    cswRec.childRecords = {};
+    cswRec.constraints = '';
+    cswRec.useLimitConstraints = '';
+    cswRec.accessConstraints = '';
+    cswRec.contactOrg = '';
+    cswRec.funderOrg = '';
+    cswRec.datasetURIs = {};
+    cswRec.date = '';
+    cswRec.description = '';
+    cswRec.descriptiveKeywords = {};
+    cswRec.geographicElements = {};
+    cswRec.id = id;
+    cswRec.name = name;
+    cswRec.noCache = true;
+    const ormRec = this.makeCustomOnlineResourceModel('KMZ', name, url);
+    cswRec.onlineResources = [ormRec];
+    cswRec.recordInfoUrl = '';
+    cswRec.resourceProvider = '';
+    cswRec.service = false;
+    cswRec.expanded = false;
+    return cswRec;
+  }
+
   /**
    * Make a custom CSW Record with a KML layer inside
    * 

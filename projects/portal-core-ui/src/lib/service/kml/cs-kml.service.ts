@@ -11,6 +11,7 @@ import { MapsManagerService } from '@auscope/angular-cesium';
 import { ResourceType } from '../../utility/constants.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
 import { KMLDocService } from './kml.service';
+import { UtilitiesService } from '../../utility/utilities.service';
 
 // NB: Cannot use "import { XXX, YYY, ZZZ, Color } from 'cesium';" - it prevents initialising ContextLimits.js properly
 // which causes a 'DeveloperError' when trying to draw the KML 
@@ -41,7 +42,7 @@ export class CsKMLService {
    * @returns cleaned KML text
    */
   private getKMLFeature(url: string): Observable<any> {
-    return this.http.get(url, {responseType: 'text'}).pipe(map((kmlTxt: string) => {
+    return this.http.get(url, { responseType: 'text' }).pipe(map((kmlTxt: string) => {
       // Remove unwanted characters and inject proxy for embedded URLs
       return this.kmlService.cleanKML(kmlTxt);
     }), catchError(
@@ -60,7 +61,14 @@ export class CsKMLService {
     // Remove from cancelled layer list (if present)
     this.cancelledLayers = this.cancelledLayers.filter(l => l !== layer.id);
 
-    const kmlOnlineResources: OnlineResourceModel[] = this.layerHandlerService.getOnlineResources(layer, ResourceType.KML);
+    let kmlOnlineResources: OnlineResourceModel[];
+
+    if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KML)) {
+      kmlOnlineResources = this.layerHandlerService.getOnlineResources(layer, ResourceType.KML);
+    }
+    if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KMZ)) {
+      kmlOnlineResources = this.layerHandlerService.getOnlineResources(layer, ResourceType.KMZ);
+    }
     const me = this;
 
     // Get CesiumJS viewer
@@ -85,39 +93,52 @@ export class CsKMLService {
       });
 
       // If KML is sourced from a file loaded from a browser, else URL
+      // note: KML and KMZ, loaded either from a local file or url now have
+      // a layer.kmlDoc entry - so some of the following code is redundant
       if (layer.kmlDoc) {
-          source.load(layer.kmlDoc).then(dataSource => {
-            if (this.cancelledLayers.indexOf(layer.id) === -1) {
-              viewer.dataSources.add(dataSource).then(dataSrc => {
-                layer.csLayers.push(dataSrc);
-                this.incrementLayersAdded(layer, 1);
-              });
-            }
-          });
+        source.load(layer.kmlDoc).then(dataSource => {
+          if (this.cancelledLayers.indexOf(layer.id) === -1) {
+            viewer.dataSources.add(dataSource).then(dataSrc => {
+              layer.csLayers.push(dataSrc);
+              this.incrementLayersAdded(layer, 1);
+            });
+          }
+        });
       } else {
         if (!this.numberOfResourcesAdded.get(layer.id)) {
           this.numberOfResourcesAdded.set(layer.id, 0);
         }
 
-        // Add KML to map
-        this.getKMLFeature(onlineResource.url).subscribe(response => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(response, 'text/xml');
-          source.load(doc).then(dataSource => {
-            if (this.cancelledLayers.indexOf(layer.id) === -1) {
-              viewer.dataSources.add(dataSource).then(dataSrc => {
-                layer.csLayers.push(dataSrc);
-                this.incrementLayersAdded(layer, kmlOnlineResources.length);
-              });
-            }
+        if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KMZ)) {
+          // add KMZ to map
+          source.load(onlineResource.url).then(dataSource => {
+            viewer.dataSources.add(dataSource).then(dataSrc => {
+              layer.csLayers.push(dataSrc);
+              this.incrementLayersAdded(layer,  kmlOnlineResources.length);
+            });
           });
-        }, (err) => {
-          alert('Unable to load KML: ' + err.message);
-          console.error('Unable to load KML: ', err);
-          // Tell UI that we have completed updating the map & there was an error
-          this.renderStatusService.updateComplete(layer, onlineResource, true);
-          this.incrementLayersAdded(layer, kmlOnlineResources.length);
-        });
+
+        } else {
+          // Add KML to map
+          this.getKMLFeature(onlineResource.url).subscribe(response => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(response, 'text/xml');
+            source.load(doc).then(dataSource => {
+              if (this.cancelledLayers.indexOf(layer.id) === -1) {
+                viewer.dataSources.add(dataSource).then(dataSrc => {
+                  layer.csLayers.push(dataSrc);
+                  this.incrementLayersAdded(layer, kmlOnlineResources.length);
+                });
+              }
+            });
+          }, (err) => {
+            alert('Unable to load KML: ' + err.message);
+            console.error('Unable to load KML: ', err);
+            // Tell UI that we have completed updating the map & there was an error
+            this.renderStatusService.updateComplete(layer, onlineResource, true);
+            this.incrementLayersAdded(layer, kmlOnlineResources.length);
+          });
+        }
       }
     }
   }
