@@ -1,4 +1,4 @@
-import { throwError as observableThrowError,  Observable, ReplaySubject } from 'rxjs';
+import { throwError as observableThrowError,  Observable, ReplaySubject, Subject } from 'rxjs';
 
 import { catchError, map, timeoutWith, mergeMap } from 'rxjs/operators';
 import { Bbox } from '../../../model/data/bbox.model';
@@ -16,8 +16,8 @@ declare var gtag: Function;
 // @dynamic
 @Injectable()
 export class DownloadWfsService {
-  public tsgDownloadBS = new ReplaySubject<string>(0);
-  public tsgDownloadStartBS = new ReplaySubject<string>(0);
+  public tsgDownloadBS: Subject<string> = null; 
+  public tsgDownloadStartBS:Subject<string> = null;
 
 
   constructor(private layerHandlerService: LayerHandlerService, private http: HttpClient, @Inject('env') private env) {
