@@ -63,6 +63,8 @@ export class CsCSWService {
   public setOpacity(layer, opacity: number) {
     for (const entity of layer.csLayers) {
       if (entity.rectangle) {
+        entity.rectangle.material = null;
+        entity.rectangle.material = new ColorMaterialProperty(Color.fromAlpha(POLYGON_COLOUR, POLYGON_ALPHA*opacity));
         this.opacity = opacity;
       } else if (entity.label) {
         entity.label.fillColor = Color.fromAlpha(FONT_COLOUR, opacity);
