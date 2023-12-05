@@ -15,7 +15,7 @@ const POLYGON_ALPHA = 0.4;
 const POLYGON_COLOUR = new Color(0.0, 0.0, 1.0, POLYGON_ALPHA);
 
 // Colour of the font used to label the CSW rectangles on the map 
-const FONT_COLOUR = Color.BLACK;
+const FONT_COLOUR = Color.ANTIQUEWHITE;
 
 /**
  * Use Cesium to add CSW layer like reports to map. This service class adds CSW layer to the map as a rectangle and a label
@@ -80,10 +80,10 @@ export class CsCSWService {
     return this.viewer.entities.add({
       position : Cartesian3.fromDegrees(long, lat),
       label : {
-          text : name.substring(0,45),  // Label only displays first 45 characters
+          text : name.substring(0,70),  // Label only displays first 70 characters
           font : '16px sans-serif',
           fillColor:  FONT_COLOUR,
-          showBackground : false,
+          showBackground : true,
           horizontalOrigin : HorizontalOrigin.LEFT,
           distanceDisplayCondition: new DistanceDisplayCondition(0.0, 7000000.0),
           // Randomize position to reduce chance of 2 labels overwriting each other
@@ -146,7 +146,11 @@ export class CsCSWService {
             littleBox.southBoundLatitude = littleBox.northBoundLatitude - 0.5;
             layer.csLayers.push(this.addPolygon(cswRecord.name, littleBox));
           } else {
-            // Render polygon same size as bounding box
+            // Render polygon same size as CSW record's bounding box, but first check that coords aren't reversed
+            if ((geoEl.westBoundLongitude > geoEl.eastBoundLongitude) || (geoEl.northBoundLatitude < geoEl.southBoundLatitude)) {
+              console.warn("Cannot add layer", cswRecord.name, " - BBOX coords are not in correct north > south or east > west order");
+              continue;
+            }
             layer.csLayers.push(this.addPolygon(cswRecord.name, geoEl));
           }
           layer.csLayers.push(this.addLabel(cswRecord.name, geoEl.eastBoundLongitude, geoEl.northBoundLatitude));
