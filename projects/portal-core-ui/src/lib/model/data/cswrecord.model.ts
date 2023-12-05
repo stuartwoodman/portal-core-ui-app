@@ -26,4 +26,5 @@ export class CSWRecordModel {
   service: boolean;
   expanded = false;
   temporalExtent?: TemporalExtentModel;
+  knownLayerIds?: string[];
 }
