@@ -60,6 +60,26 @@ export class CsClipboardService {
   }
 
   /**
+   * LatLng2LngLat
+   *
+   * @param latLng -20.745706568942964,121.50013367990158 .....
+   * @return lngLat 121.50013367990158,-20.745706568942964 .....
+   */
+  public LatLng2LngLat(latLng:string):string { //
+    latLng = latLng.trim().replace(/\r?\n|\r/g, ' ');
+    const latLngList = latLng.split(' ');
+    let lngLatList = [];
+    for (let i = 0; i<latLngList.length; i++) {
+      const coord = latLngList[i].split(',');
+      const lat = parseFloat(coord[0]).toFixed(3);
+      const lng = parseFloat(coord[1]).toFixed(3);
+      if (isNumber(lng) && isNumber(lat)) {
+        lngLatList.push(lng.toString() + ',' + lat.toString());
+      }
+    }
+    return lngLatList.join(' ');
+  }
+  /**
    * Method for extract a polygon coords string from geometry.
    * @param geometry string
    * @returns the string of a polygon string.
@@ -72,7 +92,17 @@ export class CsClipboardService {
     );
     return coordsString;
   }
-
+  /**
+   * swap coordinates for geometry.
+   * @param geometry string
+   * @returns swaped geometry.
+   */
+  public swapGeometry(geometry:string) : string {
+    const coords = this.getCoordinates(geometry);
+    const swappedCoords = this.LatLng2LngLat(coords);
+    const swapedGeometry = this.getGeometry(swappedCoords);
+    return swapedGeometry;
+  }
   /**
    * Method for construct a polygon geometry.
    * @param coords string
