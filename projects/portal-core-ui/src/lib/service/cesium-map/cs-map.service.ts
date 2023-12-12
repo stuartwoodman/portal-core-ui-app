@@ -12,6 +12,7 @@ import { CsWMSService } from '../wms/cs-wms.service';
 import { ResourceType } from '../../utility/constants.service';
 import { CsIrisService } from '../kml/cs-iris.service';
 import { CsKMLService } from '../kml/cs-kml.service';
+import { CsVMFService } from '../vmf/cs-vmf.service';
 import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, EventResult } from '@auscope/angular-cesium';
 import { Entity, ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle, BingMapsImageryProvider,
          ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection,  SplitDirection } from 'cesium';
@@ -40,6 +41,7 @@ export class CsMapService {
               private csMapObject: CsMapObject, private manageStateService: ManageStateService,
               private csCSWService: CsCSWService, private csIrisService: CsIrisService,
               private csKMLService: CsKMLService, private mapsManagerService: MapsManagerService,
+              private csVMFService: CsVMFService,
               @Inject('env') private env, @Inject('conf') private conf)  {
     this.csMapObject.registerClickHandler(this.mapClickHandler.bind(this));
     this.addLayerSubject = new Subject<LayerModel>();
@@ -194,7 +196,7 @@ export class CsMapService {
    * @returns a list of supported OnlineResource types as strings
    */
   public getSupportedOnlineResourceTypes(): ResourceType[] {
-    return [ResourceType.WMS, ResourceType.IRIS, ResourceType.KML, ResourceType.KMZ];
+    return [ResourceType.WMS, ResourceType.IRIS, ResourceType.KML, ResourceType.KMZ, ResourceType.VMF];
   }
 
   /**
@@ -239,6 +241,10 @@ export class CsMapService {
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.IRIS)) {
       // Add an IRIS layer
       this.csIrisService.addLayer(layer, param);
+      this.cacheLayerModelList(layer);
+    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.VMF)) {
+      // Add a WMS layer to map
+      this.csVMFService.addLayer(layer, param);
       this.cacheLayerModelList(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KMZ)) {
       // Add a WMS layer to map
@@ -318,6 +324,8 @@ export class CsMapService {
       this.csCSWService.rmLayer(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.IRIS)) {
       this.csIrisService.rmLayer(layer);
+    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.VMF)) {
+      this.csVMFService.rmLayer(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KML)) {
       this.csKMLService.rmLayer(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KMZ)) {

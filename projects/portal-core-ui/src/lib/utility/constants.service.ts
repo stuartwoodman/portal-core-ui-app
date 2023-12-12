@@ -14,6 +14,7 @@ export enum ResourceType {
   OTHERS = 'OTHERS',
   SOS = "SOS",
   UNSUPPORTED = 'Unsupported',
+  VMF = "VMF",
   WMS = "WMS",
   WFS = "WFS",
   WCS = "WCS",
