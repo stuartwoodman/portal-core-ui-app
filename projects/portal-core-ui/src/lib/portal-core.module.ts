@@ -16,6 +16,7 @@ import { CsWMSService } from './service/wms/cs-wms.service';
 import { CsWFSService } from './service/wfs/cs-wfs.service';
 import { CsIrisService } from './service/kml/cs-iris.service';
 import { CsKMLService } from './service/kml/cs-kml.service';
+import { CsVMFService } from './service/vmf/cs-vmf.service';
 import { KMLDocService } from './service/kml/kml.service';
 import { DownloadIrisService } from './service/kml/download-iris.service';
 import { GMLParserService } from './utility/gmlparser.service';
@@ -50,6 +51,7 @@ import { PolygonsEditorService } from '@auscope/angular-cesium';
     CsWMSService,
     CsIrisService,
     CsKMLService,
+    CsVMFService,
     KMLDocService,
     CsMapObject,
     CsWFSService,
