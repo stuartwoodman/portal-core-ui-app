@@ -63,6 +63,8 @@ export class Constants {
     // Centre of Australia in EPSG:3857
     public static CENTRE_COORD: [number, number] = [14793316.706200, -2974317.644633];
 
+    public static PROXY_API = 'getViaProxy.do';
+
     public static paddlesList = [['https://maps.google.com/mapfiles/kml/paddle/blu-blank.png', 'blue'],
     ['https://maps.google.com/mapfiles/kml/paddle/blu-square.png', 'blue'],
     ['https://maps.google.com/mapfiles/kml/paddle/blu-circle.png', 'blue'],
