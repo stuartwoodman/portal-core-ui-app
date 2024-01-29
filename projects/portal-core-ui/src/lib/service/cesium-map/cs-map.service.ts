@@ -15,7 +15,7 @@ import { CsKMLService } from '../kml/cs-kml.service';
 import { CsVMFService } from '../vmf/cs-vmf.service';
 import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, EventResult } from '@auscope/angular-cesium';
 import { Entity, ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle, BingMapsImageryProvider,
-         ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection,  SplitDirection } from 'cesium';
+         ArcGisMapServerImageryProvider, Cartesian2, WebMercatorProjection, SplitDirection, PolygonHierarchy } from 'cesium';
 import { UtilitiesService } from '../../utility/utilities.service';
 import ImageryLayerCollection from 'cesium/Source/Scene/ImageryLayerCollection';
 declare var Cesium: any;
@@ -215,7 +215,7 @@ export class CsMapService {
     }
     return false;
   }
-  
+
   /**
    * Add layer to the wms
    * @param layer the layer to add to the map
@@ -427,31 +427,95 @@ export class CsMapService {
    * Fit the map to the extent that is provided
    * @param extent An array of numbers representing an extent: [minx, miny, maxx, maxy]
    */
-  public fitView(extent: [number, number, number, number]): void {
-    const northWest = UtilitiesService.coordinates3857To4326(extent[0], extent[1]);
-    const northEast = UtilitiesService.coordinates3857To4326(extent[2], extent[1]);
-    const southEast = UtilitiesService.coordinates3857To4326(extent[2], extent[3]);
-    const southWest = UtilitiesService.coordinates3857To4326(extent[0], extent[3]);
-    const extentPoly = this.getViewer().entities.add({
-      polygon : {
-        hierarchy : Cesium.Cartesian3.fromDegreesArray([
-          northWest[0], northWest[1],
-          northEast[0], northEast[1],
-          southEast[0], southEast[1],
-          southWest[0], southWest[1]
-        ]),
-        height : 0,
-        material : new Cesium.Color(128, 128, 128, 0.25),
-        outline : true,
-        outlineColor : Cesium.Color.BLACK
+  public showExtentBounds(extent: [number, number, number, number], zoomTo: boolean): void {
+    if (extent[0] && extent[0] !== -180.0 && extent[1] && extent[1] !== -90.0 && extent[2]
+        && extent[2] !== 180.0 && extent[3] && extent[3] !== 90.0) {
+      const extentPoly = this.getViewer().entities.add({
+        polygon: {
+          hierarchy: new PolygonHierarchy(Cesium.Cartesian3.fromDegreesArray([
+            extent[0], extent[1],
+            extent[2], extent[1],
+            extent[2], extent[3],
+            extent[0], extent[3],
+            extent[0], extent[1],
+          ])),
+          height: 0,
+          material: new Cesium.ColorMaterialProperty(
+            Cesium.Color.BLUE.withAlpha(0.25)
+          ),
+          outline: true,
+          outlineColor: Cesium.Color.BLACK
+        }
+      });
+      if (zoomTo) {
+        // Leave the highlight for 2 seconds after zooming, then remove
+        this.getViewer().zoomTo(extentPoly).then(() => {
+          setTimeout(() => {
+            this.getViewer().entities.remove(extentPoly);
+          }, 2000);
+        });
+      } else {
+        setTimeout(() => {
+          this.getViewer().entities.remove(extentPoly);
+        }, 2000);
       }
-    });
-    // Leave the highlight for 2 seconds after zooming, then remove
-    this.getViewer().zoomTo(extentPoly).then(() => {
-      setTimeout(() => {
-        this.getViewer().entities.remove(extentPoly);
-      }, 2000);
-    });
+    }
+  }
+
+  /**
+   * Calculate the layer bounds from the min/max values of all geographic elements
+   * @param layer the layer
+   * @returns the layer bounds as an array of numbers [minx, miny, maxx, maxy]
+   */
+  public getLayerBounds(layer: LayerModel): [number, number, number, number] {
+    let minx: number;
+    let maxx: number;
+    let miny: number;
+    let maxy: number;
+    if (layer.cswRecords?.length > 0) {
+      for (const cswRecord of layer.cswRecords) {
+        if (cswRecord.geographicElements?.length > 0) {
+          for (const geoElement of cswRecord.geographicElements) {
+            if (minx === undefined || geoElement.westBoundLongitude < minx) {
+              minx = geoElement.westBoundLongitude;
+              if (minx < -180.0) {
+                minx = -180.0;
+              }
+            }
+            if (maxx === undefined || geoElement.eastBoundLongitude > maxx) {
+              maxx = geoElement.eastBoundLongitude;
+              if (maxx > 180.0) {
+                maxx = 180.0;
+              }
+            }
+            if (miny === undefined || geoElement.southBoundLatitude < miny) {
+              miny = geoElement.southBoundLatitude;
+              if (miny < -90.0) {
+                miny = -90.0;
+              }
+            }
+            if (maxy === undefined || geoElement.northBoundLatitude > maxy) {
+              maxy = geoElement.northBoundLatitude;
+              if (maxy > 90.0) {
+                maxy = 90.0;
+              }
+            }
+          }
+        }
+      }
+    }
+    return [minx, miny, maxx, maxy];
+  }
+
+  /**
+   * Display the layer bounds briefly, and zoom to the layer if requested
+   *
+   * @param layer the layer
+   * @param zoomToBounds zoom to layer bounds if true
+   */
+  public showLayerBounds(layer: LayerModel, zoomToBounds: boolean) {
+    const extent = this.getLayerBounds(layer);
+    this.showExtentBounds(extent, zoomToBounds);
   }
 
   /**
