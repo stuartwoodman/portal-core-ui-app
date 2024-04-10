@@ -8,9 +8,6 @@ import { Observable } from 'rxjs';
 @Injectable()
 export class LegendService {
 
-  private layerRecord;
-  private getCSWUrl;
-
   constructor(private http: HttpClient, @Inject('env') private env) {
   }
 

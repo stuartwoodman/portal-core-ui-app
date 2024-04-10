@@ -1,7 +1,7 @@
 
 import { throwError as observableThrowError, Observable } from 'rxjs';
 import { Inject, Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { catchError, map } from 'rxjs/operators';
 
 import { OnlineResourceModel } from '../../model/data/onlineresource.model';
@@ -10,7 +10,6 @@ import { LayerHandlerService } from '../cswrecords/layer-handler.service';
 import { MapsManagerService } from '@auscope/angular-cesium';
 import { ResourceType } from '../../utility/constants.service';
 import { RenderStatusService } from '../cesium-map/renderstatus/render-status.service';
-import { VMFDocService } from './vmf.service';
 import { UtilitiesService } from '../../utility/utilities.service';
 
 // NB: Cannot use "import { XXX, YYY, ZZZ, Color } from 'cesium';" - it prevents initialising ContextLimits.js properly
@@ -18,7 +17,7 @@ import { UtilitiesService } from '../../utility/utilities.service';
 declare var Cesium;
 
 /**
- * Use Cesium to add layer to map. This service class adds VMF layer to the map
+ * Use Cesium to add layer to map. This service class adds GeoJSON layer to the map
  */
 @Injectable()
 export class CsVMFService {
@@ -32,7 +31,6 @@ export class CsVMFService {
     private http: HttpClient,
     private renderStatusService: RenderStatusService,
     private mapsManagerService: MapsManagerService,
-    private vmfService: VMFDocService,
     @Inject('env') private env) {
   }
 
