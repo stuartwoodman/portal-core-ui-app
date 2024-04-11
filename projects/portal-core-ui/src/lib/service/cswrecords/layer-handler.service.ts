@@ -68,7 +68,7 @@ export class LayerHandlerService {
       for (const layerGroup in records) {
         if (layerGroup) {
           for (const layer of records[layerGroup]) {
-            if (layerIds.indexOf(layer.id) !== -1) {
+            if (layerIds?.indexOf(layer.id) !== -1) {
               matchingLayers.push(layer);
             }
           }
