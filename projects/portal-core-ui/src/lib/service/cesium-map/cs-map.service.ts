@@ -47,7 +47,7 @@ export class CsMapService {
     this.addLayerSubject = new Subject<LayerModel>();
   }
 
-  init() {
+  public init() {
     this.map = this.mapsManagerService.getMap();
     const eventRegistration: EventRegistrationInput = {
       event: CesiumEvent.LEFT_CLICK
@@ -70,16 +70,16 @@ export class CsMapService {
    * @returns the observable subject that returns the list of map layers that was clicked on in the format {clickedFeatureList,
    *         clickedLayerList, pixel,clickCoord}
    */
-   public getClickedLayerListBS(): BehaviorSubject<any> {
-     return this.clickedLayerListBS;
-   }
+  public getClickedLayerListBS(): BehaviorSubject<any> {
+    return this.clickedLayerListBS;
+  }
 
-   /**
-    * Pick all Entities at the given position
-    * @param windowPosition window position of mouse click event
-    * @returns an Array of Cesium.Entity objects at specified position
-    */
-   pickEntities(windowPosition: Cartesian2): Entity[] {
+  /**
+   * Pick all Entities at the given position
+   * @param windowPosition window position of mouse click event
+   * @returns an Array of Cesium.Entity objects at specified position
+   */
+  public pickEntities(windowPosition: Cartesian2): Entity[] {
     const pickedPrimitives = this.getViewer().scene.drillPick(windowPosition);
     const result = [];
     const hash = {};
@@ -215,9 +215,34 @@ export class CsMapService {
     }
     return false;
   }
+
+  /**
+   * Updates this service's layer models with new filter values so they can be displayed
+   * 
+   * @param layerId id string of layer
+   * @param optionalFilters list of optional filters to be enabled
+   */
+  public updateFilterDisplay(layerId: string, optionalFilters) {
+    const layer = this.getLayerModel(layerId);
+    if (layer && layer.filterCollection) {
+      // Optional filters
+      for (const layerFilt of layer.filterCollection.optionalFilters) {
+        for (const optFilt of optionalFilters) {
+          if (layerFilt.label === optFilt.label) {
+            // Set value of filter
+            layerFilt.value = optFilt.value;
+            // Set 'added' to 'true' so that this filter is displayed in filter panel component
+            layerFilt.added = true;
+          }
+        }
+      }
+    }
+  }
   
   /**
-   * Add layer to the wms
+   * Add a layer to the map. Calls other 'addLayer' functions according to the resource type
+   * e.g. WMS, CSW, KML ...
+   * 
    * @param layer the layer to add to the map
    */
   public addLayer(layer: LayerModel, param: any): void {
@@ -243,15 +268,15 @@ export class CsMapService {
       this.csIrisService.addLayer(layer, param);
       this.cacheLayerModelList(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.VMF)) {
-      // Add a WMS layer to map
+      // Add a GeoJSON layer to map
       this.csVMFService.addLayer(layer, param);
       this.cacheLayerModelList(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KMZ)) {
-      // Add a WMS layer to map
+      // Add a KMZ layer to map
       this.csKMLService.addLayer(layer, param);
       this.cacheLayerModelList(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KML)) {
-      // Add a WMS layer to map
+      // Add a KML layer to map
       this.csKMLService.addLayer(layer, param);
       this.cacheLayerModelList(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WFS)) {
@@ -395,7 +420,7 @@ export class CsMapService {
   }
 
   /**
-   * Test whether a layer supports opacity, currently we only support WMS, WFS and
+   * Test whether a layer supports opacity, currently we only support WMS and
    * anything in the cswrenderer list
    *
    * @param layer the layer
@@ -404,8 +429,7 @@ export class CsMapService {
   public layerHasOpacity(layer: LayerModel): boolean {
     if (this.layerExists(layer.id)) {
       if ((this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) ||
-          UtilitiesService.layerContainsResourceType(layer, ResourceType.WMS) ||
-          UtilitiesService.layerContainsResourceType(layer, ResourceType.WFS)) {
+          UtilitiesService.layerContainsResourceType(layer, ResourceType.WMS)) {
         return true;
       }
     }
