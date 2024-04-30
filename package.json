@@ -34,7 +34,7 @@
     "simplify-ts": "^1.0.2",
     "tslib": "^2.4.1",
     "when": "~3.7.8",
-    "zone.js": "~0.11.4"
+    "zone.js": "^0.13.3"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^15.2.8",
