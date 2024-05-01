@@ -19,7 +19,7 @@
     "@auscope/angular-cesium": "^17.0.0",
     "cesium": "1.93.0",
     "rxjs": "~6.6.7",
-    "zone.js": "~0.11.4",
+    "zone.js": "^0.14.4",
     "@thi.ng/hiccup": "^3.6.22",
     "@turf/bbox": "^6.5.0",
     "@turf/bbox-polygon": "^6.5.0",
@@ -29,8 +29,7 @@
     "@types/jquery": "^3.5.14",
     "jquery": "^3.6.1",
     "when": "~3.7.8",
-    "ngx-device-detector": "~5.0.0",
-    "uuid": "^8.3.2"
+    "ngx-device-detector": "~7.0.0"
   },
   "dependencies": {
     "tslib": "^2.4.1"
