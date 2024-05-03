@@ -198,7 +198,7 @@ export class CsClipboardService {
    *
    * @param roi roi polygon object, contains , assumes EPSG:4326
    */
-  loadPolygonFromROI(roi) {
+  public loadPolygonFromROI(roi) {
     let coords = roi.coordinates;
     const coordsList = coords.split(' ');
     const coordsListLngLat = [];
