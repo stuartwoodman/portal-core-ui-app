@@ -71,43 +71,52 @@ export class CsIrisService {
       return this.getKMLFeature(layer).pipe(map(
         (response) => {
           const parser = new DOMParser();
-          let stationLst = [];
-          let minStartDate = null;
-          let maxStartDate = null;
+          let stationLst = []; // List of stations in a network
+          let minStartDate: string | number | Date = null; // Earliest start date for all stations in a network
+          let maxEndDate: string | number | Date = null; // Latest end date for all stations in a network
           const dom = parser.parseFromString(response, "application/xml");
           let placemarks = dom.querySelectorAll("Placemark");
           // for each station
           placemarks.forEach(placemark => {
-            let channelLst = [];
+            let channelLst = []; // List of channels for a station
             let extendedData = placemark.querySelector("ExtendedData").querySelectorAll("Data");
             let stationCode: string;
-            let stratDate: string | number | Date;
+            let startDate: string | number | Date; // Start date for a station's data
+            let endDate: string | number | Date; // End date for a station's data
             extendedData.forEach(data => {
               let att = data.getAttribute('name');
               if (att == 'Code') {
                 stationCode = data.querySelector("value").textContent;
               }
               if (att == 'StartDate') {
-                stratDate = data.querySelector("value").textContent;
+                startDate = data.querySelector("value").textContent;
+              }
+              if (att == 'EndDate') {
+                endDate = data.querySelector("value").textContent;
               }
             })
             channelLst = this.parseChannelInfo(placemark);
 
+            // Assemble a list of station information
             let station = {
               name: placemark.querySelector("name").textContent,
               description: placemark.querySelector("description").textContent,
               code: stationCode,
-              stratDate: stratDate ? new Date(stratDate).toISOString().slice(0, 10) : null,
+              startDate: startDate ? new Date(startDate).toISOString().slice(0, 10) : null,
+              endDate: endDate ? new Date(endDate).toISOString().slice(0, 10) : null,
               channelLst: channelLst
             };
             stationLst.push(station);
-            minStartDate = !minStartDate || minStartDate > stratDate ? station.stratDate : minStartDate;
-            maxStartDate = !maxStartDate || maxStartDate < stratDate ? station.stratDate : maxStartDate;
+
+            // Calculate the earliest start date and latest end data for all stations in a network
+            minStartDate = !minStartDate || minStartDate > startDate ? station.startDate : minStartDate;
+            maxEndDate = !maxEndDate || maxEndDate < endDate ? station.endDate : maxEndDate;
           });
+          // Creating a list of station information with min start and max end dates
           retVal.data.push({
             stationLst: stationLst,
-            mintDate: minStartDate,
-            maxDate: maxStartDate
+            minDate: minStartDate,
+            maxDate: maxEndDate
           });
           return retVal;
         }));
