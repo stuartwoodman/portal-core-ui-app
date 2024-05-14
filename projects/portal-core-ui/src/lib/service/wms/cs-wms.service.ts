@@ -462,7 +462,8 @@ export class CsWMSService {
       let wmsImagProv;
 
       // Set up WMS service
-      if ((!usePost || UtilitiesService.layerIsArcGIS(layer) || UtilitiesService.resourceIsArcGIS(wmsOnlineResource)) && !layer.useDefaultProxy) {
+      // If it is ArcGIS do not use proxy as ArcGIS does not work with POST requests
+      if (UtilitiesService.layerIsArcGIS(layer) || UtilitiesService.resourceIsArcGIS(wmsOnlineResource) || (!usePost && !layer.useDefaultProxy)) {
         // NB: ArcGisMapServerImageryProvider does not allow additional parameters for ArcGIS, i.e. no styling
         // So we use a normal GET request & WebMapServiceImageryProvider instead
         wmsImagProv = new WebMapServiceImageryProvider({

@@ -105,6 +105,8 @@ export class LayerHandlerService {
             itemLayer.description = item.description;
             itemLayer.hidden = false;
             itemLayer.layerMode = 'NA';
+            // Custom layers have their own group
+            itemLayer.group = 'Custom';
             itemLayer.name = item.name;
             itemLayer.splitDirection = SplitDirection.NONE;
             itemLayer.capabilityRecords = response['data']['capabilityRecords'];
