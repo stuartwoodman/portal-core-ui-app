@@ -1,6 +1,6 @@
 {
   "name": "@auscope/portal-core-ui",
-  "version": "6.4.12",
+  "version": "6.5.11",
   "license": "(LGPL OR Apache-2.0)",
   "repository": {
     "type": "git",
@@ -8,18 +8,18 @@
   },
   "homepage": "https://github.com/AuScope/portal-core-ui-app",
   "peerDependencies": {
-    "@angular/animations": "^15.2.8",
-    "@angular/common": "^15.2.8",
-    "@angular/compiler": "^15.2.8",
-    "@angular/core": "^15.2.8",
-    "@angular/forms": "^15.2.8",
-    "@angular/platform-browser": "^15.2.8",
-    "@angular/platform-browser-dynamic": "^15.2.8",
-    "@angular/router": "^15.2.8",
-    "@auscope/angular-cesium": "^15.0.1",
+    "@angular/animations": "^17.3.6",
+    "@angular/common": "^17.3.6",
+    "@angular/compiler": "^17.3.6",
+    "@angular/core": "^17.3.6",
+    "@angular/forms": "^17.3.6",
+    "@angular/platform-browser": "^17.3.6",
+    "@angular/platform-browser-dynamic": "^17.3.6",
+    "@angular/router": "^17.3.6",
+    "@auscope/angular-cesium": "^17.0.0",
     "cesium": "1.93.0",
     "rxjs": "~6.6.7",
-    "zone.js": "~0.11.4",
+    "zone.js": "^0.14.4",
     "@thi.ng/hiccup": "^3.6.22",
     "@turf/bbox": "^6.5.0",
     "@turf/bbox-polygon": "^6.5.0",
@@ -29,8 +29,7 @@
     "@types/jquery": "^3.5.14",
     "jquery": "^3.6.1",
     "when": "~3.7.8",
-    "ngx-device-detector": "~5.0.0",
-    "uuid": "^8.3.2"
+    "ngx-device-detector": "~7.0.0"
   },
   "dependencies": {
     "tslib": "^2.4.1"

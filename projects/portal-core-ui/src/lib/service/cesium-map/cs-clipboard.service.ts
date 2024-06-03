@@ -193,7 +193,29 @@ export class CsClipboardService {
     }
 
   }
-
+  /**
+   * Load a polygon on map from ROI
+   *
+   * @param roi roi polygon object, contains , assumes EPSG:4326
+   */
+  public loadPolygonFromROI(roi) {
+    let coords = roi.coordinates;
+    const coordsList = coords.split(' ');
+    const coordsListLngLat = [];
+    for (let i = 0; i < coordsList.length; i++) {
+        const coord = coordsList[i].split(',');
+        const lng = parseFloat(coord[1]).toFixed(3);
+        const lat = parseFloat(coord[0]).toFixed(3);
+        if (isNumber(lng) && isNumber(lat)) {
+            coordsListLngLat.push(lng);
+            coordsListLngLat.push(lat);
+        }
+    }
+    this.renderPolygon(coordsListLngLat); //need to be [lng lat lng lat]
+    this.polygonBBox = roi;
+    this.polygonsBS.next(this.polygonBBox);
+    return;
+  }
   /**
    * Add a polygon to the clipboard, usually from a layer
    * @param newPolygon polygon object

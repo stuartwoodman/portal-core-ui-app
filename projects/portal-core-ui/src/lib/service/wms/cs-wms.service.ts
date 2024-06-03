@@ -25,8 +25,8 @@ import { SldService } from '../style/wms/sld.service';
 
 export class ErrorPayload {
   constructor(
-     public cmWmsService: CsWMSService,
-     public layer: LayerModel) {}
+    public cmWmsService: CsWMSService,
+    public layer: LayerModel) { }
 
   /**
    * Logs an error to console if WMS could not load on map
@@ -111,7 +111,7 @@ export class CsWMSService {
     if (param) {
       // Add in time parameter, but only if required
       if (param.time) {
-          params['time'] = param.time;
+        params['time'] = param.time;
       }
       // Add in cql_filter parameter, if requested
       if (param.optionalFilters) {
@@ -125,7 +125,7 @@ export class CsWMSService {
     if (sld_body) {
       /* ArcGIS and POST requests cannot read base64 encoded styles */
       if (!UtilitiesService.layerIsArcGIS(layer) && !UtilitiesService.resourceIsArcGIS(onlineResource) &&
-          this.wmsUrlTooLong(sld_body, layer) && !usePost) {
+        this.wmsUrlTooLong(sld_body, layer) && !usePost) {
         params['sld_body'] = window.btoa(sld_body);
       } else {
         params['sld_body'] = sld_body;
@@ -180,8 +180,8 @@ export class CsWMSService {
 
     if (sld_body) {
       /* ArcGIS and POST requests cannot read base64 encoded styles */
-      if (!UtilitiesService.layerIsArcGIS(layer) &&  !UtilitiesService.resourceIsArcGIS(onlineResource) &&
-          this.wmsUrlTooLong(sld_body, layer) && !usePost) {
+      if (!UtilitiesService.layerIsArcGIS(layer) && !UtilitiesService.resourceIsArcGIS(onlineResource) &&
+        this.wmsUrlTooLong(sld_body, layer) && !usePost) {
         params['sld_body'] = window.btoa(sld_body);
       } else {
         params['sld_body'] = sld_body;
@@ -343,6 +343,7 @@ export class CsWMSService {
    * @param param request parameters
    */
   public addLayer(layer: LayerModel, param?: any): void {
+    layer.initialLoad = true;
     // Any running sldSubscriptions should have been stopped in rmLayer
     this.sldSubscriptions[layer.id] = [];
     if (!param) {
@@ -382,7 +383,7 @@ export class CsWMSService {
             const cswExtent = wmsOnlineResource.geographicElements[0];
 
             const cswExtentPoly = bboxPolygon([cswExtent.westBoundLongitude, cswExtent.southBoundLatitude,
-                                            cswExtent.eastBoundLongitude, cswExtent.northBoundLatitude]);
+            cswExtent.eastBoundLongitude, cswExtent.northBoundLatitude]);
             const globalExtentPoly = bboxPolygon([-180, -90, 180, 90]);
             const intersectionPoly = intersect(cswExtentPoly, globalExtentPoly);
             lonlatextent = bbox(intersectionPoly);
@@ -405,155 +406,184 @@ export class CsWMSService {
     }
   }
 
-    /**
-     * Calls CesiumJS to add WMS layer to the map
-     * @method addCesiumLayer
-     * @param layer the WMS layer to add to the map.
-     * @param wmsOnlineResource details of WMS service
-     * @param usePost whether to use a POST request
-     * @param lonlatextent longitude latitude extent of the layer as an array [west,south,east,north]
-     * @returns the new CesiumJS ImageryLayer object
-     */
-    private addCesiumLayer(layer, wmsOnlineResource, params, usePost: boolean, lonlatextent): ImageryLayer {
-      const browserInfo = this.deviceService.getDeviceInfo();
-      const viewer = this.map.getCesiumViewer();
-      const me = this;
-      if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WMS)) {
-        // WMS tile loading callback function, numLeft = number of tiles left to load
-        const tileLoading = (numLeft: number) => {
-          if (numLeft === 0) {
-              // When there are no more tiles to load it is complete
-              this.renderStatusService.updateComplete(layer, wmsOnlineResource);
-          }
-        };
-        // Register tile loading callback function
-        this.tileLoadUnsubscribes[wmsOnlineResource.url] = viewer.scene.globe.tileLoadProgressEvent.addEventListener(tileLoading);
+  /**
+   * Calls CesiumJS to add WMS layer to the map
+   * @method addCesiumLayer
+   * @param layer the WMS layer to add to the map.
+   * @param wmsOnlineResource details of WMS service
+   * @param usePost whether to use a POST request
+   * @param lonlatextent longitude latitude extent of the layer as an array [west,south,east,north]
+   * @returns the new CesiumJS ImageryLayer object
+   */
+  private addCesiumLayer(layer, wmsOnlineResource, params, usePost: boolean, lonlatextent): ImageryLayer {
+    const browserInfo = this.deviceService.getDeviceInfo();
+    const viewer = this.map.getCesiumViewer();
+    const cameraService = this.map.getCameraService();
+    const me = this;
+    if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WMS)) {
+      // WMS tile loading callback function, numLeft = number of tiles left to load
+      const tileLoading = (numLeft: number) => {
+        if (numLeft === 0) {
+          // When there are no more tiles to load it is complete
+          this.renderStatusService.updateComplete(layer, wmsOnlineResource);
+          if (layer.initialLoad) {
 
-        const url = UtilitiesService.rmParamURL(wmsOnlineResource.url);
-        let wmsImagProv;
+            // zoom to the given bounding box from layers.yaml
+            if (layer["geojson"]) {
+              if (layer["geojson"]["bbox"]) {
 
-        // Set up WMS service
-        if ((!usePost || UtilitiesService.layerIsArcGIS(layer) || UtilitiesService.resourceIsArcGIS(wmsOnlineResource)) && !layer.useDefaultProxy) {
-          // NB: ArcGisMapServerImageryProvider does not allow additional parameters for ArcGIS, i.e. no styling
-          // So we use a normal GET request & WebMapServiceImageryProvider instead
-          wmsImagProv = new WebMapServiceImageryProvider({
-            url: url,
-            layers: wmsOnlineResource.name,
-            parameters: params,
-            rectangle: Rectangle.fromDegrees(lonlatextent[0], lonlatextent[1], lonlatextent[2], lonlatextent[3])
-          });
-        } else {
-          // Keep old function call
-          let oldCreateImage = (Resource as any)._Implementations.createImage;
-
-          // Overwrite CesiumJS 'createImage' function to allow us to do 'POST' requests via a proxy
-          // If there is a 'usepost' parameter in the URL, then 'POST' via proxy else uses standard 'GET'
-          // TODO: Implement a Resource constructor parameter instead of 'usepost'
-          (Resource as any)._Implementations.createImage = function (request, crossOrigin, deferred, flipY, preferImageBitmap) {
-            const jURL = new URL(request.url);
-            // If there's no 'usepost' parameter then call the old 'createImage' method which uses 'GET'
-            if (!jURL.searchParams.has('usepost')) {
-              return oldCreateImage(request, crossOrigin, deferred, flipY, preferImageBitmap);
-            }
-            // Initiate loading WMS tiles via POST & a proxy
-            (Resource as any).supportsImageBitmapOptions()
-              .then(function (supportsImageBitmap) {
-                const responseType = "blob";
-                const method = "POST";
-                const xhrDeferred = when.defer();
-                // Assemble parameters into a form for 'POST' request
-                const postForm = new FormData();
-                postForm.append('service', 'WMS');
-                jURL.searchParams.forEach(function(val, key) {
-                  if (key === 'url') {
-                    postForm.append('url', val.split('?')[0] + '?service=WMS');
-                    const kvp = val.split('?')[1];
-                    if (kvp) {
-                      me.paramSubst(kvp.split('=')[0], kvp.split('=')[1], postForm);
-                    }
+                var lon1 = 0, lon2 = 0, lat1 = 0, lat2 = 0
+                const bbox = layer["geojson"]["bbox"];
+                var i = 0;
+                for (const coord of bbox) {
+                  if (i == 0) {
+                    lon1 = parseFloat(coord[0]);
+                    lat1 = parseFloat(coord[1]);
                   } else {
-                    me.paramSubst(key, val, postForm);
+                    lon2 = parseFloat(coord[0]);
+                    lat2 = parseFloat(coord[1]);
                   }
-                });
-
-                const newURL = jURL.origin + jURL.pathname;
-                // Initiate request
-                const xhr = (Resource as any)._Implementations.loadWithXhr(
-                  newURL,
-                  responseType,
-                  method,
-                  postForm,
-                  undefined,
-                  xhrDeferred,
-                  undefined,
-                  undefined,
-                  undefined
-                );
-
-                if (xhr && xhr.abort) {
-                  request.cancelFunction = function () {
-                    xhr.abort();
-                  };
+                  i = i + 1;
                 }
-                return xhrDeferred.promise.then(function (blob) {
-                  if (!blob) {
-                    deferred.reject(
-                      new Error("Successfully retrieved " + url + " but it contained no content.")
-                    );
-                    return;
-                  }
-                  // 'createImageBitmap' was not fully supported in older versions of Firefox (ESR & version <= 92.0) and Safari
-                  // due to bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1367251
-                  if (browserInfo.browser === 'Firefox' && parseFloat(browserInfo.browser_version) <= 92.0) {
-                    return createImageBitmap(blob);
-                  } else {
-                    return (Resource as any).createImageBitmapFromBlob(blob, {
-                      flipY: flipY,
-                      premultiplyAlpha: false,
-                      skipColorSpaceConversion: false
-                    });
-                  }
-                }).then(deferred.resolve);
-              }).catch(deferred.reject);
-          };
-          /* End of 'createImage' overwrite */
 
-          // Create a resource which uses our custom proxy
-          const proxyUrl = me.env.portalBaseUrl + Constants.PROXY_API + '?usewhitelist=' + (layer.useProxyWhitelist ? 'true' : 'false') + '&url=';
-          const res = new Resource({url: url, proxy: new MyDefaultProxy(proxyUrl)});
+                const bboxDataset = Rectangle.fromDegrees(lon1, lat1, lon2, lat2);
+                cameraService.cameraFlyTo({ destination: bboxDataset });
+              }
+            }
+            layer.initialLoad = false;
 
-          // Force Resource to use 'POST' and our proxy
-          params['usepost'] = true;
-          wmsImagProv = new WebMapServiceImageryProvider({
-            url: res,
-            layers: wmsOnlineResource.name,
-            parameters: params,
-            rectangle: Rectangle.fromDegrees(lonlatextent[0], lonlatextent[1], lonlatextent[2], lonlatextent[3])
-          });
+          }
         }
-        const errorPayload = new ErrorPayload( this, layer);
+      };
+      // Register tile loading callback function
+      this.tileLoadUnsubscribes[wmsOnlineResource.url] = viewer.scene.globe.tileLoadProgressEvent.addEventListener(tileLoading);
 
-        wmsImagProv.errorEvent.addEventListener(errorPayload.errorEvent, errorPayload);
-        return viewer.imageryLayers.addImageryProvider(wmsImagProv);
-      }
-      return null;
-    }
+      const url = UtilitiesService.rmParamURL(wmsOnlineResource.url);
+      let wmsImagProv;
 
-    /**
-     * Function to add parameters to FormData object
-     * some parameters are converted to something that geoserver WMS can understand
-     * @method paramSubst
-     * @param key parameter key
-     * @param val parameter value
-     * @param postForm a FormData object to add key,val pairs to
-     */
-    private paramSubst(key: string, val: string, postForm: FormData) {
-      if (key === 'sld_body') {
-        postForm.append('sldBody', val);
-      } else if (key !== 'usepost') {
-        postForm.append(key, val);
+      // Set up WMS service
+      // If it is ArcGIS do not use proxy as ArcGIS does not work with POST requests
+      if (UtilitiesService.layerIsArcGIS(layer) || UtilitiesService.resourceIsArcGIS(wmsOnlineResource) || (!usePost && !layer.useDefaultProxy)) {
+        // NB: ArcGisMapServerImageryProvider does not allow additional parameters for ArcGIS, i.e. no styling
+        // So we use a normal GET request & WebMapServiceImageryProvider instead
+        wmsImagProv = new WebMapServiceImageryProvider({
+          url: url,
+          layers: wmsOnlineResource.name,
+          parameters: params,
+          rectangle: Rectangle.fromDegrees(lonlatextent[0], lonlatextent[1], lonlatextent[2], lonlatextent[3])
+        });
+      } else {
+        // Keep old function call
+        let oldCreateImage = (Resource as any)._Implementations.createImage;
+
+        // Overwrite CesiumJS 'createImage' function to allow us to do 'POST' requests via a proxy
+        // If there is a 'usepost' parameter in the URL, then 'POST' via proxy else uses standard 'GET'
+        // TODO: Implement a Resource constructor parameter instead of 'usepost'
+        (Resource as any)._Implementations.createImage = function (request, crossOrigin, deferred, flipY, preferImageBitmap) {
+          const jURL = new URL(request.url);
+          // If there's no 'usepost' parameter then call the old 'createImage' method which uses 'GET'
+          if (!jURL.searchParams.has('usepost')) {
+            return oldCreateImage(request, crossOrigin, deferred, flipY, preferImageBitmap);
+          }
+          // Initiate loading WMS tiles via POST & a proxy
+          (Resource as any).supportsImageBitmapOptions()
+            .then(function (supportsImageBitmap) {
+              const responseType = "blob";
+              const method = "POST";
+              const xhrDeferred = when.defer();
+              // Assemble parameters into a form for 'POST' request
+              const postForm = new FormData();
+              postForm.append('service', 'WMS');
+              jURL.searchParams.forEach(function (val, key) {
+                if (key === 'url') {
+                  postForm.append('url', val.split('?')[0] + '?service=WMS');
+                  const kvp = val.split('?')[1];
+                  if (kvp) {
+                    me.paramSubst(kvp.split('=')[0], kvp.split('=')[1], postForm);
+                  }
+                } else {
+                  me.paramSubst(key, val, postForm);
+                }
+              });
+
+              const newURL = jURL.origin + jURL.pathname;
+              // Initiate request
+              const xhr = (Resource as any)._Implementations.loadWithXhr(
+                newURL,
+                responseType,
+                method,
+                postForm,
+                undefined,
+                xhrDeferred,
+                undefined,
+                undefined,
+                undefined
+              );
+
+              if (xhr && xhr.abort) {
+                request.cancelFunction = function () {
+                  xhr.abort();
+                };
+              }
+              return xhrDeferred.promise.then(function (blob) {
+                if (!blob) {
+                  deferred.reject(
+                    new Error("Successfully retrieved " + url + " but it contained no content.")
+                  );
+                  return;
+                }
+                // 'createImageBitmap' was not fully supported in older versions of Firefox (ESR & version <= 92.0) and Safari
+                // due to bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1367251
+                if (browserInfo.browser === 'Firefox' && parseFloat(browserInfo.browser_version) <= 92.0) {
+                  return createImageBitmap(blob);
+                } else {
+                  return (Resource as any).createImageBitmapFromBlob(blob, {
+                    flipY: flipY,
+                    premultiplyAlpha: false,
+                    skipColorSpaceConversion: false
+                  });
+                }
+              }).then(deferred.resolve);
+            }).catch(deferred.reject);
+        };
+        /* End of 'createImage' overwrite */
+
+        // Create a resource which uses our custom proxy
+        const proxyUrl = me.env.portalBaseUrl + Constants.PROXY_API + '?usewhitelist=' + (layer.useProxyWhitelist ? 'true' : 'false') + '&url=';
+        const res = new Resource({ url: url, proxy: new MyDefaultProxy(proxyUrl) });
+
+        // Force Resource to use 'POST' and our proxy
+        params['usepost'] = true;
+        wmsImagProv = new WebMapServiceImageryProvider({
+          url: res,
+          layers: wmsOnlineResource.name,
+          parameters: params,
+          rectangle: Rectangle.fromDegrees(lonlatextent[0], lonlatextent[1], lonlatextent[2], lonlatextent[3])
+        });
       }
+      const errorPayload = new ErrorPayload(this, layer);
+
+      wmsImagProv.errorEvent.addEventListener(errorPayload.errorEvent, errorPayload);
+      return viewer.imageryLayers.addImageryProvider(wmsImagProv);
     }
+    return null;
+  }
+
+  /**
+   * Function to add parameters to FormData object
+   * some parameters are converted to something that geoserver WMS can understand
+   * @method paramSubst
+   * @param key parameter key
+   * @param val parameter value
+   * @param postForm a FormData object to add key,val pairs to
+   */
+  private paramSubst(key: string, val: string, postForm: FormData) {
+    if (key === 'sld_body') {
+      postForm.append('sldBody', val);
+    } else if (key !== 'usepost') {
+      postForm.append(key, val);
+    }
+  }
 
 }
 
@@ -561,12 +591,12 @@ export class CsWMSService {
 // so that the parameters are not uuencoded
 class MyDefaultProxy {
   proxy: string;
-    constructor(proxy) {
-  this.proxy = proxy;
+  constructor(proxy) {
+    this.proxy = proxy;
   }
   getURL: (any) => any;
 }
-MyDefaultProxy.prototype.getURL = function(resource) {
+MyDefaultProxy.prototype.getURL = function (resource) {
   const prefix = this.proxy.indexOf('?') === -1 ? '?' : '';
   return this.proxy + prefix + resource;
 };

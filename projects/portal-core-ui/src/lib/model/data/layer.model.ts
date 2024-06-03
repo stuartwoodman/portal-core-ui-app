@@ -39,4 +39,5 @@ export class LayerModel {
   supportsCsvDownloads: boolean;
   kmlDoc: any; // Document object for custom KML layer
   serverType?: string;  // Type of server hosting the data
+  initialLoad: boolean; // if first time loaded, zoom to bbox
 }
