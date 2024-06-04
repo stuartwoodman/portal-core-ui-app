@@ -13,7 +13,6 @@ declare var RenderControls: any;
 @Injectable()
 export class RickshawService {
 
-
   constructor() {}
 
   public _findLogName(bvLogId, logIds, logNames) {
