@@ -13,7 +13,6 @@ declare var RenderControls: any;
 @Injectable()
 export class RickshawService {
 
-
   constructor() {}
 
   public _findLogName(bvLogId, logIds, logNames) {
@@ -36,158 +35,158 @@ export class RickshawService {
 
   public drawNVCLDataGraph(response, logIds, logNames) {
     const this_ptr = this;
-      // Once we have received the plot data, reformat it into (x,y) values and create colour table
-      const metric_colours = new Object;
-      const data_bin = new Object;
-      let has_data = false;
-      const yaxis_labels = new Object;
-      const yaxis_keys = [];
-      const jsonObj = JSON.parse(response);
-      // {"success":true, "data":[{ "logId":"logid_1", "stringValues":[{"roundedDepth":170.5,"classCount":1,"classText":"Alunite-K","colour":4351080},
+    // Once we have received the plot data, reformat it into (x,y) values and create colour table
+    const metric_colours = new Object;
+    const data_bin = new Object;
+    let has_data = false;
+    const yaxis_labels = new Object;
+    const yaxis_keys = [];
+    const jsonObj = JSON.parse(response);
+    // {"success":true, "data":[{ "logId":"logid_1", "stringValues":[{"roundedDepth":170.5,"classCount":1,"classText":"Alunite-K","colour":4351080},
 
-        const dataObj = jsonObj;
-        for (let i = 0; i < dataObj.length; i++) {
-          const bv = dataObj[i];
+    const dataObj = jsonObj;
+    for (let i = 0; i < dataObj.length; i++) {
+      const bv = dataObj[i];
           ['stringValues', 'numericValues'].forEach(function(dataType) {
-            if (bv.hasOwnProperty(dataType) && bv[dataType].length > 0) {
-              // Find the log name for our log id, this will be our 'metric_name'
-              const metric_name = this_ptr._findLogName(bv.logId, logIds, logNames);
-              if (metric_name.length > 0) {
-                if (!(metric_name in data_bin)) {
-                  data_bin[metric_name] = new Object;
-                }
+        if (bv.hasOwnProperty(dataType) && bv[dataType].length > 0) {
+          // Find the log name for our log id, this will be our 'metric_name'
+          const metric_name = this_ptr._findLogName(bv.logId, logIds, logNames);
+          if (metric_name.length > 0) {
+            if (!(metric_name in data_bin)) {
+              data_bin[metric_name] = new Object;
+            }
                 bv[dataType].forEach(function(val) {
 
-                  // "stringValues" ==> units are called "Sample Count" and "numericValues" ==> "Meter Average"
-                  if (dataType === 'stringValues') {
-                    const key = val.classText;
-                    // Use the supplied colour for each metric
-                    if (!(key in metric_colours)) {
-                      metric_colours[key] = this_ptr._colourConvert(val.colour);
-                    }
+              // "stringValues" ==> units are called "Sample Count" and "numericValues" ==> "Meter Average"
+              if (dataType === 'stringValues') {
+                const key = val.classText;
+                // Use the supplied colour for each metric
+                if (!(key in metric_colours)) {
+                  metric_colours[key] = this_ptr._colourConvert(val.colour);
+                }
 
-                    // Start to create graphing data
-                    if (!(key in data_bin[metric_name])) {
-                      data_bin[metric_name][key] = [];
-                      if (!(metric_name in yaxis_labels)) {
-                        yaxis_labels[metric_name] = 'Sample Count';
-                        yaxis_keys.push(metric_name);
-                      }
-                    }
+                // Start to create graphing data
+                if (!(key in data_bin[metric_name])) {
+                  data_bin[metric_name][key] = [];
+                  if (!(metric_name in yaxis_labels)) {
+                    yaxis_labels[metric_name] = 'Sample Count';
+                    yaxis_keys.push(metric_name);
+                  }
+                }
 
-                    // Depth is 'x' and 'y' is our measured value
+                // Depth is 'x' and 'y' is our measured value
                     data_bin[metric_name][key].push({'x': parseFloat(val.roundedDepth), 'y': parseFloat(val.classCount)});
-                    has_data = true;
+                has_data = true;
 
-                  } else if (dataType === 'numericValues') {
-                    // Start to create graphing data
-                    if (!(metric_name in data_bin[metric_name])) {
-                      data_bin[metric_name][metric_name] = [];
-                      if (!(metric_name in yaxis_labels)) {
-                        yaxis_labels[metric_name] = 'Meter Average';
-                        yaxis_keys.push(metric_name);
-                      }
-                    }
-                    // Depth is 'x' and 'y' is our measured value
+              } else if (dataType === 'numericValues') {
+                // Start to create graphing data
+                if (!(metric_name in data_bin[metric_name])) {
+                  data_bin[metric_name][metric_name] = [];
+                  if (!(metric_name in yaxis_labels)) {
+                    yaxis_labels[metric_name] = 'Meter Average';
+                    yaxis_keys.push(metric_name);
+                  }
+                }
+                // Depth is 'x' and 'y' is our measured value
                     data_bin[metric_name][metric_name].push({'x': parseFloat(val.roundedDepth), 'y': parseFloat(val.averageValue)});
-                    has_data = true;
-                  } // if
-                }); // for each
+                has_data = true;
               } // if
-            } // if
-          }); // for each
-        } // for
+            }); // for each
+          } // if
+        } // if
+      }); // for each
+    } // for
 
-      // Call 'genericPlot()'
-      if (has_data) {
-        this.plot(data_bin, 'Depth', yaxis_labels, yaxis_keys, metric_colours);
-      } else {
-        alert('Sorry, the selected dataset has no data. Please select a different dataset');
-      }
+    // Call 'genericPlot()'
+    if (has_data) {
+      this.plot(data_bin, 'Depth', yaxis_labels, yaxis_keys, metric_colours);
+    } else {
+      alert('Sorry, the selected dataset has no data. Please select a different dataset');
+    }
 
   }
 
   public drawNVCLJobsGraph(response, logid_colour_table, logIds, logNames) {
 
-      // Once we have received the plot data, reformat it into (x,y) values and create colour table
-      const metric_colours = new Object;
-      const data_bin = new Object;
-      let has_data = false;
-      const yaxis_labels = new Object;
-      const yaxis_keys = [];
-      const re = new RegExp('[^A-Za-z0-9]', 'g');
-      const jsonObj = response;
-      if ('success' in jsonObj && jsonObj.success === true && jsonObj.data.length > 0) {
+    // Once we have received the plot data, reformat it into (x,y) values and create colour table
+    const metric_colours = new Object;
+    const data_bin = new Object;
+    let has_data = false;
+    const yaxis_labels = new Object;
+    const yaxis_keys = [];
+    const re = new RegExp('[^A-Za-z0-9]', 'g');
+    const jsonObj = response;
+    if ('success' in jsonObj && jsonObj.success === true && jsonObj.data.length > 0) {
         jsonObj.data[0].binnedValues.forEach(function(bv) {
           ['stringValues', 'numericValues'].forEach(function(dataType) {
-            if (bv.startDepths.length === bv[dataType].length && bv[dataType].length > 0) {
-              const metric_name = bv.name;
-              if (!(metric_name in data_bin)) {
-                data_bin[metric_name] = new Object;
-              }
+          if (bv.startDepths.length === bv[dataType].length && bv[dataType].length > 0) {
+            const metric_name = bv.name;
+            if (!(metric_name in data_bin)) {
+              data_bin[metric_name] = new Object;
+            }
 
               bv[dataType].forEach(function(val, idx, arr) {
 
-                // "stringValues" ==> units are called "Sample Count" and "numericValues" ==> "Meter Average"
-                if (dataType === 'stringValues') {
+              // "stringValues" ==> units are called "Sample Count" and "numericValues" ==> "Meter Average"
+              if (dataType === 'stringValues') {
 
-                  // Using entries(), make a name,value list, then use that to add to 'data_bin[metric_name]'
+                // Using entries(), make a name,value list, then use that to add to 'data_bin[metric_name]'
                   d3.entries(val).forEach(function(meas) {
-                    const key = meas.key;
-                    if (!(key in metric_colours)) {
-                      let logIdIdx = 999999;
-                      // First, find the logid for the metric returned from the graph data so that mineral colours can be found for graph data
-                      for (let j = 0; j < logNames.length; j++) {
-                        // Unfortunately the metric names from the two services do not correspond exactly
-                        if (metric_name.replace(re, '').toUpperCase() === logNames[j].replace(re, '').toUpperCase()) {
-                          logIdIdx = j;
-                          break;
-                        }
-                      }
-                      // If mineral name can be found in 'logid_colour_table' put the appropriate colour in the 'metric_colours' table
-                      if ((logIds.length > logIdIdx) && (logIds[logIdIdx] in logid_colour_table) && (meas.key in logid_colour_table[logIds[logIdIdx]])) {
-                        metric_colours[key] = logid_colour_table[logIds[logIdIdx]][meas.key];
+                  const key = meas.key;
+                  if (!(key in metric_colours)) {
+                    let logIdIdx = 999999;
+                    // First, find the logid for the metric returned from the graph data so that mineral colours can be found for graph data
+                    for (let j = 0; j < logNames.length; j++) {
+                      // Unfortunately the metric names from the two services do not correspond exactly
+                      if (metric_name.replace(re, '').toUpperCase() === logNames[j].replace(re, '').toUpperCase()) {
+                        logIdIdx = j;
+                        break;
                       }
                     }
-                    // Start to create graphing data
-                    if (!(key in data_bin[metric_name])) {
-                      data_bin[metric_name][key] = [];
-                      if (!(metric_name in yaxis_labels)) {
-                        yaxis_labels[metric_name] = 'Sample Count';
-                        yaxis_keys.push(metric_name);
-                      }
+                    // If mineral name can be found in 'logid_colour_table' put the appropriate colour in the 'metric_colours' table
+                    if ((logIds.length > logIdIdx) && (logIds[logIdIdx] in logid_colour_table) && (meas.key in logid_colour_table[logIds[logIdIdx]])) {
+                      metric_colours[key] = logid_colour_table[logIds[logIdIdx]][meas.key];
                     }
-
-                    // Depth is 'x' and 'y' is our measured value
-                    data_bin[metric_name][key].push({'x': parseFloat(bv.startDepths[idx]), 'y': parseFloat(meas.value)});
-                    has_data = true;
-
-                  });
-                } else if (dataType === 'numericValues') {
+                  }
                   // Start to create graphing data
-                  if (!(metric_name in data_bin[metric_name])) {
-                    data_bin[metric_name][metric_name] = [];
+                  if (!(key in data_bin[metric_name])) {
+                    data_bin[metric_name][key] = [];
                     if (!(metric_name in yaxis_labels)) {
-                      yaxis_labels[metric_name] = 'Meter Average';
+                      yaxis_labels[metric_name] = 'Sample Count';
                       yaxis_keys.push(metric_name);
                     }
                   }
-                  // Depth is 'x' and 'y' is our measured value
-                  data_bin[metric_name][metric_name].push({'x': parseFloat(bv.startDepths[idx]), 'y': parseFloat(val)});
-                  has_data = true;
-                } // if
-              }); // for each
-            } // if
-          }); // for each
-        }); // for each
-      } // if
 
-      // Call 'genericPlot()'
-      if (has_data) {
-        this.plot(data_bin, 'Depth', yaxis_labels, yaxis_keys, metric_colours);
-      } else {
-        alert('Sorry, the selected dataset has no data. Please select a different dataset');
-      }
+                  // Depth is 'x' and 'y' is our measured value
+                    data_bin[metric_name][key].push({'x': parseFloat(bv.startDepths[idx]), 'y': parseFloat(meas.value)});
+                  has_data = true;
+
+                });
+              } else if (dataType === 'numericValues') {
+                // Start to create graphing data
+                if (!(metric_name in data_bin[metric_name])) {
+                  data_bin[metric_name][metric_name] = [];
+                  if (!(metric_name in yaxis_labels)) {
+                    yaxis_labels[metric_name] = 'Meter Average';
+                    yaxis_keys.push(metric_name);
+                  }
+                }
+                // Depth is 'x' and 'y' is our measured value
+                  data_bin[metric_name][metric_name].push({'x': parseFloat(bv.startDepths[idx]), 'y': parseFloat(val)});
+                has_data = true;
+              } // if
+            }); // for each
+          } // if
+        }); // for each
+      }); // for each
+    } // if
+
+    // Call 'genericPlot()'
+    if (has_data) {
+      this.plot(data_bin, 'Depth', yaxis_labels, yaxis_keys, metric_colours);
+    } else {
+      alert('Sorry, the selected dataset has no data. Please select a different dataset');
+    }
 
   }
 
@@ -389,9 +388,10 @@ export class RickshawService {
         // One y-axis
         if (label_div.size() === 1) {
           label_div.select('svg').append('text')
+            .attr('writing-mode', 'tb')
             .attr('text-anchor', 'start')
-            .attr('x', 0)
-            .attr('y', 20)
+            .attr('x', 60)
+            .attr('y', 180)
             .text(yaxis_names[yaxis_key]);
         }
       }; // end of callback function
@@ -404,20 +404,17 @@ export class RickshawService {
 
     }); // forEach yaxis_key
 
-    // Create range slider underneath graphs
-    const preview = new Rickshaw.Graph.RangeSlider.MultiPreview({
-      graphs: graph_list,
-      width: 500 + 20, // Add 20 to allow for the grips at both ends of the previewer, this ensures that the
-      // preview window and the real window are the same width and their ticks line up together
-      element: local_div.select('[id=preview_last]').node(),
-      height: yaxis_keys.length * 50,
-    });
-
-
-
-
     // Render graph
-    graph_list.forEach(function(graph, idx, arr) {
+    graph_list.forEach(function (graph, idx, arr) {
+
+      // Create range slider underneath graphs
+      const preview = new Rickshaw.Graph.RangeSlider.MultiPreview({
+        graph: graph,
+        width: 500 + 20, // Add 20 to allow for the grips at both ends of the previewer, this ensures that the
+        // preview window and the real window are the same width and their ticks line up together
+        element: local_div.select('[id=preview_last_' + idx.toString() + ']').node(),
+        height: 50,
+      });
 
       // One set of controls for each graph
       const controls = new RenderControls({
@@ -433,7 +430,8 @@ export class RickshawService {
 
       // X-Axis for the preview slider
       const previewXAxis = new Rickshaw.Graph.Axis.X({
-        graph: preview.previews[idx],
+        graph: preview.previews[0],
+        //graph: preview.previews[idx],
         tickFormat: formatMetres,
         ticksTreatment: ticksTreatment,
         orientation: 'top'

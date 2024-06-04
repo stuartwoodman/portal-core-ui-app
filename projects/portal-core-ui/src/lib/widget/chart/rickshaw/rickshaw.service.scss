@@ -26,6 +26,9 @@
     width: 100px;
 	display: inline-block;
 	top: -232px;
+    writing-mode: vertical-rl;
+    text-align: center;
+    color: red;
 }
 
 #rickshawChart_outer [id^=content_] [id^=x_axis_] {
@@ -45,7 +48,7 @@
 #rickshawChart_outer [id^=content_] [id^=left_side_panel_] {
     width: 25%;
     padding: 0px 0px 0px 0px;
-	position: relative;
+	position: absolute;
 }
 
 #rickshawChart_outer [id^=content_] [id^=left_side_panel_] * {
@@ -65,7 +68,7 @@
 }
 
 #rickshawChart_outer [id^=preview_] {
-    position: relative;
+    position: absolute;
 	left: 325px;
 	width:500px
 }
@@ -82,4 +85,10 @@
 
 [id^=smoother_] a.ui-slider-handle {
     margin-left: -1px !important;
+}
+
+.rickshaw_verticaltext {
+    writing-mode: vertical-rl;
+    text-align: center;
+    color: red;
 }
