@@ -391,7 +391,7 @@ export class RickshawService {
             .attr('writing-mode', 'tb')
             .attr('text-anchor', 'start')
             .attr('x', 60)
-            .attr('y', 180)
+            .attr('y', 90)
             .text(yaxis_names[yaxis_key]);
         }
       }; // end of callback function
