@@ -28,11 +28,18 @@
             "tsConfig": "projects/portal-core-ui/tsconfig.spec.json",
             "karmaConfig": "projects/portal-core-ui/karma.conf.js"
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": ["projects/portal-core-ui/src/**/*.ts", "projects/portal-core-ui/src/**/*.html"]
+          }
         }
       }
     }
   },
   "cli": {
+    "schematicCollections": ["@angular-eslint/schematics"],
     "analytics": false
   }
 }
