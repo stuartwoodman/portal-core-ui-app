@@ -1,8 +1,8 @@
-import {Injectable, Inject} from '@angular/core';
-import {HttpClient, HttpParams} from '@angular/common/http';
-import {SimpleXMLService} from '../../utility/simplexml.service';
-import {Observable} from 'rxjs';
-import {map} from 'rxjs/operators';
+import { Injectable, Inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { SimpleXMLService } from '../../utility/simplexml.service';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -56,16 +56,16 @@ export class GetCapsService {
    * Extracts online resources from GetCapabilities response
    * 
    * @param doc Document interface of GetCapabilities response
+   * @param node the layer Node
    * @param nsResolver namespace resolver function
    * @returns an object with the following property names: 'url', 'type', 'name', 'description', 'version'
    */
-  private getOnlineResElems(doc: Document, nsResolver: (prefix: string) => string, layerNum: number) {
-    const ONLINE_RES = {
-      'url': "string(/xsi:WMS_Capabilities/xsi:Capability/xsi:Request/xsi:GetMap/xsi:DCPType/xsi:HTTP/xsi:Get/xsi:OnlineResource/@*[local-name()='href'])",
-      'name': 'string(/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:Layer[' + layerNum + ']/xsi:Name)',
-      'description': 'string(/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:Layer[' + layerNum + ']/xsi:Title)',
-      'version': "string(/xsi:WMS_Capabilities/@*[local-name()='version'])"
-    };
+  private getOnlineResElems(doc: Document, node: Node, nsResolver: (prefix: string) => string): any {
+    const URL_GET = "/xsi:WMS_Capabilities/xsi:Capability/xsi:Request/xsi:GetMap/xsi:DCPType/xsi:HTTP/xsi:Get/xsi:OnlineResource/@*[local-name()='href']";
+    const URL_POST = "/xsi:WMS_Capabilities/xsi:Capability/xsi:Request/xsi:GetMap/xsi:DCPType/xsi:HTTP/xsi:Post/xsi:OnlineResource/@*[local-name()='href']";
+    const NAME = './xsi:Name';
+    const DESCRIPTION = './xsi:Title';
+    const VERSION = "/xsi:WMS_Capabilities/@*[local-name()='version']";
     const onlineResElems = {
       url: "",
       type: "WMS",
@@ -75,41 +75,34 @@ export class GetCapsService {
       applicationProfile: "",
       protocolRequest: ""
     };
-    for (const xpath of Object.keys(ONLINE_RES)) {
-        onlineResElems[xpath] = SimpleXMLService.evaluateXPathString(doc, doc, ONLINE_RES[xpath], nsResolver);
+    // Use GET URL if possible, try POST if not
+    // NOTE: The code originally only used the GET URL, but getViaProxy uses POST, so we try this first.
+    //       On servers that do not accept POST the call with fail (Method not allowed).
+    let url = SimpleXMLService.evaluateXPathString(doc, doc, URL_POST, nsResolver);
+    if (!url || url === '') {
+      url = SimpleXMLService.evaluateXPathString(doc, doc, URL_GET, nsResolver);
     }
+    onlineResElems['url'] = url;
+    onlineResElems['name'] = SimpleXMLService.evaluateXPathString(doc, node, NAME, nsResolver);
+    onlineResElems['description'] = SimpleXMLService.evaluateXPathString(doc, node, DESCRIPTION, nsResolver);
+    onlineResElems['version'] = SimpleXMLService.evaluateXPathString(doc, doc, VERSION, nsResolver);
     return onlineResElems;
-  }
-
-  /**
-   * Counts the number of layers in a GetCapabilities response
-   * 
-   * @param doc 
-   * @param nsResolver 
-   * @returns number of layers 
-   */
-  private getNumLayers(doc: Document, nsResolver: (prefix: string) => string) {
-    const CNT = 'count(/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:Layer)';
-    const result: XPathResult = SimpleXMLService.evaluateXPath(doc, doc, CNT, XPathResult.NUMBER_TYPE, nsResolver);
-    if (!result.invalidIteratorState) {
-      return result.numberValue;
-    }
-    return 0;
   }
 
   /**
    * Retrieves a bounding box from GetCapabilities response
    * 
    * @param doc Document interface of GetCapabilities response
+   * @param node the layer Node
    * @param nsResolver namespace resolver function
    * @returns object with the following properties: 'westBoundLongitude', 'eastBoundLongitude', 'southBoundLatitude', 'northBoundLatitude'
    */
-  private getGeoElems(doc: Document, nsResolver: (prefix: string) => string, layerNum: number) {
+  private getGeoElems(doc: Document, node: Node, nsResolver: (prefix: string) => string): any {
     const GEO_ELEMS = {
-      'westBoundLongitude': 'string(/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:Layer[' + layerNum + ']/xsi:EX_GeographicBoundingBox/xsi:westBoundLongitude)',
-      'eastBoundLongitude': 'string(/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:Layer[' + layerNum + ']/xsi:EX_GeographicBoundingBox/xsi:eastBoundLongitude)',
-      'southBoundLatitude': 'string(/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:Layer[' + layerNum + ']/xsi:EX_GeographicBoundingBox/xsi:southBoundLatitude)',
-      'northBoundLatitude': 'string(/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:Layer[' + layerNum + ']/xsi:EX_GeographicBoundingBox/xsi:northBoundLatitude)'
+      'westBoundLongitude': 'string(./xsi:EX_GeographicBoundingBox/xsi:westBoundLongitude)',
+      'eastBoundLongitude': 'string(./xsi:EX_GeographicBoundingBox/xsi:eastBoundLongitude)',
+      'southBoundLatitude': 'string(./xsi:EX_GeographicBoundingBox/xsi:southBoundLatitude)',
+      'northBoundLatitude': 'string(./xsi:EX_GeographicBoundingBox/xsi:northBoundLatitude)'
     };
     const geoElems = {
       type: "bbox",
@@ -117,12 +110,17 @@ export class GetCapsService {
       westBoundLongitude: 0.0,
       northBoundLatitude: 0.0,
       southBoundLatitude: 0.0,
-    };                        
-    for (const xpath of Object.keys(GEO_ELEMS)) {
-      const flt = parseFloat(SimpleXMLService.evaluateXPathString(doc, doc, GEO_ELEMS[xpath], nsResolver));
-      if (!isNaN(flt)) {
-        geoElems[xpath] = flt;
+    };
+    // Get bounding box from node if present, if not check parent if it exists and is a Layer
+    if (SimpleXMLService.evaluateXPathNodeArray(doc, node, './xsi:EX_GeographicBoundingBox', nsResolver).length !== 0) {
+      for (const xpath of Object.keys(GEO_ELEMS)) {
+        const flt = parseFloat(SimpleXMLService.evaluateXPathString(doc, node, GEO_ELEMS[xpath], nsResolver));
+        if (!isNaN(flt)) {
+          geoElems[xpath] = flt;
+        }
       }
+    } else if(node.parentNode && node.parentNode.nodeName === 'Layer') {
+      return this.getGeoElems(doc, node.parentNode, nsResolver);
     }
     return geoElems;
   }
@@ -135,7 +133,7 @@ export class GetCapsService {
    * @param nsResolver namespace resolver function
    * @returns a list of map format strings
    */
-  private getMapFormats(doc: Document, node: Node, nsResolver: (prefix: string) => string) {
+  private getMapFormats(doc: Document, node: Node, nsResolver: (prefix: string) => string): any[] {
     const MAP_FORMATS = '/xsi:WMS_Capabilities/xsi:Capability/xsi:Request/xsi:GetMap/xsi:Format';
     const mapFormats = [];
     const mapFormatElems: Element[] = SimpleXMLService.evaluateXPathNodeArray(doc, node, MAP_FORMATS, nsResolver);
@@ -151,31 +149,38 @@ export class GetCapsService {
    * @param doc DOM's Document interface
    * @param node Node class representing a part of the GetCapabilities response
    * @param nsResolver namespace resolver function
+   * @param the current SRS array
    * @returns list of layer CRS strings
    */
-  private getLayerSRS(doc: Document, node: Node, nsResolver: (prefix: string) => string) {
-    const LAYER_SRS = '/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:CRS';
-    const layerSRS = [];
+  private getLayerSRS(doc: Document, node: Node, nsResolver: (prefix: string) => string, layerSRS: string[]): any[] {
+    const LAYER_SRS = './xsi:CRS';
     const layerSRSElems: Element[] = SimpleXMLService.evaluateXPathNodeArray(doc, node, LAYER_SRS, nsResolver);
     for (const elem of layerSRSElems) {
-      layerSRS.push(elem.textContent);
+      // Add SRS if not already present
+      if (layerSRS.indexOf(elem.textContent) == -1) {
+        layerSRS.push(elem.textContent);
+      }
+    }
+    // If parent is a Layer recurse and add any extra CRS defined there
+    if (node.parentNode && node.parentNode.nodeName === 'Layer') {
+      return this.getLayerSRS(doc, node.parentNode, nsResolver, layerSRS);
     }
     return layerSRS;
   }
 
-/**
- * Constructs a CSWRecord for a layer from the GetCapabilities response
- * 
- * @param doc DOM's Document interface
- * @param node Node class representing a part of the GetCapabilities response
- * @param nsResolver namespace resolver function
- * @returns a CSWRecord object with these property names: 'name', 'id', 'description', 'adminArea', 'contactOrg'
- */
-  private getCSWRecElems(doc: Document, node: Node, nsResolver: (prefix: string) => string, layerNum: number) {
+  /**
+   * Constructs a CSWRecord for a layer from the GetCapabilities response
+   * 
+   * @param doc DOM's Document interface
+   * @param node Node class representing a part of the GetCapabilities response
+   * @param nsResolver namespace resolver function
+   * @returns a CSWRecord object with these property names: 'name', 'id', 'description', 'adminArea', 'contactOrg'
+   */
+  private getCSWRecElems(doc: Document, node: Node, nsResolver: (prefix: string) => string): any {
     const CSW_REC = {
-      'name': 'string(/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:Layer[' + layerNum + ']/xsi:Title)',
-      'id': 'string(/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:Layer[' + layerNum + ']/xsi:Name)',
-      'description': 'string(/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:Layer[' + layerNum + ']/xsi:Abstract)',
+      'name': 'string(./xsi:Title)',
+      'id': 'string(./xsi:Name)',
+      'description': 'string(./xsi:Abstract)',
       'adminArea': 'string(/xsi:WMS_Capabilities/xsi:Service/xsi:ContactInformation/xsi:ContactAddress/xsi:StateOrProvince)',
       'contactOrg': 'string(/xsi:WMS_Capabilities/xsi:Service/xsi:ContactInformation/xsi:ContactPersonPrimary/xsi:ContactOrganization)'
     };
@@ -195,9 +200,9 @@ export class GetCapsService {
    * @param dimName name of dimension e.g. 'time' 'elevation' ...
    * @returns a list of dimensions or null if nothing found
    */
-  private findDims(doc: Document, node: Node, nsResolver: (prefix: string) => string, dimName: string, layerNum: number) {
-    const DIM = "string(/xsi:WMS_Capabilities/xsi:Capability/xsi:Layer/xsi:Layer[" + layerNum + "]/xsi:Dimension[@name='" + dimName + "'])";
-    // Should contain a comma separated list of dimension values 
+  private findDims(doc: Document, node: Node, nsResolver: (prefix: string) => string, dimName: string): any[] {
+    const DIM = "string(./xsi:Dimension[@name='" + dimName + "'])";
+    // Should contain a comma separated list of dimension values
     const dims = SimpleXMLService.evaluateXPathString(doc, node, DIM, nsResolver);
     const retDims = [];
     if (dims.length > 0) {
@@ -206,22 +211,168 @@ export class GetCapsService {
       }
       return retDims;
     }
+    // Recurse any parent(s) Layer for dimensions if not found here
+    if (dims.length === 0 && node.parentNode && node.parentNode.nodeName === 'Layer') {
+      return this.findDims(doc, node.parentNode, nsResolver, dimName);
+    }
     return null;
   }
 
-    /**
-     * Function used to detect Access Constraints
-     *
-     * @param doc Document interface of GetCapabilities response
-     * @param nsResolver namespace resolver function
-     * @returns AccessConstraints string
-     */
-     private findAccessConstraints(doc: Document, nsResolver: (prefix: string) => string): string[] {
-      const mapFormats = "string(/xsi:WMS_Capabilities/xsi:Service/xsi:AccessConstraints)";
-      const accessConstraints = [];
-      accessConstraints.push( SimpleXMLService.evaluateXPathString(doc, doc, mapFormats, nsResolver));
-      return accessConstraints;
+  /**
+   * Function used to detect Access Constraints
+   *
+   * @param doc Document interface of GetCapabilities response
+   * @param nsResolver namespace resolver function
+   * @returns AccessConstraints string
+   */
+    private findAccessConstraints(doc: Document, nsResolver: (prefix: string) => string): string[] {
+    const mapFormats = "string(/xsi:WMS_Capabilities/xsi:Service/xsi:AccessConstraints)";
+    const accessConstraints = [];
+    accessConstraints.push( SimpleXMLService.evaluateXPathString(doc, doc, mapFormats, nsResolver));
+    return accessConstraints;
+  }
+
+  /**
+   * Get a layer Node's metadata URL
+   *
+   * @param doc the root Document for the GetCapabilities response
+   * @param node the layer Node
+   * @param nsResolver namespace resolver function
+   * @returns the metadata URL for the layer
+   */
+  private getMetadataUrl(doc: Document, node: Node, nsResolver: (prefix: string) => string): string {
+    const METADATA_URL = "./xsi:MetadataURL/xsi:OnlineResource/@*[local-name()='href']";
+    return SimpleXMLService.evaluateXPathString(doc, node, METADATA_URL, nsResolver);
+  }
+
+  /**
+   * Get a layer Node's legend URL
+   *
+   * @param doc the root Document for the GetCapabilities response
+   * @param node the layer Node
+   * @param nsResolver namespace resolver function
+   * @returns the legend URL for th elayer
+   */
+  private getLegendUrl(doc: Document, node: Node, nsResolver: (prefix: string) => string): string {
+    const LEGEND_URL = "./xsi:LegendURL/xsi:OnlineResource/@*[local-name()='href']";
+    return SimpleXMLService.evaluateXPathString(doc, node, LEGEND_URL, nsResolver);
+  }
+
+  /**
+   * Test if the layer should use a post request.
+   * NOTE: In the future if we parse styles this should also factor in the request length
+   *
+   * @param doc the root Document for the GetCapabilities response
+   * @param node the layer Node
+   * @param nsResolver namespace resolver function
+   * @returns true if the layer has no GET URL but does have a POST URL, false otherwise
+   */
+  private getUsePost(doc: Document, node: Node, nsResolver: (prefix: string) => string): boolean {
+    const URL_GET = "/xsi:WMS_Capabilities/xsi:Capability/xsi:Request/xsi:GetMap/xsi:DCPType/xsi:HTTP/xsi:Get/xsi:OnlineResource/@*[local-name()='href']";
+    const URL_POST = "/xsi:WMS_Capabilities/xsi:Capability/xsi:Request/xsi:GetMap/xsi:DCPType/xsi:HTTP/xsi:Post/xsi:OnlineResource/@*[local-name()='href']";
+    let url = SimpleXMLService.evaluateXPathString(doc, doc, URL_GET, nsResolver);
+    if (!url || url === '') {
+      url = SimpleXMLService.evaluateXPathString(doc, doc, URL_POST, nsResolver);
+      if (url && url !== '') {
+        return true;
+      }
     }
+    return false;
+  }
+
+  /**
+   * Build layer CSW records and capability records from a GetCapabilities response
+   *
+   * @param getCapsResponse the GetCapabilities response as a string
+   * @returns a response of the form:
+   *            {
+   *              data: {
+   *                cswRecords: [ <CSW_records> ],
+   *                capabilityRecords: [ <capability_records> ],
+   *                 invalidLayerCount: <invalid_layer_count>
+   *              },
+   *              message: {},
+   *              success: 'true'
+   *            }
+   */
+  public getLayersFromGetCapabilities(getCapsResponse: any): any {
+    const rootNode = SimpleXMLService.parseStringToDOM(getCapsResponse);
+    // Root layers are all layers with an attribute "queryable=1"
+    const ROOT_LAYERS = '//xsi:Layer[@queryable=1]';
+    const rootLayers: Element[] = SimpleXMLService.evaluateXPathNodeArray(rootNode, rootNode, ROOT_LAYERS, this.nsResolver);
+    const mapFormats = this.getMapFormats(rootNode, rootNode, this.nsResolver);
+    const applicationProfile = this.findApplicationProfile(rootNode, this.nsResolver);
+    const accessConstraints = this.findAccessConstraints(rootNode, this.nsResolver);
+    
+    const retVal = { data: { cswRecords: [], capabilityRecords: [], invalidLayerCount: 0 }, msg: '', success: true};
+
+    for (let i = 0; i < rootLayers.length; i++) {
+      const layerNode = rootLayers[i];
+      const cswRecElems = this.getCSWRecElems(rootNode, layerNode, this.nsResolver);
+      const onlineResElems = this.getOnlineResElems(rootNode, layerNode, this.nsResolver);
+
+      onlineResElems['applicationProfile'] = applicationProfile;
+      const geoElems = this.getGeoElems(rootNode, layerNode, this.nsResolver);
+      const timeExtent = this.findDims(rootNode, layerNode, this.nsResolver, 'time');
+      const layerSRS = this.getLayerSRS(rootNode, layerNode, this.nsResolver, []);
+      const metadataUrl = this.getMetadataUrl(rootNode, layerNode, this.nsResolver);
+      const legendUrl = this.getLegendUrl(rootNode, layerNode, this.nsResolver);
+
+      // One cswRecord object per layer
+      retVal.data.cswRecords.push({
+        name: cswRecElems['name'],
+        resourceProvider: null,
+        id: cswRecElems['id'],
+        recordInfoUrl: null,
+        description: cswRecElems['description'],
+        noCache: false,
+        service: false,
+        adminArea: cswRecElems['adminArea'],
+        contactOrg: cswRecElems['contactOrg'],
+        onlineResources: [ onlineResElems ],
+        geographicElements: [ geoElems ],
+        descriptiveKeywords: [],
+        datasetURIs: [],
+        constraints: [],
+        useLimitConstraints: [],
+        childRecords: [],
+        date: '',
+        minScale: null,
+        maxScale: null
+      });
+
+      // Only add one GetCapabilities object
+      if (i === 0) {
+        retVal.data.capabilityRecords = [{
+          serviceType: 'wms',
+          organisation: cswRecElems['contactOrg'],
+          mapUrl: '',
+          metadataUrl: metadataUrl,
+          isWFS: false,
+          isWMS: true,
+          version: onlineResElems['version'],
+          layers: [],
+          layerSRS: layerSRS,
+          mapFormats: mapFormats,
+          applicationProfile: applicationProfile,
+          accessConstraints:accessConstraints
+
+        }];
+      }
+
+      // Add layers within our GetCapabilities object
+      retVal.data.capabilityRecords[0].layers.push({
+          name: onlineResElems['name'],
+          title: onlineResElems['description'],
+          abstract: cswRecElems['description'],
+          metadataUrl: metadataUrl,
+          legendUrl: legendUrl,
+          timeExtent: timeExtent,
+          bbox: geoElems
+      });
+    }
+    return retVal;
+  }
 
   /**
    * Retrieve the CSW record located at the WMS serviceurl endpoint.
@@ -229,13 +380,9 @@ export class GetCapsService {
    *
    * @param serviceUrl The URL that is to be to be proxied
    * @param from If 'from' is defined then use the proxy
-   * @Return A layer with the retrieved cswrecord wrapped in a layer model.
+   * @returns A layer with the retrieved cswrecord wrapped in a layer model.
    */
   public getCaps(serviceUrl: string, from?: string): Observable<any> {
-    const METADATA_URL = "string(//xsi:MetadataURL/xsi:OnlineResource/@*[local-name()='href'])";
-    const LEGEND_URL = "string(//xsi:LegendURL/xsi:OnlineResource/@*[local-name()='href'])";
-    const me = this;
-
     // GetCaps parameters
     let version = '1.3.0';
 
@@ -281,86 +428,8 @@ export class GetCapsService {
 
     return this.http.get(serviceUrl, {params: httpParams, responseType: 'text'}).pipe(map(
       (response) => {
-          const rootNode = SimpleXMLService.parseStringToDOM(response);
-          const numLayers = this.getNumLayers(rootNode, this.nsResolver);
-          // No layers found so exit
-          if (numLayers < 1) {
-            return [];
-          }
-          const metadataUrl = SimpleXMLService.evaluateXPathString(rootNode, rootNode, METADATA_URL, me.nsResolver);
-          const legendUrl = SimpleXMLService.evaluateXPathString(rootNode, rootNode, LEGEND_URL, me.nsResolver);
-          const mapFormats = this.getMapFormats(rootNode, rootNode, this.nsResolver);
-          const layerSRS = this.getLayerSRS(rootNode, rootNode, this.nsResolver);
-          const applicationProfile = this.findApplicationProfile(rootNode, this.nsResolver);
-          const accessConstraints = this.findAccessConstraints(rootNode, this.nsResolver);
-
-          const retVal = { data: { cswRecords: [], capabilityRecords: [], invalidLayerCount: 0 }, msg: '', success: true};
-
-          // Loop over all the layers found in the GetCapabilies response
-          for (let layerNum = 0 ; layerNum < numLayers; layerNum++) {
-
-            const cswRecElems = this.getCSWRecElems(rootNode, rootNode, this.nsResolver, layerNum + 1);
-            const onlineResElems = this.getOnlineResElems(rootNode, this.nsResolver, layerNum + 1);
-            onlineResElems['applicationProfile'] = applicationProfile;
-            const geoElems = this.getGeoElems(rootNode, this.nsResolver, layerNum + 1);
-            const timeExtent = this.findDims(rootNode, rootNode, this.nsResolver, 'time', layerNum + 1);
-
-            // One cswRecord object per layer
-            retVal.data.cswRecords.push({
-              name: cswRecElems['name'],
-              resourceProvider: null,
-              id: cswRecElems['id'],
-              recordInfoUrl: null,
-              description: cswRecElems['description'],
-              noCache: false,
-              service: false,
-              adminArea: cswRecElems['adminArea'],
-              contactOrg: cswRecElems['contactOrg'],
-              onlineResources: [ onlineResElems ],
-              geographicElements: [ geoElems ],
-              descriptiveKeywords: [],
-              datasetURIs: [],
-              constraints: [],
-              useLimitConstraints: [],
-              childRecords: [],
-              date: '',
-              minScale: null,
-              maxScale: null
-            });
-
-            // Only add one GetCapabilities object
-            if (layerNum === 0) {
-              retVal.data.capabilityRecords = [{
-                serviceType: 'wms',
-                organisation: cswRecElems['contactOrg'],
-                mapUrl: '',
-                metadataUrl: metadataUrl,
-                isWFS: false,
-                isWMS: true,
-                version: onlineResElems['version'],
-                layers: [],
-                layerSRS: layerSRS,
-                mapFormats: mapFormats,
-                applicationProfile: applicationProfile,
-                accessConstraints:accessConstraints
-
-              }];
-            }
-
-            // Add layers within our GetCapabilities object
-            retVal.data.capabilityRecords[0].layers.push({
-                name: onlineResElems['name'],
-                title: onlineResElems['description'],
-                abstract: cswRecElems['description'],
-                metadataUrl: metadataUrl,
-                legendUrl: legendUrl,
-                timeExtent: timeExtent,
-                bbox: geoElems
-            });
-
-          } // end 'layerNum' loop
-
-          return retVal;
+        return this.getLayersFromGetCapabilities(response);
     }));
   }
+
 }
