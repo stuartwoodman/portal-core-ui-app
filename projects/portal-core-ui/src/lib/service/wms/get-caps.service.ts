@@ -259,6 +259,42 @@ export class GetCapsService {
   }
 
   /**
+   * Get a layer Node's MinScaleDenominator
+   *
+   * @param doc the root Document for the GetCapabilities response
+   * @param node the layer Node
+   * @param nsResolver namespace resolver function
+   * @returns the MinScaleDenomintor for the layer, or null if not present
+   */
+  private getMinScaleDenominator(doc: Document, node: Node, nsResolver: (prefix: string) => string): number {
+    let minScaleDenominator = null;
+    const METADATA_URL = './xsi:MinScaleDenominator';
+    const stringVal = SimpleXMLService.evaluateXPathString(doc, node, METADATA_URL, nsResolver);
+    if (stringVal && stringVal !== '') {
+      minScaleDenominator = parseFloat(stringVal);
+    }
+    return minScaleDenominator;
+  }
+
+  /**
+   * Get a layer Node's MaxScaleDenominator
+   *
+   * @param doc the root Document for the GetCapabilities response
+   * @param node the layer Node
+   * @param nsResolver namespace resolver function
+   * @returns the MaxScaleDenomintor for the layer, or null if not present
+   */
+  private getMaxScaleDenominator(doc: Document, node: Node, nsResolver: (prefix: string) => string): number {
+    let maxScaleDenominator = null;
+    const METADATA_URL = './xsi:MaxScaleDenominator';
+    const stringVal = SimpleXMLService.evaluateXPathString(doc, node, METADATA_URL, nsResolver);
+    if (stringVal && stringVal !== '') {
+      maxScaleDenominator = parseFloat(stringVal);
+    }
+    return maxScaleDenominator;
+  }
+
+  /**
    * Test if the layer should use a post request.
    * NOTE: In the future if we parse styles this should also factor in the request length
    *
@@ -318,6 +354,10 @@ export class GetCapsService {
       const metadataUrl = this.getMetadataUrl(rootNode, layerNode, this.nsResolver);
       const legendUrl = this.getLegendUrl(rootNode, layerNode, this.nsResolver);
 
+      // Only some layers will have Min/MaxScaleDenominators, these can affect if a layer will display at some zoom levels
+      const minScaleDenominator = this.getMinScaleDenominator(rootNode, layerNode, this.nsResolver);
+      const maxScaleDenominator = this.getMaxScaleDenominator(rootNode, layerNode, this.nsResolver);
+
       // One cswRecord object per layer
       retVal.data.cswRecords.push({
         name: cswRecElems['name'],
@@ -356,7 +396,6 @@ export class GetCapsService {
           mapFormats: mapFormats,
           applicationProfile: applicationProfile,
           accessConstraints:accessConstraints
-
         }];
       }
 
@@ -368,7 +407,9 @@ export class GetCapsService {
           metadataUrl: metadataUrl,
           legendUrl: legendUrl,
           timeExtent: timeExtent,
-          bbox: geoElems
+          bbox: geoElems,
+          minScaleDenominator: minScaleDenominator,
+          maxScaleDenominator: maxScaleDenominator
       });
     }
     return retVal;
