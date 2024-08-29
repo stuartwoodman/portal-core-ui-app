@@ -1,10 +1,8 @@
-
 import { throwError as observableThrowError, Observable } from 'rxjs';
 import { Bbox } from '../../model/data/bbox.model';
 import { LayerModel } from '../../model/data/layer.model';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, Inject } from '@angular/core';
-import { min } from 'rxjs/operators';
 
 /**
  * Service to download IRIS data
@@ -51,9 +49,9 @@ export class DownloadIrisService {
             httpParams = httpParams.append('serviceUrls', url);
             return this.http.post(this.env.portalBaseUrl + 'downloadDataAsZip.do', httpParams, {
                 headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'),
-                responseType: 'blob'
+                responseType: 'blob',
+                observe: 'response'
             });
-
         } catch (e) {
             console.error("Download error:", e);
             return observableThrowError(e);
@@ -103,9 +101,9 @@ export class DownloadIrisService {
             return this.http.post(this.env.portalBaseUrl + 'downloadDataAsZip.do', httpParams,
                 {
                     headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'),
-                    responseType: 'blob'
+                    responseType: 'blob',
+                    observe: 'response'
                 });
-
         } catch (e) {
             console.error("Download error:", e);
             return observableThrowError(e);
