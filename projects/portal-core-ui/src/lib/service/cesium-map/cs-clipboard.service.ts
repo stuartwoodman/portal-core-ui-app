@@ -79,19 +79,23 @@ export class CsClipboardService {
     }
     return lngLatList.join(' ');
   }
+
   /**
    * Method for extract a polygon coords string from geometry.
    * @param geometry string
    * @returns the string of a polygon string.
    */
   public getCoordinates(geometry: string): string {
-    const tag = '<gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">';
-    const coordsString = geometry.substring(
-      geometry.indexOf(tag) + tag.length,
-      geometry.indexOf('</gml:coordinates>')
-    );
-    return coordsString;
+    let coordString = '';
+    const gmlCoordsTagPos = geometry.indexOf('<gml:coordinates');
+    if (gmlCoordsTagPos !== -1) {
+      const closingGmlCoordsTagPos = geometry.indexOf('>', gmlCoordsTagPos);
+      coordString = geometry.substring(closingGmlCoordsTagPos + 1, geometry.indexOf('</gml:coordinates>'));
+    }
+    return coordString;
   }
+  
+
   /**
    * swap coordinates for geometry.
    * @param geometry string
@@ -103,6 +107,7 @@ export class CsClipboardService {
     const swapedGeometry = this.getGeometry(swappedCoords);
     return swapedGeometry;
   }
+
   /**
    * Method for construct a polygon geometry.
    * @param coords string
@@ -191,8 +196,8 @@ export class CsClipboardService {
       };
       reader.readAsText(file);
     }
-
   }
+
   /**
    * Load a polygon on map from ROI
    *
@@ -216,6 +221,7 @@ export class CsClipboardService {
     this.polygonsBS.next(this.polygonBBox);
     return;
   }
+
   /**
    * Add a polygon to the clipboard, usually from a layer
    * @param newPolygon polygon object
