@@ -15,7 +15,7 @@ import { CsKMLService } from '../kml/cs-kml.service';
 import { CsVMFService } from '../vmf/cs-vmf.service';
 import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, EventResult } from '@auscope/angular-cesium';
 import { Entity, ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle, BingMapsImageryProvider,
-         ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection,  SplitDirection } from 'cesium';
+         ArcGisMapServerImageryProvider, Cartesian2, WebMercatorProjection,  SplitDirection } from 'cesium';
 import { UtilitiesService } from '../../utility/utilities.service';
 import ImageryLayerCollection from 'cesium/Source/Scene/ImageryLayerCollection';
 declare var Cesium: any;
@@ -53,7 +53,7 @@ export class CsMapService {
       event: CesiumEvent.LEFT_CLICK
     };
     const mapEventManager = this.mapsManagerService.getMap().getMapEventsManager();
-    const clickEvent = mapEventManager.register(eventRegistration).subscribe((result) => {
+    mapEventManager.register(eventRegistration).subscribe((result) => {
       this.mapClickHandler(result);
     });
   }
@@ -100,7 +100,6 @@ export class CsMapService {
    */
   public mapClickHandler(eventResult: EventResult) {
     try {
-      const me = this;
       // Filter out drag event
       if (!eventResult.movement ||
           Math.abs(eventResult.movement.startPosition.x - eventResult.movement.endPosition.x) > 2 ||
@@ -133,7 +132,8 @@ export class CsMapService {
       // tslint:disable-next-line:forin
       for (const layerModel of this.layerModelList) {
         if (!UtilitiesService.layerContainsResourceType(layerModel, ResourceType.WMS) &&
-            !UtilitiesService.layerContainsResourceType(layerModel, ResourceType.WWW)) {
+            !UtilitiesService.layerContainsResourceType(layerModel, ResourceType.WWW) &&
+            !UtilitiesService.layerContainsBboxGeographicElement(layerModel)) {
           continue;
         }
         const cswRecords = layerModel.cswRecords;
@@ -191,32 +191,6 @@ export class CsMapService {
   }
 
   /**
-   * Get a list of current map supported OnlineResource types.
-   * Excludes config CSW renderer list.
-   * @returns a list of supported OnlineResource types as strings
-   */
-  public getSupportedOnlineResourceTypes(): ResourceType[] {
-    return [ResourceType.WMS, ResourceType.IRIS, ResourceType.KML, ResourceType.KMZ, ResourceType.VMF];
-  }
-
-  /**
-   * Check if a layer is supported to be added to the map
-   * @param layer layer to be added to map
-   * @returns true if layer is supported, false otherwise
-   */
-  public isMapSupportedLayer(layer: LayerModel): boolean {
-    if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
-      return true;
-    }
-    for (const resourceType of this.getSupportedOnlineResourceTypes()) {
-      if (UtilitiesService.layerContainsResourceType(layer, resourceType)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
    * Updates this service's layer models with new filter values so they can be displayed
    * 
    * @param layerId id string of layer
@@ -224,7 +198,7 @@ export class CsMapService {
    */
   public updateFilterDisplay(layerId: string, optionalFilters) {
     const layer = this.getLayerModel(layerId);
-    if (layer && layer.filterCollection) {
+    if (layer?.filterCollection) {
       // Optional filters
       for (const layerFilt of layer.filterCollection.optionalFilters) {
         for (const optFilt of optionalFilters) {
@@ -255,11 +229,7 @@ export class CsMapService {
       this.removeLayer(layer);
     }
     // Add layer depending on type
-    if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
-      // Add a CSW layer to map
-      this.csCSWService.addLayer(layer, param);
-      this.cacheLayerModelList(layer);
-    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WMS)) {
+    if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WMS)) {
       // Add a WMS layer to map
       this.csWMSService.addLayer(layer, param);
       this.cacheLayerModelList(layer);
@@ -279,16 +249,28 @@ export class CsMapService {
       // Add a KML layer to map
       this.csKMLService.addLayer(layer, param);
       this.cacheLayerModelList(layer);
-    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WFS)) {
+    }
+    // Stu: be sure to leave whole blocks commented out until implemented or records with these resources will
+    //      fire before hitting the catch-all CSW element below which should always remain the last in the chain
+    /*
+    else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WFS)) {
       // Add a WFS layer to map
       // FIXME this.csWFSService.addLayer(layer, param);
       // FIXME this.layerModelList[layer.id] = layer;
       // TODO: Add to getSupportedOnlineResourceTypes() when supported
-    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WWW)) {
+    }
+    */
+    /*
+    else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WWW)) {
       // Add a WWW layer to map
       // FIXME this.csWWWService.addLayer(layer, param);
       // FIXME this.layerModelList[layer.id] = layer;
       // TODO: Add to getSupportedOnlineResourceTypes() when supported
+    }
+    */
+    else if(UtilitiesService.layerContainsBboxGeographicElement(layer)) {
+      this.csCSWService.addLayer(layer);
+      this.cacheLayerModelList(layer);
     } else {
       throw new Error('No Suitable service found');
     }
@@ -321,7 +303,7 @@ export class CsMapService {
    * Add layer to the map. taking a short cut by wrapping the csw in a layerModel
    * @param layer the layer to add to the map
    */
-   public addCSWRecord(cswRecord: CSWRecordModel): void {
+  public addCSWRecord(cswRecord: CSWRecordModel): void {
     const itemLayer = new LayerModel();
     itemLayer.cswRecords = [cswRecord];
     itemLayer['expanded'] = false;
@@ -336,7 +318,7 @@ export class CsMapService {
     } catch (error) {
       throw error;
     }
-   }
+  }
 
   /**
    * Remove layer from map
@@ -345,8 +327,8 @@ export class CsMapService {
   public removeLayer(layer: LayerModel): void {
     this.csMapObject.removeLayerById(layer.id);
     this.manageStateService.removeLayer(layer.id);
-    if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
-      this.csCSWService.rmLayer(layer);
+    if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WMS)) {
+      this.csWMSService.rmLayer(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.IRIS)) {
       this.csIrisService.rmLayer(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.VMF)) {
@@ -355,8 +337,8 @@ export class CsMapService {
       this.csKMLService.rmLayer(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KMZ)) {
       this.csKMLService.rmLayer(layer);
-    } else {
-      this.csWMSService.rmLayer(layer);
+    } else if (UtilitiesService.layerContainsBboxGeographicElement(layer)) {
+      this.csCSWService.rmLayer(layer);
     }
     this.layerModelList = this.layerModelList.filter(l => l.id !== layer.id);
   }
@@ -411,25 +393,25 @@ export class CsMapService {
    */
   public setLayerOpacity(layer: LayerModel, opacity: number) {
     if (this.layerExists(layer.id)) {
-      if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
-        this.csCSWService.setOpacity(layer, opacity);
-      } else {
-        this.csWMSService.setOpacity(layer, opacity);
+      if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WMS)) {
+        this.csWMSService.setLayerOpacity(layer, opacity);
+      } else if (UtilitiesService.layerContainsBboxGeographicElement(layer)) {
+        this.csCSWService.setLayerOpacity(layer, opacity);
       }
     }
   }
 
   /**
    * Test whether a layer supports opacity, currently we only support WMS and
-   * anything in the cswrenderer list
+   * anything added as a CSW bbox
    *
    * @param layer the layer
    * @returns true if a layer supports opacity, false otherwise
    */
   public layerHasOpacity(layer: LayerModel): boolean {
     if (this.layerExists(layer.id)) {
-      if ((this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) ||
-          UtilitiesService.layerContainsResourceType(layer, ResourceType.WMS)) {
+      if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WMS) || 
+          UtilitiesService.layerContainsBboxGeographicElement(layer)) {
         return true;
       }
     }
