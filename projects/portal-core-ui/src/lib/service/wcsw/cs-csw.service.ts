@@ -1,4 +1,3 @@
-
 import { Injectable, Inject } from '@angular/core';
 import { LayerModel } from '../../model/data/layer.model';
 import { OnlineResourceModel } from '../../model/data/onlineresource.model';
@@ -29,7 +28,6 @@ export class CsCSWService {
 
   private map: AcMapComponent = null;
   private viewer: any = null;
-  private opacity: number = 1.0;
   
 
   constructor(private layerHandlerService: LayerHandlerService,
@@ -56,15 +54,14 @@ export class CsCSWService {
   }
 
   /**
-   * setOpacity - sets opacity 
-   * @param layer 
+   * setLayerOpacity - sets opacity for a given layer
+   * @param layer the LayerModel
    * @param opacity value from 0.0 to 1.0 
    */
-  public setOpacity(layer, opacity: number) {
+  public setLayerOpacity(layer, opacity: number) {
     for (const entity of layer.csLayers) {
       if (entity.rectangle) {
-        entity.rectangle.material = new ColorMaterialProperty(Color.fromAlpha(POLYGON_COLOUR, POLYGON_ALPHA*opacity));
-        this.opacity = opacity;
+        entity.rectangle.material = new ColorMaterialProperty(Color.fromAlpha(POLYGON_COLOUR, POLYGON_ALPHA * opacity));
       } else if (entity.label) {
         entity.label.fillColor = Color.fromAlpha(FONT_COLOUR, opacity);
       }
@@ -89,7 +86,6 @@ export class CsCSWService {
           distanceDisplayCondition: new DistanceDisplayCondition(0.0, 7000000.0),
           // Randomize position to reduce chance of 2 labels overwriting each other
           pixelOffset: new Cartesian2(5, 20 + Math.floor(Math.random()*10)*20)
-           
       }
     });
   }
@@ -100,7 +96,6 @@ export class CsCSWService {
    * @param bbox - bounding box object; members: westBoundLongitude, southBoundLatitude, eastBoundLongitude, northBoundLatitude
    */
   private addPolygon(name, bbox): Entity {
-    const me = this;
     return this.viewer.entities.add({
       name: name,
       rectangle: {
@@ -112,7 +107,7 @@ export class CsCSWService {
         ),
         // 'CallBackProperty' is used to avoid flickering when material colour is changed
         material: new ColorMaterialProperty(new CallbackProperty(function(time, result) {
-          return Color.fromAlpha(POLYGON_COLOUR, POLYGON_ALPHA*me.opacity);
+          return Color.fromAlpha(POLYGON_COLOUR, POLYGON_ALPHA);
          }, true))
       },
     });
@@ -121,9 +116,8 @@ export class CsCSWService {
   /**
    * Add the CSW layer
    * @param layer the layer to add to the map
-   * @param param the WFS layer to be added to the map
    */
-  public addLayer(layer: LayerModel, param?: any): void {
+  public addLayer(layer: LayerModel): void {
     const cswRecords = this.layerHandlerService.getCSWRecord(layer);
     this.map = this.mapsManagerService.getMap();
     this.viewer = this.map.getCesiumViewer();

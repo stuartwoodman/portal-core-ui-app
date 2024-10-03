@@ -302,10 +302,10 @@ export class CsWMSService {
 
   /**
    * Set layer opacity
-   * @method setOpacity
+   * @method setLayerOpacity
    * @param layer layer whose opacity is to be changed
    */
-  public setOpacity(layer: LayerModel, opacity: number) {
+  public setLayerOpacity(layer: LayerModel, opacity: number) {
     for (const imgLayer of layer.csLayers) {
       imgLayer.alpha = opacity;
     }
