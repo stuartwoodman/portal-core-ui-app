@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { LayerModel } from '../../model/data/layer.model';
 import { OnlineResourceModel } from '../../model/data/onlineresource.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
@@ -13,8 +13,9 @@ const POLYGON_ALPHA = 0.4;
 // Colour of the CSW bounding box rectangles
 const POLYGON_COLOUR = new Color(0.0, 0.0, 1.0, POLYGON_ALPHA);
 
-// Colour of the font used to label the CSW rectangles on the map 
-const FONT_COLOUR = Color.ANTIQUEWHITE;
+// Colour of the font and background used to label the CSW rectangles on the map
+const LABEL_COLOUR = Color.ANTIQUEWHITE;
+const LABEL_BACKGROUND_COLOUR = Color.BLACK;
 
 /**
  * Use Cesium to add CSW layer like reports to map. This service class adds CSW layer to the map as a rectangle and a label
@@ -32,8 +33,7 @@ export class CsCSWService {
 
   constructor(private layerHandlerService: LayerHandlerService,
                   private renderStatusService: RenderStatusService, 
-                  private mapsManagerService: MapsManagerService,
-                  @Inject('env') private env) {
+                  private mapsManagerService: MapsManagerService) {
   }
 
   
@@ -61,9 +61,10 @@ export class CsCSWService {
   public setLayerOpacity(layer, opacity: number) {
     for (const entity of layer.csLayers) {
       if (entity.rectangle) {
-        entity.rectangle.material = new ColorMaterialProperty(Color.fromAlpha(POLYGON_COLOUR, POLYGON_ALPHA * opacity));
+        entity.rectangle.material = new ColorMaterialProperty(Color.fromAlpha(POLYGON_COLOUR, opacity));
       } else if (entity.label) {
-        entity.label.fillColor = Color.fromAlpha(FONT_COLOUR, opacity);
+        entity.label.fillColor = Color.fromAlpha(LABEL_COLOUR, opacity);
+        entity.label.backgroundColor = Color.fromAlpha(LABEL_BACKGROUND_COLOUR, opacity);
       }
     }
   }
@@ -80,7 +81,7 @@ export class CsCSWService {
       label : {
           text : name.substring(0,70),  // Label only displays first 70 characters
           font : '16px sans-serif',
-          fillColor:  FONT_COLOUR,
+          fillColor:  LABEL_COLOUR,
           showBackground : true,
           horizontalOrigin : HorizontalOrigin.LEFT,
           distanceDisplayCondition: new DistanceDisplayCondition(0.0, 7000000.0),
