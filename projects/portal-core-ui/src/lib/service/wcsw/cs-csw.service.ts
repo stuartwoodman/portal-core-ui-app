@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { LayerModel } from '../../model/data/layer.model';
 import { OnlineResourceModel } from '../../model/data/onlineresource.model';
 import { LayerHandlerService } from '../cswrecords/layer-handler.service';
@@ -13,8 +13,9 @@ const POLYGON_ALPHA = 0.4;
 // Colour of the CSW bounding box rectangles
 const POLYGON_COLOUR = new Color(0.0, 0.0, 1.0, POLYGON_ALPHA);
 
-// Colour of the font used to label the CSW rectangles on the map 
-const FONT_COLOUR = Color.ANTIQUEWHITE;
+// Colour of the font and background used to label the CSW rectangles on the map 
+const LABEL_COLOUR = Color.ANTIQUEWHITE;
+const LABEL_BACKGROUND_COLOUR = Color.BLACK;
 
 /**
  * Use Cesium to add CSW layer like reports to map. This service class adds CSW layer to the map as a rectangle and a label
@@ -32,8 +33,7 @@ export class CsCSWService {
 
   constructor(private layerHandlerService: LayerHandlerService,
                   private renderStatusService: RenderStatusService, 
-                  private mapsManagerService: MapsManagerService,
-                  @Inject('env') private env) {
+                  private mapsManagerService: MapsManagerService) {
   }
 
   
@@ -61,9 +61,10 @@ export class CsCSWService {
   public setLayerOpacity(layer, opacity: number) {
     for (const entity of layer.csLayers) {
       if (entity.rectangle) {
-        entity.rectangle.material = new ColorMaterialProperty(Color.fromAlpha(POLYGON_COLOUR, POLYGON_ALPHA * opacity));
+        entity.rectangle.material = new ColorMaterialProperty(Color.fromAlpha(POLYGON_COLOUR, opacity * POLYGON_ALPHA));
       } else if (entity.label) {
-        entity.label.fillColor = Color.fromAlpha(FONT_COLOUR, opacity);
+        entity.label.fillColor = Color.fromAlpha(LABEL_COLOUR, opacity);
+        entity.label.backgroundColor = Color.fromAlpha(LABEL_BACKGROUND_COLOUR, opacity);
       }
     }
   }
@@ -71,21 +72,21 @@ export class CsCSWService {
   /**
    * addLabel - adds a label to screen
    * @param name - name to be put on label 
-   * @param long - longitude in degrees
+   * @param lon - longitude in degrees
    * @param lat - latitude in degrees
    */
-  private addLabel(name:string, long: number, lat: number): Entity {
+  private addLabel(name:string, lon: number, lat: number): Entity {
     return this.viewer.entities.add({
-      position : Cartesian3.fromDegrees(long, lat),
+      position : Cartesian3.fromDegrees(lon, lat),
       label : {
           text : name.substring(0,70),  // Label only displays first 70 characters
           font : '16px sans-serif',
-          fillColor:  FONT_COLOUR,
+          fillColor:  LABEL_COLOUR,
           showBackground : true,
           horizontalOrigin : HorizontalOrigin.LEFT,
           distanceDisplayCondition: new DistanceDisplayCondition(0.0, 7000000.0),
-          // Randomize position to reduce chance of 2 labels overwriting each other
-          pixelOffset: new Cartesian2(5, 20 + Math.floor(Math.random()*10)*20)
+          // Randomize position a little to reduce chance of 2 labels overwriting each other
+          pixelOffset: new Cartesian2(5, (Math.random() * 26) - 5)
       }
     });
   }
