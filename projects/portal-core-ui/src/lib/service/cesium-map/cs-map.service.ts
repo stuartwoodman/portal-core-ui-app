@@ -15,7 +15,8 @@ import { CsKMLService } from '../kml/cs-kml.service';
 import { CsVMFService } from '../vmf/cs-vmf.service';
 import { MapsManagerService, RectangleEditorObservable, EventRegistrationInput, CesiumEvent, EventResult } from '@auscope/angular-cesium';
 import { Entity, ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider, BingMapsStyle, BingMapsImageryProvider,
-         ArcGisMapServerImageryProvider, Cartesian2, WebMercatorProjection,  SplitDirection } from 'cesium';
+         ArcGisMapServerImageryProvider, Cartesian2, WebMercatorProjection,  SplitDirection, 
+         Rectangle} from 'cesium';
 import { UtilitiesService } from '../../utility/utilities.service';
 import ImageryLayerCollection from 'cesium/Source/Scene/ImageryLayerCollection';
 declare var Cesium: any;
@@ -220,6 +221,7 @@ export class CsMapService {
    * @param layer the layer to add to the map
    */
   public addLayer(layer: LayerModel, param: any): void {
+    layer.initialLoad = true;
     // initiate csLayers to prevent undefined errors
     if (!layer.csLayers) {
       layer.csLayers = [];
@@ -274,6 +276,28 @@ export class CsMapService {
     } else {
       throw new Error('No Suitable service found');
     }
+
+    // Zoom to initialBBox if one has been set
+    if (layer["geojson"]) {
+      if (layer["geojson"]["bbox"]) {
+        let lon1 = 0, lon2 = 0, lat1 = 0, lat2 = 0
+        const bbox = layer["geojson"]["bbox"];
+        let i = 0;
+        for (const coord of bbox) {
+          if (i == 0) {
+            lon1 = parseFloat(coord[0]);
+            lat1 = parseFloat(coord[1]);
+          } else {
+            lon2 = parseFloat(coord[0]);
+            lat2 = parseFloat(coord[1]);
+          }
+          i = i + 1;
+        }
+        const bboxDataset = Rectangle.fromDegrees(lon1, lat1, lon2, lat2);
+        this.map.getCameraService().cameraFlyTo({ destination: bboxDataset });
+      }
+    }
+
   }
 
   /**
