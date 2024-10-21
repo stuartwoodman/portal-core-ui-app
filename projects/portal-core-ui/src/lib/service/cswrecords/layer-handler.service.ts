@@ -1,9 +1,9 @@
-import { Observable, BehaviorSubject } from 'rxjs';
+import { throwError as observableThrowError, Observable, BehaviorSubject } from 'rxjs';
 
-import { map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { CSWRecordModel } from '../../model/data/cswrecord.model';
 import { Injectable, Inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 
 import { LayerModel} from '../../model/data/layer.model';
 import { OnlineResourceModel } from '../../model/data/onlineresource.model';
@@ -118,7 +118,11 @@ export class LayerHandlerService {
         });
       }
       return itemLayers;
-    }));
+    })
+    , catchError(
+      (error: HttpResponse<any>) => {
+        return observableThrowError(error);
+      },),);
     return retVal;
   }
 
