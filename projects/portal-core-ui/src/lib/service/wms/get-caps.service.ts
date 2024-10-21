@@ -1,8 +1,8 @@
 import { Injectable, Inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { SimpleXMLService } from '../../utility/simplexml.service';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { throwError as observableThrowError, Observable, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -23,6 +23,14 @@ export class GetCapsService {
         return "http://www.opengis.net/wms";
       case 'xlink':
         return "http://www.w3.org/1999/xlink";
+      case 'mdb':
+        return "http://standards.iso.org/iso/19115/-3/mdb/1.0";
+      case 'srv':
+        return "http://standards.iso.org/iso/19115/-3/srv/2.0";
+      case 'cit':
+        return "http://standards.iso.org/iso/19115/-3/cit/1.0";
+      case 'gco':
+        return "http://standards.iso.org/iso/19115/-3/gco/1.0";
     }
     return "http://www.opengis.net/wms";
   }
@@ -340,7 +348,15 @@ export class GetCapsService {
     const applicationProfile = this.findApplicationProfile(rootNode, this.nsResolver);
     const accessConstraints = this.findAccessConstraints(rootNode, this.nsResolver);
     
-    const retVal = { data: { cswRecords: [], capabilityRecords: [], invalidLayerCount: 0 }, msg: '', success: true};
+    const retVal = { data: { cswRecords: [], capabilityRecords: [], invalidLayerCount: 0 }, msg: '', success: true, serviceUrl: '' };
+
+    if (rootLayers.length == 0) {
+      // check for the element "mdb:identificationInfo"
+      const SERVICE_GET_CAP = '//mdb:identificationInfo/srv:SV_ServiceIdentification/srv:containsOperations/srv:SV_OperationMetadata/srv:connectPoint';
+      const serviceCapsUrl = SimpleXMLService.evaluateXPathString(rootNode, rootNode, SERVICE_GET_CAP, this.nsResolver);
+
+      retVal.serviceUrl = serviceCapsUrl;
+    }
 
     for (let i = 0; i < rootLayers.length; i++) {
       const layerNode = rootLayers[i];
@@ -416,14 +432,13 @@ export class GetCapsService {
   }
 
   /**
-   * Retrieve the CSW record located at the WMS serviceurl endpoint.
-   * Currently only supports v1.3.0
+   * setup the http params and the url for a get capabilities call
    *
    * @param serviceUrl The URL that is to be to be proxied
    * @param from If 'from' is defined then use the proxy
-   * @returns A layer with the retrieved cswrecord wrapped in a layer model.
+   * @returns A params and url
    */
-  public getCaps(serviceUrl: string, from?: string): Observable<any> {
+  public setupCaps(serviceUrl: string, from?: string): any {
     // GetCaps parameters
     let version = '1.3.0';
 
@@ -467,10 +482,60 @@ export class GetCapsService {
       httpParams = httpParams.append('request', 'GetCapabilities').append('service', 'WMS');
     }
 
-    return this.http.get(serviceUrl, {params: httpParams, responseType: 'text'}).pipe(map(
+    const retVal = { capsUrl: '', params: new HttpParams() };
+    retVal.capsUrl = serviceUrl;
+    retVal.params = httpParams;
+
+    return retVal;
+  }
+
+
+  /**
+   * Retrieve the CSW record located at the WMS serviceurl endpoint.
+   * Currently only supports v1.3.0
+   *
+   * @param serviceUrl The URL that is to be to be proxied
+   * @param from If 'from' is defined then use the proxy
+   * @returns A layer with the retrieved cswrecord wrapped in a layer model.
+   */
+  public getCaps(serviceUrl: string, from?: string): Observable<any> {
+
+    const settings = this.setupCaps(serviceUrl, from);
+    let httpParams = settings.params;
+    let capsUrl = settings.capsUrl;
+
+    return this.http.get(capsUrl, { params: httpParams, responseType: 'text' }).pipe(switchMap(
       (response) => {
-        return this.getLayersFromGetCapabilities(response);
-    }));
+
+        let ret;
+        ret = this.getLayersFromGetCapabilities(response);
+
+        if (ret.serviceUrl !== '') {
+          let innerCapsUrl = ret.serviceUrl;
+          
+          const settings = this.setupCaps(innerCapsUrl, from);
+          let httpParams = settings.params;
+          let capsUrl = settings.capsUrl;
+          
+          return this.http.get(capsUrl, { params: httpParams, responseType: 'text' }).pipe(
+            map(response => {
+              let retInner;
+              retInner = this.getLayersFromGetCapabilities(response);
+              return retInner;
+            }), catchError(
+                (error: HttpResponse<any>) => {
+                  return observableThrowError(error);
+                })
+          );
+
+        } else {
+          return of(ret);
+        }
+      }), catchError(
+        (error: HttpResponse<any>) => {
+          return observableThrowError(error);
+        })
+    );
   }
 
 }
