@@ -40,7 +40,7 @@ import { PolygonsEditorService } from '@auscope/angular-cesium';
         StopPropagationDirective
     ],
     exports: [ImgLoadingDirective, StopPropagationDirective,
-        HttpClientModule, BrowserModule, FormsModule], imports: [BrowserModule,
+        BrowserModule, FormsModule], imports: [BrowserModule,
         FormsModule], providers: [LayerHandlerService,
         CsWMSService,
         CsIrisService,
