@@ -1,5 +1,5 @@
 import { NgModule, Optional, SkipSelf, ModuleWithProviders } from '@angular/core';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 
@@ -35,45 +35,37 @@ import { ImgLoadingDirective } from './uiutilities/imgloading.directive';
 import { StopPropagationDirective } from './utility/utilities.directives';
 import { PolygonsEditorService } from '@auscope/angular-cesium';
 
-@NgModule({
-  declarations: [
-    ImgLoadingDirective,
-    StopPropagationDirective
-  ],
-  imports: [
-    HttpClientModule,
-    BrowserModule,
-    FormsModule
-  ],
-  exports: [ImgLoadingDirective, StopPropagationDirective,
-    HttpClientModule, BrowserModule, FormsModule],
-  providers: [LayerHandlerService,
-    CsWMSService,
-    CsIrisService,
-    CsKMLService,
-    CsVMFService,
-    KMLDocService,
-    CsMapObject,
-    CsWFSService,
-    CsWWWService,
-    DownloadWfsService,
-    DownloadWcsService,
-    DownloadIrisService,
-    GMLParserService,
-    RenderStatusService,
-    FilterPanelService,
-    LegendService,
-    ImgLoadingDirective,
-    NotificationService,
-    QueryWMSService,
-    QueryWFSService,
-    ManageStateService,
-    LayerStatusService,
-    CsCSWService,
-    PolygonsEditorService,
-    SldService
-  ]
-})
+@NgModule({ declarations: [
+        ImgLoadingDirective,
+        StopPropagationDirective
+    ],
+    exports: [ImgLoadingDirective, StopPropagationDirective,
+        HttpClientModule, BrowserModule, FormsModule], imports: [BrowserModule,
+        FormsModule], providers: [LayerHandlerService,
+        CsWMSService,
+        CsIrisService,
+        CsKMLService,
+        CsVMFService,
+        KMLDocService,
+        CsMapObject,
+        CsWFSService,
+        CsWWWService,
+        DownloadWfsService,
+        DownloadWcsService,
+        DownloadIrisService,
+        GMLParserService,
+        RenderStatusService,
+        FilterPanelService,
+        LegendService,
+        ImgLoadingDirective,
+        NotificationService,
+        QueryWMSService,
+        QueryWFSService,
+        ManageStateService,
+        LayerStatusService,
+        CsCSWService,
+        PolygonsEditorService,
+        SldService, provideHttpClient(withInterceptorsFromDi())] })
 
 export class PortalCoreModule {
 
