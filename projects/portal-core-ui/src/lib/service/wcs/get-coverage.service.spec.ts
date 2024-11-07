@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { GetCoverageService } from './get-coverage.service';
 import { DescribeCoverageResponseSample } from './describeCoverageSample/DescribeCoverageResponseSample';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('GetCoverageService', () => {
   let url = "https://gsky.nci.org.au/ows/aster?service=WCS&version=1.0.0&request=DescribeCoverage&coverage=AlOH_Group_Composition";
@@ -61,9 +62,9 @@ describe('GetCoverageService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [GetCoverageService]
-    });
+    imports: [],
+    providers: [GetCoverageService, provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+});
     httpTestingController = TestBed.inject(HttpTestingController);
     service = TestBed.inject(GetCoverageService);
   });
