@@ -35,6 +35,7 @@ export { CsWWWService } from './lib/service/www/cs-www.service';
 export { CsIrisService } from './lib/service/kml/cs-iris.service';
 export { CsKMLService } from './lib/service/kml/cs-kml.service';
 export { CsVMFService } from './lib/service/vmf/cs-vmf.service';
+export { CsGeoJsonService } from './lib/service/geojson/cs-geojson.service';
 export { DownloadIrisService } from './lib/service/kml/download-iris.service';
 export { KMLDocService } from './lib/service/kml/kml.service';
 

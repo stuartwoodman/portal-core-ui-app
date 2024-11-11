@@ -18,6 +18,7 @@ import { Entity, ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider
          ArcGisMapServerImageryProvider, Cartesian2, WebMercatorProjection,  SplitDirection } from 'cesium';
 import { UtilitiesService } from '../../utility/utilities.service';
 import ImageryLayerCollection from 'cesium/Source/Scene/ImageryLayerCollection';
+import { CsGeoJsonService } from '../geojson/cs-geojson.service';
 declare var Cesium: any;
 
 /**
@@ -41,7 +42,7 @@ export class CsMapService {
               private csMapObject: CsMapObject, private manageStateService: ManageStateService,
               private csCSWService: CsCSWService, private csIrisService: CsIrisService,
               private csKMLService: CsKMLService, private mapsManagerService: MapsManagerService,
-              private csVMFService: CsVMFService,
+              private csVMFService: CsVMFService, private csGeoJsonService: CsGeoJsonService,
               @Inject('env') private env, @Inject('conf') private conf)  {
     this.csMapObject.registerClickHandler(this.mapClickHandler.bind(this));
     this.addLayerSubject = new Subject<LayerModel>();
@@ -191,6 +192,32 @@ export class CsMapService {
   }
 
   /**
+   * Get a list of current map supported OnlineResource types.
+   * Excludes config CSW renderer list.
+   * @returns a list of supported OnlineResource types as strings
+   */
+  public getSupportedOnlineResourceTypes(): ResourceType[] {
+    return [ResourceType.WMS, ResourceType.IRIS, ResourceType.KML, ResourceType.KMZ, ResourceType.VMF, ResourceType.GEOJSON];
+  }
+
+  /**
+   * Check if a layer is supported to be added to the map
+   * @param layer layer to be added to map
+   * @returns true if layer is supported, false otherwise
+   */
+  public isMapSupportedLayer(layer: LayerModel): boolean {
+    if (this.conf.cswrenderer && this.conf.cswrenderer.includes(layer.id)) {
+      return true;
+    }
+    for (const resourceType of this.getSupportedOnlineResourceTypes()) {
+      if (UtilitiesService.layerContainsResourceType(layer, resourceType)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Updates this service's layer models with new filter values so they can be displayed
    * 
    * @param layerId id string of layer
@@ -249,7 +276,11 @@ export class CsMapService {
       // Add a KML layer to map
       this.csKMLService.addLayer(layer, param);
       this.cacheLayerModelList(layer);
-    }
+    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.GEOJSON)) {
+      // Add a GeoJson layer to map
+      this.csGeoJsonService.addLayer(layer, param);
+      this.cacheLayerModelList(layer);
+    } 
     // Stu: be sure to leave whole blocks commented out until implemented or records with these resources will
     //      fire before hitting the catch-all CSW element below which should always remain the last in the chain
     /*
@@ -337,8 +368,12 @@ export class CsMapService {
       this.csKMLService.rmLayer(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KMZ)) {
       this.csKMLService.rmLayer(layer);
+    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.GEOJSON)) {
+      this.csGeoJsonService.rmLayer(layer);
     } else if (UtilitiesService.layerContainsBboxGeographicElement(layer)) {
       this.csCSWService.rmLayer(layer);
+    } else {
+      this.csWMSService.rmLayer(layer);
     }
     this.layerModelList = this.layerModelList.filter(l => l.id !== layer.id);
   }
