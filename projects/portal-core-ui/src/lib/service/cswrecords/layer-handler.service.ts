@@ -144,7 +144,28 @@ export class LayerHandlerService {
     itemLayer.kmlDoc = kmlDoc;
     return itemLayer;
   }
-
+    /**
+   * Make a custom GEOJSON layer record
+   *
+   * @param name Name of custom GEOJSON layer
+   * @returns LayerModel object
+   */
+  public makeCustomGEOJSONLayerRecord(name: string, url: string, jsonDoc: {}): LayerModel {
+    const id = 'GEOJSON_' + name.substring(0, 10) + '_' + Math.floor(Math.random() * 10000).toString();
+    const itemLayer = new LayerModel();
+    const cswRec = this.makeCustomJsonCSWRec(name, id, url);
+    itemLayer.cswRecords = [cswRec];
+    itemLayer['expanded'] = false;
+    itemLayer.id = id;
+    itemLayer.description = 'Because this is a custom GEOJSON layer there is no more information to display';
+    itemLayer.hidden = false;
+    itemLayer.layerMode = 'NA';
+    itemLayer.name = name;
+    itemLayer.splitDirection = SplitDirection.NONE;
+    itemLayer.capabilityRecords = {};
+    itemLayer.jsonDoc = jsonDoc;
+    return itemLayer;
+  }
     /**
    * Make a custom KMZ layer record
    *
@@ -233,7 +254,38 @@ export class LayerHandlerService {
     cswRec.expanded = false;
     return cswRec;
   }
-
+  /**
+   * Make a custom CSW Record with a GEOJSON layer inside
+   * 
+   * @param name name of GEOJSON layer
+   * @param id GEOJSON layer id
+   * @returns CSWRecordModel object
+   */
+  public makeCustomJsonCSWRec(name: string, id: string, url: string): CSWRecordModel {
+    const cswRec = new CSWRecordModel();
+    cswRec.adminArea = '';
+    cswRec.childRecords = {};
+    cswRec.constraints = '';
+    cswRec.useLimitConstraints = '';
+    cswRec.accessConstraints = '';
+    cswRec.contactOrg = '';
+    cswRec.funderOrg = '';
+    cswRec.datasetURIs = {};
+    cswRec.date = '';
+    cswRec.description = '';
+    cswRec.descriptiveKeywords = {};
+    cswRec.geographicElements = {};
+    cswRec.id = id;
+    cswRec.name = name;
+    cswRec.noCache = true;
+    const ormRec = this.makeCustomOnlineResourceModel('GEOJSON', name, url);
+    cswRec.onlineResources = [ormRec];
+    cswRec.recordInfoUrl = '';
+    cswRec.resourceProvider = '';
+    cswRec.service = false;
+    cswRec.expanded = false;
+    return cswRec;
+  }
   /**
    * Make a custom placeholder OnlineResourceModel
    * @param type layer type (e.g. 'KML', 'WMS' ...)

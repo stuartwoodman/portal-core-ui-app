@@ -18,6 +18,7 @@ import { Entity, ProviderViewModel, buildModuleUrl, OpenStreetMapImageryProvider
          ArcGisMapServerImageryProvider, TileMapServiceImageryProvider, Cartesian2, WebMercatorProjection,  SplitDirection } from 'cesium';
 import { UtilitiesService } from '../../utility/utilities.service';
 import ImageryLayerCollection from 'cesium/Source/Scene/ImageryLayerCollection';
+import { CsGeoJsonService } from '../geojson/cs-geojson.service';
 declare var Cesium: any;
 
 /**
@@ -41,7 +42,7 @@ export class CsMapService {
               private csMapObject: CsMapObject, private manageStateService: ManageStateService,
               private csCSWService: CsCSWService, private csIrisService: CsIrisService,
               private csKMLService: CsKMLService, private mapsManagerService: MapsManagerService,
-              private csVMFService: CsVMFService,
+              private csVMFService: CsVMFService, private csGeoJsonService: CsGeoJsonService,
               @Inject('env') private env, @Inject('conf') private conf)  {
     this.csMapObject.registerClickHandler(this.mapClickHandler.bind(this));
     this.addLayerSubject = new Subject<LayerModel>();
@@ -196,7 +197,7 @@ export class CsMapService {
    * @returns a list of supported OnlineResource types as strings
    */
   public getSupportedOnlineResourceTypes(): ResourceType[] {
-    return [ResourceType.WMS, ResourceType.IRIS, ResourceType.KML, ResourceType.KMZ, ResourceType.VMF];
+    return [ResourceType.WMS, ResourceType.IRIS, ResourceType.KML, ResourceType.KMZ, ResourceType.VMF, ResourceType.GEOJSON];
   }
 
   /**
@@ -279,6 +280,10 @@ export class CsMapService {
       // Add a KML layer to map
       this.csKMLService.addLayer(layer, param);
       this.cacheLayerModelList(layer);
+    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.GEOJSON)) {
+      // Add a GeoJson layer to map
+      this.csGeoJsonService.addLayer(layer, param);
+      this.cacheLayerModelList(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WFS)) {
       // Add a WFS layer to map
       // FIXME this.csWFSService.addLayer(layer, param);
@@ -355,6 +360,8 @@ export class CsMapService {
       this.csKMLService.rmLayer(layer);
     } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.KMZ)) {
       this.csKMLService.rmLayer(layer);
+    } else if (UtilitiesService.layerContainsResourceType(layer, ResourceType.GEOJSON)) {
+      this.csGeoJsonService.rmLayer(layer);
     } else {
       this.csWMSService.rmLayer(layer);
     }

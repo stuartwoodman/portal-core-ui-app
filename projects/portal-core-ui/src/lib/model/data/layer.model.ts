@@ -38,6 +38,7 @@ export class LayerModel {
   // Layer supports downloading, usually feature data in CSV form
   supportsCsvDownloads: boolean;
   kmlDoc: any; // Document object for custom KML layer
+  jsonDoc: any; // Document object for custom Json layer  
   serverType?: string;  // Type of server hosting the data
   initialLoad: boolean; // if first time loaded, zoom to bbox
   minScaleDenominator?: number;  // MinScaleDenominator (from GetCapabilities)
