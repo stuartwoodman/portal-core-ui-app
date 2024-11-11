@@ -40,10 +40,11 @@ export class CsVMFService {
    * @param vmfResource VMF resource to be fetched
    * @returns  VMF geojson text
    */
-  private getVMFFeature(url: string, polygon: string): Observable<any> {
+  private getVMFFeature(url: string, polygon: string, apikey: string, maps: string): Observable<any> {
     /*
     const body =
     {
+      "key": "_7AyXpOSiefzoaCbUaPOM",
       "maps": "territories",
       "polygon_geojson": {
         "type": "FeatureCollection",
@@ -54,7 +55,7 @@ export class CsVMFService {
             "geometry": {
               "type": "Polygon",
               "coordinates": [
-                [[111.64, -17.61], [132.45, -8.23], [146.26, -10.53], [159.37, -24.57], [147.95, -45.25], [110.29, -34.29]]
+                [ [146.26, -10.53], [132.45, -8.23], [111.64, -17.61], [110.29, -34.29], [147.95, -45.25], [159.37, -24.57], [146.26, -10.53] ]
               ]
             }
           }
@@ -64,7 +65,8 @@ export class CsVMFService {
     */
     const body=
     {
-      "maps": "territories",
+      "key": apikey, // "_7AyXpOSiefzoaCbUaPOM", // https://api-docs.native-land.ca/
+      "maps": maps, // "territories",
       "polygon_geojson": {
         "type": "FeatureCollection",
         "features": [
@@ -79,9 +81,11 @@ export class CsVMFService {
         ]
       }
     };
-    return this.http.post(url, body, {
-      headers: new HttpHeaders().set('Content-Type', 'application/json'),
-      responseType: 'text'
+    
+    //url="https://native-land.ca/api/index.php";
+    return this.http.post(url, body, { 
+      // this will cause a preflight )OPTIONS/CORS) error - 'application/json'
+      headers: new HttpHeaders().set('Content-Type', 'text/plain')
     }).pipe(map(response => {
       return response;
     }), catchError((error: HttpResponse<any>) => {
@@ -149,11 +153,14 @@ export class CsVMFService {
           i = i + 1;
         }
         polygonStr = polygonStr + "]";
-        this.getVMFFeature(proxyUrl,polygonStr).subscribe(geojsonTxt => {
+        const apikey = layer["apikey"];
+        const maps = layer["maps"];
+        this.getVMFFeature(proxyUrl,polygonStr,apikey,maps).subscribe(geojsonTxt => {
+          geojsonTxt = JSON.stringify(geojsonTxt);
           // make a geojson features collection
           let fcTxt = '{"type": "FeatureCollection","features":' + geojsonTxt + '}';
           let geojson = JSON.parse(fcTxt);
-
+     
           source.load(geojson).then(dataSource => {
             if (this.cancelledLayers.indexOf(layer.id) === -1) {
               viewer.dataSources.add(dataSource).then(dataSrc => {
@@ -182,11 +189,15 @@ export class CsVMFService {
                 this.incrementLayersAdded(layer, vmfOnlineResources.length);
               }, (err) => {
                 console.error('Unable to add viewer.dataSources VMF: ', err);
-              });
+              }).catch(function(err){
+                console.error('Unable to add viewer.dataSources VMF (otherwise): ', err);
+            });
             }
           }, (err) => {
             console.error('Unable to load source.load VMF: ', err);
-          });
+          }).catch(function(err){
+            console.error('Unable to load geojson VMF (otherwise): ', err);
+        });
         }, (err) => {
           alert('Unable to load VMF: ' + err.message);
           console.error('Unable to load VMF: ', err);

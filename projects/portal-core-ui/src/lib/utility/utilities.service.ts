@@ -628,11 +628,76 @@ export class UtilitiesService {
    * @returns true if a layer contains a resource of type resourceType, false otherwise
    */
   public static layerContainsResourceType(layer: LayerModel, resourceType: ResourceType): boolean {
-    if (layer.cswRecords && layer.cswRecords.length > 0) {
+    if (layer.cswRecords?.length > 0) {
       for (const record of layer.cswRecords) {
-        if (record.onlineResources && record.onlineResources.length > 0) {
+        if (record.onlineResources?.length > 0) {
           if (record.onlineResources.find(r => r.type === resourceType)) {
             return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Get a list of current map supported OnlineResource types
+   *
+   * @returns a list of supported OnlineResource types as strings
+   */
+  public static getSupportedOnlineResourceTypes(): ResourceType[] {
+    return [ResourceType.WMS, ResourceType.IRIS, ResourceType.KML, ResourceType.KMZ, ResourceType.VMF];
+  }
+
+  /**
+   * Check is a layer has a supported OnlineResource type
+   *
+   * @param layer the LayerModel
+   * @returns true if the layer contains an OnlineResource of one of the supported types, false otherwise
+   */
+  public static getLayerHasSupportedOnlineResourceType(layer: LayerModel): boolean {
+    for (const resourceType of this.getSupportedOnlineResourceTypes()) {
+      if (UtilitiesService.layerContainsResourceType(layer, resourceType)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Check if a layer is supported to be added to the map
+   *
+   * @param layer layer to be added to map
+   * @returns true if layer is supported, false otherwise
+   */
+  public static isMapSupportedLayer(layer: LayerModel): boolean {
+    // Addable if one of supported resource types
+    if (this.getLayerHasSupportedOnlineResourceType(layer)) {
+        return true;
+    }
+    // Addable if layer's CSWRecords have at leasr one bbox geographic element
+    if (UtilitiesService.layerContainsBboxGeographicElement(layer)) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Find whether a layer contains a valid bbox geographic element
+   *
+   * @param layer the LayerModel
+   * @returns true if a layer's CSWRecord(s) contains at least one valid bbox geographic element
+   */
+  public static layerContainsBboxGeographicElement(layer: LayerModel): boolean {
+    if (layer.cswRecords?.length > 0) {
+      for (const record of layer.cswRecords) {
+        if (record.geographicElements?.length > 0) {
+          for (const geoElement of record.geographicElements) {
+            if (geoElement.type && geoElement.type === 'bbox' && 
+                geoElement.northBoundLatitude && geoElement.eastBoundLongitude &&
+                geoElement.southBoundLatitude && geoElement.westBoundLongitude) {
+              return true;
+            }
           }
         }
       }
