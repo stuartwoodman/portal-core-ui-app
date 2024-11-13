@@ -155,7 +155,7 @@ export class LayerHandlerService {
    * @returns LayerModel object
    */
   public makeCustomGEOJSONLayerRecord(name: string, url: string, jsonDoc: {}): LayerModel {
-    const id = 'GEOJSON_' + name.substring(0, 10) + '_' + Math.floor(Math.random() * 10000).toString();
+    const id = 'GEOJSON_' + name;
     const itemLayer = new LayerModel();
     const cswRec = this.makeCustomJsonCSWRec(name, id, url);
     itemLayer.cswRecords = [cswRec];
