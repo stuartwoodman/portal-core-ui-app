@@ -343,7 +343,6 @@ export class CsWMSService {
    * @param param request parameters
    */
   public addLayer(layer: LayerModel, param?: any): void {
-    layer.initialLoad = true;
     // Any running sldSubscriptions should have been stopped in rmLayer
     this.sldSubscriptions[layer.id] = [];
     if (!param) {
@@ -418,7 +417,6 @@ export class CsWMSService {
   private addCesiumLayer(layer, wmsOnlineResource, params, usePost: boolean, lonlatextent): ImageryLayer {
     const browserInfo = this.deviceService.getDeviceInfo();
     const viewer = this.map.getCesiumViewer();
-    const cameraService = this.map.getCameraService();
     const me = this;
     if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WMS)) {
       // WMS tile loading callback function, numLeft = number of tiles left to load
@@ -426,33 +424,6 @@ export class CsWMSService {
         if (numLeft === 0) {
           // When there are no more tiles to load it is complete
           this.renderStatusService.updateComplete(layer, wmsOnlineResource);
-          if (layer.initialLoad) {
-
-            // zoom to the given bounding box from layers.yaml
-            if (layer["geojson"]) {
-              if (layer["geojson"]["bbox"]) {
-
-                var lon1 = 0, lon2 = 0, lat1 = 0, lat2 = 0
-                const bbox = layer["geojson"]["bbox"];
-                var i = 0;
-                for (const coord of bbox) {
-                  if (i == 0) {
-                    lon1 = parseFloat(coord[0]);
-                    lat1 = parseFloat(coord[1]);
-                  } else {
-                    lon2 = parseFloat(coord[0]);
-                    lat2 = parseFloat(coord[1]);
-                  }
-                  i = i + 1;
-                }
-
-                const bboxDataset = Rectangle.fromDegrees(lon1, lat1, lon2, lat2);
-                cameraService.cameraFlyTo({ destination: bboxDataset });
-              }
-            }
-            layer.initialLoad = false;
-
-          }
         }
       };
       // Register tile loading callback function
