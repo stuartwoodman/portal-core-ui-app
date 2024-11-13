@@ -417,6 +417,7 @@ export class CsWMSService {
   private addCesiumLayer(layer, wmsOnlineResource, params, usePost: boolean, lonlatextent): ImageryLayer {
     const browserInfo = this.deviceService.getDeviceInfo();
     const viewer = this.map.getCesiumViewer();
+    const me = this;
     if (UtilitiesService.layerContainsResourceType(layer, ResourceType.WMS)) {
       // WMS tile loading callback function, numLeft = number of tiles left to load
       const tileLoading = (numLeft: number) => {
@@ -469,10 +470,10 @@ export class CsWMSService {
                   postForm.append('url', val.split('?')[0] + '?service=WMS');
                   const kvp = val.split('?')[1];
                   if (kvp) {
-                    this.paramSubst(kvp.split('=')[0], kvp.split('=')[1], postForm);
+                    me.paramSubst(kvp.split('=')[0], kvp.split('=')[1], postForm);
                   }
                 } else {
-                  this.paramSubst(key, val, postForm);
+                  me.paramSubst(key, val, postForm);
                 }
               });
 
@@ -519,7 +520,7 @@ export class CsWMSService {
         /* End of 'createImage' overwrite */
 
         // Create a resource which uses our custom proxy
-        const proxyUrl = this.env.portalBaseUrl + Constants.PROXY_API + '?usewhitelist=' + (layer.useProxyWhitelist ? 'true' : 'false') + '&url=';
+        const proxyUrl = me.env.portalBaseUrl + Constants.PROXY_API + '?usewhitelist=' + (layer.useProxyWhitelist ? 'true' : 'false') + '&url=';
         const res = new Resource({ url: url, proxy: new MyDefaultProxy(proxyUrl) });
 
         // Force Resource to use 'POST' and our proxy
