@@ -1,5 +1,5 @@
 # portal-core-ui
-Shared portal UI components written in Angular 17. This project is a workspace for creating a portal-core-ui library that can be deployed and imported into portal projects.
+Shared portal UI components written in Angular 18. This project is a workspace for creating a portal-core-ui library that can be deployed and imported into portal projects.
 
 Requires npm >= v10.50  & node >= v18.20.2
 
