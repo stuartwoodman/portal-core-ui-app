@@ -72,13 +72,12 @@ export class CsGeoJsonService {
 
       if (UtilitiesService.layerContainsResourceType(layer, ResourceType.GEOJSON)) {
         // add geoJson to map
-        const jsonUrl = 'https://nvclanalytics.azurewebsites.net/NVCLAnalyticalServices/downloadNVCLJobResult.do?jobid=eb23ac38df87246f8cb89e652692f333&format=json';
         const stylefn = me.styleGeoJsonEntity;
         var promise;
         if (layer.jsonDoc) {
           promise = Cesium.GeoJsonDataSource.load(JSON.parse(layer.jsonDoc));
         } else {
-          promise = Cesium.GeoJsonDataSource.load(jsonUrl);
+          promise = Cesium.GeoJsonDataSource.load(layer.proxyUrl);
         }
         promise
           .then(function (dataSource) {
@@ -90,6 +89,7 @@ export class CsGeoJsonService {
             }
             layer.csLayers.push(dataSource);
             me.incrementLayersAdded(layer, 1);
+            me.renderStatusService.updateComplete(layer, onlineResource, true);
           })
           .catch(function (error) {
             window.alert(error);
