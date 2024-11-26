@@ -10,7 +10,6 @@ import { ResourceType } from '../../../utility/constants.service';
 import { LayerHandlerService } from '../../cswrecords/layer-handler.service';
 
 
-
 import { UtilitiesService } from '../../../utility/utilities.service';
 import { GetCapsService } from '../../wms/get-caps.service';
 import { GetCoverageService } from '../get-coverage.service';
@@ -37,9 +36,10 @@ export class DownloadWcsService {
    * @param downloadformat requests a download in a certain format
    * @param outputCrs coord reference system for the download
    * @param timeRange range of times if applicable to layers
+   * @param maxImageSize a limit to the longest side of the downloaded image
    * @return observable containing the download or error
    */
-  public download(layer: LayerModel, bbox: Bbox, inputCrs: string, downloadFormat: string, outputCrs: string, timePositions: string[]): Observable<any> {
+  public download(layer: LayerModel, bbox: Bbox, inputCrs: string, downloadFormat: string, outputCrs: string, timePositions: string[], maxImageSize: number): Observable<any> {
     try {
       const ftpResources = this.layerHandlerService.getOnlineResources(layer, ResourceType.FTP);
       const ftpURL = (ftpResources.length > 0) ? ftpResources[0]['url'] : '';
@@ -62,22 +62,21 @@ export class DownloadWcsService {
       // NB: Assumes bbox does not cross longitude boundary
       const aspectRatio = Math.abs(bbox.southBoundLatitude - bbox.northBoundLatitude)/Math.abs(bbox.eastBoundLongitude - bbox.westBoundLongitude);
       
-      // Downloaded image always has longest side of 'MAX_SIDE' pixels
-      const MAX_SIDE = 4096;
-
-      // If width < height
+      // Ensure downloaded image always has longest side of 'maxImageSize' pixels
+      //
+      // If width > height
       if (aspectRatio < 1.0) {
-        // Set width of image to be 'MAX_SIDE'
-        httpParams = httpParams.set('outputWidth', MAX_SIDE.toString());
-        // Set height of image to be less than 'MAX_SIDE'
-        httpParams = httpParams.set('outputHeight', Math.floor(MAX_SIDE*aspectRatio).toString());
+        // Set width of image to be 'maxImageSize'
+        httpParams = httpParams.set('outputWidth', maxImageSize.toString());
+        // Set height of image to be less than 'maxImageSize'
+        httpParams = httpParams.set('outputHeight', Math.floor(maxImageSize*aspectRatio).toString());
 
-      // If width >= height
+      // If height >= width
       } else {
-        // Set width of image to be less than 'MAX_SIDE'
-        httpParams = httpParams.set('outputWidth', Math.floor(MAX_SIDE/aspectRatio).toString());
-        // Set height of image to be 'MAX_SIDE'
-        httpParams = httpParams.set('outputHeight', MAX_SIDE.toString());
+        // Set width of image to be less than 'maxImageSize'
+        httpParams = httpParams.set('outputWidth', Math.floor(maxImageSize/aspectRatio).toString());
+        // Set height of image to be 'maxImageSize'
+        httpParams = httpParams.set('outputHeight', maxImageSize.toString());
       }
       httpParams = httpParams.set('inputCrs', inputCrs);
       httpParams = httpParams.set('downloadFormat', downloadFormat);
