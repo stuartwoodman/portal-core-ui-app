@@ -72,7 +72,9 @@ export class CsGeoJsonService {
 
       if (UtilitiesService.layerContainsResourceType(layer, ResourceType.GEOJSON)) {
         // add geoJson to map
-        const stylefn = me.styleGeoJsonEntity;
+        if (! layer.stylefn) {
+           layer.stylefn = me.styleGeoJsonEntity;
+        }
         var promise;
         if (layer.jsonDoc) {
           promise = Cesium.GeoJsonDataSource.load(JSON.parse(layer.jsonDoc));
@@ -85,7 +87,7 @@ export class CsGeoJsonService {
             //Get the array of entities
             for (const entity of dataSource.entities.values) {
               // Style each geoJson point
-              stylefn(entity);
+              layer.stylefn(entity);
             }
             layer.csLayers.push(dataSource);
             me.incrementLayersAdded(layer, 1);
@@ -99,24 +101,20 @@ export class CsGeoJsonService {
     }
   }
   private styleGeoJsonEntity(entity) {
-    // if (entity.name) {
-    //   // Style label for each point
-    //   entity.label = new Cesium.LabelGraphics({
-    //     text: entity.name,
-    //     showBackground: false,
-    //     fillColor: Cesium.Color.BLACK,
-    //     font: '12px roboto,sans-serif',
-    //     style: Cesium.LabelStyle.FILL,
-    //     pixelOffset: new Cesium.Cartesian2(9, -2),
-    //     horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
-    //     distanceDisplayCondition: new Cesium.DistanceDisplayCondition(1.0, entity.maxDist),
-    //     disableDepthTestDistance: Number.POSITIVE_INFINITY
-    //   });
-    // }
-    // Style point in purple
+    let dotColor = Cesium.Color.YELLOW;
+    if (entity.properties.Message) {
+      const message = entity.properties.Message.getValue();
+      if (message.indexOf('Hit') >= 0) {
+        dotColor = Cesium.Color.BLUE;
+      } else if (message.indexOf('Fail') >= 0 || message.indexOf('Miss') >= 0) {
+        dotColor = Cesium.Color.RED;
+      } else {
+        dotColor = Cesium.Color.YELLOW;
+      }
+    }
     entity.point = new Cesium.PointGraphics({
-      color: Cesium.Color.BLUE,
-      outlineColor: Cesium.Color.BLUE,
+      color: dotColor,
+      outlineColor: dotColor,
       outlineWidth: 2,
       pixelSize: 20,
       disableDepthTestDistance: Number.POSITIVE_INFINITY,
@@ -124,8 +122,6 @@ export class CsGeoJsonService {
       heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
       scaleByDistance: new Cesium.NearFarScalar(1.5e2, 0.35, 1.5e7, 0.35),
     });
-    // Don't display a billboard
-    // entity.billboard = null;
   }
   /**
    * Increment the number of layers added for a given LayerModel, and clear the layer from the

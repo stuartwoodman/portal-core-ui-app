@@ -43,4 +43,5 @@ export class LayerModel {
   initialLoad: boolean; // if first time loaded, zoom to bbox
   minScaleDenominator?: number;  // MinScaleDenominator (from GetCapabilities)
   maxScaleDenominator?: number;  // MaxScaleDenominator (from GetCapabilities)
+  stylefn?: any; //style function for GeoJson layer
 }
