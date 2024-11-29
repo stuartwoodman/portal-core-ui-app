@@ -138,8 +138,8 @@ export class CsCSWService {
           if (geoEl.eastBoundLongitude === geoEl.westBoundLongitude ||
             geoEl.southBoundLatitude === geoEl.northBoundLatitude) {
             const littleBox: any = { ...geoEl };
-            littleBox.westBoundLongitude = littleBox.eastBoundLongitude - 0.5;
-            littleBox.southBoundLatitude = littleBox.northBoundLatitude - 0.5;
+            littleBox.westBoundLongitude = littleBox.eastBoundLongitude - 0.05;
+            littleBox.southBoundLatitude = littleBox.northBoundLatitude - 0.05;
             layer.csLayers.push(this.addPolygon(cswRecord.name, littleBox));
           } else {
             // Render polygon same size as CSW record's bounding box, but first check that coords aren't reversed

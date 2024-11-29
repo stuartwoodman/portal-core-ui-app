@@ -141,30 +141,34 @@ export class CsMapService {
         const cswRecords = layerModel.cswRecords;
         layerModel.clickCSWRecordsIndex = [];
         for (let i = 0; i < cswRecords.length; i++) {
-          if (!cswRecords[i].onlineResources[0]) {
-            console.log('error onlineResources:', cswRecords[i].onlineResources);
-            continue;
-          }
-          let bbox = null;
-          if (cswRecords[i].onlineResources[0].hasOwnProperty('geographicElements') &&
+          let bboxes = [];
+          // Look for 'geographicElements' in 'onlineResource's
+          if (cswRecords[i].onlineResources.length > 0 && 
+              cswRecords[i].onlineResources[0].hasOwnProperty('geographicElements') &&
               cswRecords[i].onlineResources[0].geographicElements.length > 0) {
-            bbox = cswRecords[i].onlineResources[0].geographicElements[0];
+            // Only take the first one, assuming all the onlineresoures have the same bbox
+            bboxes = cswRecords[i].onlineResources[0].geographicElements;
+          // Look for 'geographicElements' in the cswRecord
           } else if (cswRecords[i].hasOwnProperty('geographicElements') && cswRecords[i].geographicElements.length > 0) {
-            bbox = cswRecords[i].geographicElements[0];
+            bboxes = cswRecords[i].geographicElements;
           }
-          if (bbox === null) {
+          if (!bboxes || bboxes.length == 0) {
+            console.error("Cannot process map click: geographic elements missing from layer metadata - " + cswRecords[i].name);
             continue;
           }
 
-          // Expand the bbox slightly to make it easy to select features on the boundary
+          // 'margin' is used to expand the bbox slightly to make it easy to select features on the boundary
           const margin = 0.05;
-          const poly = bboxPolygon([bbox.westBoundLongitude - margin, bbox.southBoundLatitude - margin,
+          for (const bbox of bboxes) {
+            const poly = bboxPolygon([bbox.westBoundLongitude - margin, bbox.southBoundLatitude - margin,
                                     bbox.eastBoundLongitude + margin, bbox.northBoundLatitude + margin]);
-          if (booleanPointInPolygon(clickPoint, poly)) {
-            // Add to list of clicked layers
-            layerModel.clickPixel = [pixel.x, pixel.y];
-            layerModel.clickCoord = [lon, lat];
-            layerModel.clickCSWRecordsIndex.push(i);
+            if (booleanPointInPolygon(clickPoint, poly)) {
+              // Add to list of clicked layers
+              layerModel.clickPixel = [pixel.x, pixel.y];
+              layerModel.clickCoord = [lon, lat];
+              layerModel.clickCSWRecordsIndex.push(i);
+              break;
+            }
           }
         }
         if (layerModel.clickCSWRecordsIndex.length > 0) {
