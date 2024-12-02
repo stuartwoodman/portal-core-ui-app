@@ -23,11 +23,13 @@ steps:
     git config --global user.email 'azdo-ci@geoanalytics.group'
     git config --global user.name 'AzDO Pipeline'
     git checkout $(Build.SourceBranchName)
+  condition: ne(variables['Build.Reason'], 'PullRequest')
   displayName: 'Setup Git'
 - script: |
     cd projects/portal-core-ui/
     mkdir '.git'
     npm version patch -m "[skip ci] Upgrade to version %s"
+  condition: ne(variables['Build.Reason'], 'PullRequest')
   displayName: 'Bump package version'
 - script: |
     npm install -g npm@9
@@ -38,8 +40,10 @@ steps:
 - script: |
     git push origin $(Build.SourceBranchName)
     git push origin --tags
+  condition: ne(variables['Build.Reason'], 'PullRequest')
   displayName: 'Git Push back to repo'
 - task: Npm@1
+  condition: ne(variables['Build.Reason'], 'PullRequest')
   inputs:
     command: 'publish'
     workingDir: 'dist/portal-core-ui'
