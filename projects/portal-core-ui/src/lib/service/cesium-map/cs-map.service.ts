@@ -559,7 +559,7 @@ export class CsMapService {
             tooltip: layer.tooltip,
             creationFunction() {
               return new OpenStreetMapImageryProvider({
-                url: 'https://a.tile.openstreetmap.org/',
+                url: 'https://tile.openstreetmap.org/',
               });
             },
           })
