@@ -144,8 +144,11 @@ export class CsClipboardService {
    */
   public drawPolygon() {
     this.csMapObject.drawPolygon().subscribe((coords) => {
+     let strToday=new Date(); 
+     let dt= new Date(strToday).toISOString();
+     let name = 'Polygon-' + dt.slice(0,dt.lastIndexOf('.'));
       const newPolygon = {
-        name: 'Polygon created',
+        name: name,
         srs: 'EPSG:4326',
         geometryType: GeometryType.POLYGON,
         coordinates: this.getGeometry(coords)
