@@ -370,7 +370,7 @@ export class CsWMSService {
       const usePost = this.wmsUrlTooLong(this.env.portalBaseUrl + layer.proxyStyleUrl + collatedParam.toString(), layer);
       // Perform request for style data, store subscription so we can cancel if user removes layer
       this.sldSubscriptions[layer.id].push(
-        this.sldService.getSldBody(layer.proxyStyleUrl, usePost, wmsOnlineResource, collatedParam).subscribe(sldBody => {
+        this.sldService.getSldBody(layer.proxyStyleUrl, usePost, wmsOnlineResource, collatedParam, layer.id).subscribe(sldBody => {
           const longResp = this.wmsUrlTooLong(sldBody, layer);
           // Create parameters for add layer request
           const params = wmsOnlineResource.version.startsWith('1.3')
