@@ -24,6 +24,7 @@ import { GeologicalProvincesStyleService } from './geological-provinces-style.se
 import { MineralTenementStyleService } from './mineral-tenement-style.service';
 import { RemanentAnomaliesAutoSearchStyleService } from './remanent-anomalies-auto-search-style.service';
 import { RemanentAnomaliesStyleService } from './remanent-anomalies-style.service';
+import { GenericStyleService } from './generic-style.service';
 
 @Injectable()
 export class SldService {
@@ -39,7 +40,8 @@ export class SldService {
     'ErlMineralOccurrenceStyleService': ErlMineralOccurrenceStyleService,
     'GeologicalProvincesStyleService': GeologicalProvincesStyleService,
     'RemanentAnomaliesStyleService': RemanentAnomaliesStyleService,
-    'RemanentAnomaliesAutoSearchStyleService': RemanentAnomaliesAutoSearchStyleService
+    'RemanentAnomaliesAutoSearchStyleService': RemanentAnomaliesAutoSearchStyleService,
+    'GenericStyleService': GenericStyleService
   };
 
   constructor(
