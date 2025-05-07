@@ -108,8 +108,8 @@ export class DownloadWcsService {
    *  @param coverageName name of coverage
    *  @return observable containing the describe coverage response or error
    */
-  public describeCoverage(serviceUrl: string, coverageName: string): Observable<any> {
-    const retVal = this.getCoverageService.getCoverage(serviceUrl,coverageName).pipe(map((response: { data: { cswRecords: any, capabilityRecords: any }}) => {
+  public describeCoverage(serviceUrl: string, coverageName: string, useProxy: boolean): Observable<any> {
+    const retVal = this.getCoverageService.getCoverage(serviceUrl,coverageName, useProxy).pipe(map((response: { data: { cswRecords: any, capabilityRecords: any }}) => {
       if (response['success'] === true) {
         return response['data'][0];
       } else {
