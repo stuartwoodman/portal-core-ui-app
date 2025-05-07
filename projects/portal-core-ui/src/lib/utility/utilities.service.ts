@@ -7,6 +7,9 @@ import * as $ from 'jquery';
 import { ResourceType } from './constants.service';
 import { LayerModel } from '../../public-api';
 
+import proj4 from "proj4";
+import epsg from "epsg-index/all.json";
+import { EpsgEntry } from "../../types/epsg";
 declare function unescape(s: string): string;
 declare var Cesium;
 
@@ -618,6 +621,51 @@ export class UtilitiesService {
     lat4326 = lat4326 / (Math.PI / 360);
     lat4326 = lat4326 - 90;
     return [long4326, lat4326];
+  }
+
+  /**
+   * Remove non-digit characters and return the number from EPSG string
+   * e.g. "EPSG:3107" returns 3107
+   * @param epsgCode
+   * @returns EPSG number or null
+   */
+  private static getEPSGNum(epsgCode: string): number|null {
+    const match = epsgCode.match(/\d+/);
+    return match ? parseInt(match[0], 10) : null;
+}
+
+
+  /**
+   * Convert bbox coordinates to a desired CRS
+   * 
+   * @param bbox bounding box
+   * @param crs desired coord ref system e.g. 'EPSG:12345'
+   * @returns Bbox
+   */
+  public static coordConvBbox(bbox: Bbox, crs: string): Bbox {
+    // Create Proj object for Bbox CRS
+    const fromProj = proj4.Proj(bbox.crs);
+    // Register 'crs' Proj4 string with 'proj4', use EPSG:4326 as a fallback
+    const epsgNum = UtilitiesService.getEPSGNum(crs) || 4326;
+    const entry: EpsgEntry = epsg[epsgNum];
+    if (entry) {
+      proj4.defs(crs, entry.proj4);
+    } else {
+      crs = 'EPSG:4326';
+    }
+    // Create Proj object for 'crs'
+    const toProj = proj4.Proj(crs);
+    // Convert east+north & south+west coords
+    const en = proj4.transform(fromProj, toProj, [bbox.eastBoundLongitude, bbox.northBoundLatitude]);
+    const sw = proj4.transform(fromProj, toProj, [bbox.westBoundLongitude, bbox.southBoundLatitude]);
+    // Create new Bbox and return it
+    const bboxOut: Bbox = new Bbox();
+    bboxOut.eastBoundLongitude = en.x;
+    bboxOut.northBoundLatitude = en.y;
+    bboxOut.southBoundLatitude = sw.y;
+    bboxOut.westBoundLongitude = sw.x;
+    bboxOut.crs = crs;
+    return bboxOut;
   }
 
   /**
