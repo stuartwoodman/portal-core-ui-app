@@ -1,16 +1,18 @@
 import { SimpleXMLService } from './../../utility/simplexml.service';
 import { UtilitiesService } from './../../utility/utilities.service';
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, Inject } from '@angular/core';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Constants } from '../../utility/constants.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class GetCoverageService {
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient,
+              @Inject('env') private env) { }
 
   /**
  * Test 
@@ -26,28 +28,52 @@ export class GetCoverageService {
   }
   /**
    * Retrieve the wcs record located at the WMS serviceurl endpoint 
-   * Currently only supports v1.1.0
+   * Currently only supports v1.0.0
    * @param serviceUrl URL of the WCS
    * @param coverageName name of coverage
    * @Return a single <CoverageOffering> element from a WCS DescribeCoverage response.
    */
-  public getCoverage(serviceUrl: string, coverageName: string): Observable<any> {
+  public getCoverage(serviceUrl: string, coverageName: string, useProxy: boolean): Observable<any> {
 
-    serviceUrl = UtilitiesService.setUpdateParameter(serviceUrl, 'request', "DescribeCoverage");
-    serviceUrl = UtilitiesService.setUpdateParameter(serviceUrl, 'version', "1.0.0");
-    serviceUrl = UtilitiesService.setUpdateParameter(serviceUrl, 'service', "WCS");
-    serviceUrl = UtilitiesService.setUpdateParameter(serviceUrl, 'coverage', coverageName);
+    // If the proxy needs to be used because of CORS, for example
+    if (useProxy) {
+      // Add in 'https:' if it is missing
+      if (serviceUrl.indexOf("http") != 0) {
+        serviceUrl = "https://" + serviceUrl;
+      }
 
-    let httpParams = new HttpParams();
+      let httpParams = new HttpParams()
+          .set('request', "DescribeCoverage")
+          .append('version', "1.0.0")
+          .append('service', "WCS")
+          .append('coverage', coverageName)
+          .append('url', serviceUrl);
 
-    // Add in 'http:' if it is missing
-    if (serviceUrl.indexOf("http") != 0) {
-      serviceUrl = "http://" + serviceUrl;
+      // Use proxy to send 'DescribeCoverage' request
+      serviceUrl = this.env.portalBaseUrl + Constants.PROXY_API;
+      return this.http.post(serviceUrl, httpParams, 
+          { responseType: 'text' }).pipe(map(
+        (response) => {
+          return this.parseCoverageRes(response);
+        }));
+    } else {
+      // Use a GET request without a proxy, also GSKY does not accept POST requests
+      serviceUrl = UtilitiesService.setUpdateParameter(serviceUrl, 'request', "DescribeCoverage");
+      serviceUrl = UtilitiesService.setUpdateParameter(serviceUrl, 'version', "1.0.0");
+      serviceUrl = UtilitiesService.setUpdateParameter(serviceUrl, 'service', "WCS");
+      serviceUrl = UtilitiesService.setUpdateParameter(serviceUrl, 'coverage', coverageName);
+  
+      let httpParams = new HttpParams();
+  
+      // Add in 'https:' if it is missing
+      if (serviceUrl.indexOf("http") != 0) {
+        serviceUrl = "https://" + serviceUrl;
+      }
+      return this.http.get(serviceUrl, { params: httpParams, responseType: "text" }).pipe(map(
+        (response) => {
+          return this.parseCoverageRes(response);;
+        }));  
     }
-    return this.http.get(serviceUrl, { params: httpParams, responseType: "text" }).pipe(map(
-      (response) => {
-        return this.parseCoverageRes(response);;
-      }));
   }
 
   /**
