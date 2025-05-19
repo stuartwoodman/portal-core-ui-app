@@ -19,8 +19,8 @@ export class KMLDocService {
    */
   public cleanKML(kmlTxt: string): string {
     // Removes non-standard chars that can cause errors
-    kmlTxt = kmlTxt.replace(/\016/g, '');
-    kmlTxt = kmlTxt.replace(/\002/g, '');
+    kmlTxt = kmlTxt.replace(/\x0e/g, '');
+    kmlTxt = kmlTxt.replace(/\x02/g, '');
     // Inserts local paddle image to avoid CORS errors
     // Cesium does not load proxied images for some as yet unknown reason
     kmlTxt = kmlTxt.replace(/<Icon>\s*<href>.*<\/href>/g, 
@@ -37,8 +37,8 @@ export class KMLDocService {
    */
   public cleanKMZ(kmZTxt: string): string {
     // Removes non-standard chars that can cause errors
-    kmZTxt = kmZTxt.replace(/\016/g, '');
-    kmZTxt = kmZTxt.replace(/\002/g, '');
+    kmZTxt = kmZTxt.replace(/\x0e/g, '');
+    kmZTxt = kmZTxt.replace(/\x02/g, '');
     return kmZTxt;
   }
 }
