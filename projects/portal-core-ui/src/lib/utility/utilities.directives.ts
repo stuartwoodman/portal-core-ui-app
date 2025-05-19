@@ -4,7 +4,8 @@ import {Directive, HostListener} from '@angular/core';
  * helper directive to stop the click event from propagating upwards
  */
 @Directive({
-    selector: '[appStopPropagation]'
+    selector: '[appStopPropagation]',
+    standalone: false
 })
 export class StopPropagationDirective {
     @HostListener('click', ['$event'])

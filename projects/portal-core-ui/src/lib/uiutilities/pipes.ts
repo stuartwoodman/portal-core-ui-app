@@ -4,7 +4,10 @@ import { DomSanitizer } from '@angular/platform-browser';
 /**
  * Pipe for retriving the key in a associative array
  */
-@Pipe({name: 'getKey'})
+@Pipe({
+    name: 'getKey',
+    standalone: false
+})
 export class KeysPipe implements PipeTransform {
   transform(value, args: string[]): any {
     const keys = [];
@@ -18,7 +21,10 @@ export class KeysPipe implements PipeTransform {
 /**
  * Pipe used for searching and filtering the layer
  */
-@Pipe({name: 'querierFeatureSearchPipe'})
+@Pipe({
+    name: 'querierFeatureSearchPipe',
+    standalone: false
+})
 export class QuerierFeatureSearchPipe implements PipeTransform {
   transform(value, args?): Array<any> {
     if (value && value.length > 0) {
@@ -37,7 +43,10 @@ export class QuerierFeatureSearchPipe implements PipeTransform {
 /**
  * Pipe used to mark a resource url as trusted e.g in a iframe
  */
-@Pipe({ name: 'trustResourceUrl' })
+@Pipe({
+    name: 'trustResourceUrl',
+    standalone: false
+})
 export class TrustResourceUrlPipe implements PipeTransform {
   constructor(private sanitizer: DomSanitizer) {}
   transform(url) {
@@ -48,7 +57,10 @@ export class TrustResourceUrlPipe implements PipeTransform {
 /**
  * Pipe used to mark the resource html as trusted
  */
-@Pipe({ name: 'trustResourceHtml' })
+@Pipe({
+    name: 'trustResourceHtml',
+    standalone: false
+})
 export class TrustResourceHtmlPipe implements PipeTransform {
   constructor(private sanitizer: DomSanitizer) {}
   transform(html) {

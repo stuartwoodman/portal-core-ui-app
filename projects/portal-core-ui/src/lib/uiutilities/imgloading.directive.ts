@@ -4,7 +4,10 @@ import { Directive, ElementRef, HostListener } from '@angular/core';
  The spinner will disappear once the image is loaded or an error occurs.
  NOTA BENE: This directive modifies the 'style' attribute of the <img>.
  */
-@Directive({ selector: '[appImgLoading]' })
+@Directive({
+    selector: '[appImgLoading]',
+    standalone: false
+})
 export class ImgLoadingDirective {
     /**
       * Gets called at the start, adds a spinner to the loading image
