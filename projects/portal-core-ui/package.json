@@ -8,15 +8,15 @@
   },
   "homepage": "https://github.com/AuScope/portal-core-ui-app",
   "peerDependencies": {
-    "@angular/animations": "^18.2.8",
-    "@angular/common": "^18.2.8",
-    "@angular/compiler": "^18.2.8",
-    "@angular/core": "^18.2.8",
-    "@angular/forms": "^18.2.8",
-    "@angular/platform-browser": "^18.2.8",
-    "@angular/platform-browser-dynamic": "^18.2.8",
-    "@angular/router": "^18.2.8",
-    "@auscope/angular-cesium": "^18.0.1",
+    "@angular/animations": "^19.2.11",
+    "@angular/common": "^19.2.11",
+    "@angular/compiler": "^19.2.11",
+    "@angular/core": "^19.2.11",
+    "@angular/forms": "^19.2.11",
+    "@angular/platform-browser": "^19.2.11",
+    "@angular/platform-browser-dynamic": "^19.2.11",
+    "@angular/router": "^19.2.11",
+    "@auscope/angular-cesium": "^19.0.0",
     "@thi.ng/hiccup": "^3.6.22",
     "@turf/bbox": "^6.5.0",
     "@turf/bbox-polygon": "^6.5.0",
@@ -26,10 +26,10 @@
     "@types/jquery": "^3.5.14",
     "cesium": "1.93.0",
     "jquery": "^3.6.1",
-    "ngx-device-detector": "^8.0.0",
+    "ngx-device-detector": "^9.0.0",
     "rxjs": "~6.6.7",
     "when": "~3.7.8",
-    "zone.js": "^0.14.4"
+    "zone.js": "^0.15.0"
   },
   "dependencies": {
     "tslib": "^2.4.1"
