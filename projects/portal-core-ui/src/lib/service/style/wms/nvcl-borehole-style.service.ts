@@ -107,6 +107,15 @@ export class NVCLBoreholeStyleService {
         case 'OPTIONAL.DATE':
           filterParts.push(this.createDateFilter(filter));
           break;
+          case 'OPTIONAL.TEXT':
+            if (filter.xpath === 'gsmlp:name') {
+              const nameFilterXml = `<ogc:PropertyIsLike wildCard="*" singleChar="#" escapeChar="!" matchCase="false">
+                <ogc:PropertyName>${filter.xpath}</ogc:PropertyName>
+                <ogc:Literal>${filter.value || '*'}</ogc:Literal>
+              </ogc:PropertyIsLike>`;
+              filterParts.push(nameFilterXml);
+            }
+            break;
       }
     });
 
