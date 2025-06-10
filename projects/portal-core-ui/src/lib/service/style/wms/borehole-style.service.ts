@@ -121,7 +121,18 @@ export class BoreholeStyleService {
         case 'OPTIONAL.DATE':
           filterParts.push(this.createDateFilter(filter));
           break;
-      }
+        case 'OPTIONAL.TEXT':
+          if (filter.xpath === 'gsmlp:name') {
+            // Handle name filter with substring search (contains)
+            const searchValue = filter.value ? `*${filter.value}*` : '*';
+            const nameFilterXml = `<ogc:PropertyIsLike wildCard="*" singleChar="#" escapeChar="!" matchCase="false">
+            <ogc:PropertyName>${filter.xpath}</ogc:PropertyName>
+            <ogc:Literal>${searchValue}</ogc:Literal>
+            </ogc:PropertyIsLike>`;
+            filterParts.push(nameFilterXml);
+          }
+          break;
+        }
     });
 
     // Combine all filters with AND
