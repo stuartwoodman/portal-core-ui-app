@@ -63,7 +63,7 @@ export class RemanentAnomaliesStyleService {
                 filterParts.push(`
                   <ogc:PropertyIsLike wildCard="*" singleChar="#" escapeChar="!">
                     <ogc:PropertyName>${filter.xpath}</ogc:PropertyName>
-                    <ogc:Literal>${filter.value}</ogc:Literal>
+                    <ogc:Literal>*${filter.value}*</ogc:Literal>
                   </ogc:PropertyIsLike>
                 `);
               }
@@ -80,7 +80,7 @@ export class RemanentAnomaliesStyleService {
         <ogc:Or>
           <ogc:PropertyIsLike wildCard="*" singleChar="#" escapeChar="!">
             <ogc:PropertyName>RemAnom:AnomalyName</ogc:PropertyName>
-            <ogc:Literal>${params.name}</ogc:Literal>
+            <ogc:Literal>*${params.name}*</ogc:Literal>
           </ogc:PropertyIsLike>
           <ogc:FeatureId fid="anomaly.${params.name}"/>
         </ogc:Or>
