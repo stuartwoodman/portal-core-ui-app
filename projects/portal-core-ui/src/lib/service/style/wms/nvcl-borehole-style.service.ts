@@ -113,9 +113,9 @@ export class NVCLBoreholeStyleService {
             // Handle name filter with substring search (contains)
             const searchValue = filter.value ? `*${filter.value}*` : '*';
             const nameFilterXml = `<ogc:PropertyIsLike wildCard="*" singleChar="#" escapeChar="!" matchCase="false">
-              <ogc:PropertyName>${filter.xpath}</ogc:PropertyName>
-              <ogc:Literal>${searchValue}</ogc:Literal>
-            </ogc:PropertyIsLike>`;
+              <ogc:PropertyName>${filter.xpath}</ogc:PropertyName>
+              <ogc:Literal>${searchValue}</ogc:Literal>
+            </ogc:PropertyIsLike>`;
             filterParts.push(nameFilterXml);
           } else if (
             filter.xpath === 'gsmlp:boreholeLength_m' &&
@@ -128,17 +128,17 @@ export class NVCLBoreholeStyleService {
                 ? 'PropertyIsGreaterThan'
                 : 'PropertyIsLessThan';
             const lengthFilterXml = `<ogc:${operator}>
-              <ogc:PropertyName>${filter.xpath}</ogc:PropertyName>
-              <ogc:Literal>${filter.value}</ogc:Literal>
-            </ogc:${operator}>`;
+              <ogc:PropertyName>${filter.xpath}</ogc:PropertyName>
+              <ogc:Literal>${filter.value}</ogc:Literal>
+            </ogc:${operator}>`;
             filterParts.push(lengthFilterXml);
           } else if (filter.xpath === 'gsmlp:identifier') {
             // Handle identifier filter with substring search (contains)
             const searchValue = filter.value ? `*${filter.value}*` : '*';
             const identifierFilterXml = `<ogc:PropertyIsLike wildCard="*" singleChar="#" escapeChar="!" matchCase="false">
-              <ogc:PropertyName>${filter.xpath}</ogc:PropertyName>
-              <ogc:Literal>${searchValue}</ogc:Literal>
-            </ogc:PropertyIsLike>`;
+              <ogc:PropertyName>${filter.xpath}</ogc:PropertyName>
+              <ogc:Literal>${searchValue}</ogc:Literal>
+            </ogc:PropertyIsLike>`;
             filterParts.push(identifierFilterXml);
           }
           break;
@@ -156,9 +156,9 @@ export class NVCLBoreholeStyleService {
   }
   private static createPolygonFilter(filter: OptionalFilter): string {
     return `<ogc:Intersects>
-      <ogc:PropertyName>${filter.xpath}</ogc:PropertyName>
-      ${filter.value}
-    </ogc:Intersects>`;
+             <ogc:PropertyName>${filter.xpath}</ogc:PropertyName>
+             ${filter.value}
+             </ogc:Intersects>`;
   }
   private static createDateFilter(filter: OptionalFilter): string {
     const operator =
@@ -166,15 +166,15 @@ export class NVCLBoreholeStyleService {
         ? 'PropertyIsGreaterThan'
         : 'PropertyIsLessThan';
     return `<ogc:${operator}>
-      <ogc:PropertyName>${filter.xpath}</ogc:PropertyName>
-      <ogc:Literal>${filter.value}</ogc:Literal>
-    </ogc:${operator}>`;
+             <ogc:PropertyName>${filter.xpath}</ogc:PropertyName>
+             <ogc:Literal>${filter.value}</ogc:Literal>
+             </ogc:${operator}>`;
   }
   private static createHyloggedFilter(): string {
     return `<ogc:PropertyIsEqualTo>
-      <ogc:PropertyName>gsmlp:nvclCollection</ogc:PropertyName>
-      <ogc:Literal>true</ogc:Literal>
-    </ogc:PropertyIsEqualTo>`;
+             <ogc:PropertyName>gsmlp:nvclCollection</ogc:PropertyName>
+             <ogc:Literal>true</ogc:Literal>
+            </ogc:PropertyIsEqualTo>`;
   }
   private static createAnalyticsRules(
     analytics: any,
@@ -233,9 +233,9 @@ export class NVCLBoreholeStyleService {
     if (!identifiers?.length) return '';
     const conditions = identifiers.map(
       (id) => `<ogc:PropertyIsEqualTo>
-        <ogc:PropertyName>gsmlp:identifier</ogc:PropertyName>
-        <ogc:Literal>${id}</ogc:Literal>
-      </ogc:PropertyIsEqualTo>`
+                <ogc:PropertyName>gsmlp:identifier</ogc:PropertyName>
+                <ogc:Literal>${id}</ogc:Literal>
+              </ogc:PropertyIsEqualTo>`
     );
     return conditions.length > 1
       ? `<ogc:Or>${conditions.join('')}</ogc:Or>`
@@ -347,8 +347,8 @@ export class NVCLBoreholeStyleService {
   }
   private static generateDefaultFilter(ns: any): string {
     return `<ogc:Filter><ogc:PropertyIsLike wildCard="*" singleChar="#" escapeChar="!">
-              <ogc:PropertyName>gsmlp:name</ogc:PropertyName>
-              <ogc:Literal>*</ogc:Literal>
-            </ogc:PropertyIsLike></ogc:Filter>`;
+              <ogc:PropertyName>gsmlp:name</ogc:PropertyName>
+              <ogc:Literal>*</ogc:Literal>
+            </ogc:PropertyIsLike></ogc:Filter>`;
   }
 }
